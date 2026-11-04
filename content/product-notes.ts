@@ -1,0 +1,16 @@
+export const productNotes: Record<string, { construction: string; application: string }> = {
+  'aerial-bunched-cable': { construction:'Insulated aluminium cores assembled around a messenger wire.', application:'Overhead distribution and service networks.' },
+  'lt-xlpe-cable': { construction:'Low voltage power cable with cross-linked polyethylene insulation.', application:'Low voltage power distribution.' },
+  'pvc-power-cable': { construction:'Power cable with PVC insulation.', application:'Power distribution and industrial installations.' },
+  'control-cable': { construction:'Multi-core cable for control and signal circuits.', application:'Industrial equipment, automation and instrumentation.' },
+  'service-cable': { construction:'Service cable selected for the supply and installation requirements.', application:'Connecting a distribution line to a customer service point.' },
+  'covered-conductor': { construction:'An overhead conductor surrounded by a protective cover.', application:'Medium voltage overhead distribution. Ask PCI to confirm the applicable line design and clearance requirements.' },
+  aac: { construction:'Circular stranded aluminium.', application:'Overhead transmission and distribution.' },
+  aaac: { construction:'Circular strands of aluminium magnesium silicon alloy.', application:'Overhead line projects that specify an aluminium alloy conductor.' },
+  acsr: { construction:'Aluminium strands around a reinforcing steel core.', application:'Overhead transmission and distribution.' },
+  aacsr: { construction:'Aluminium alloy outer strands around a reinforcing steel core.', application:'Overhead line designs that specify a steel reinforced alloy conductor.' },
+  'al-59': { construction:'A stranded aluminium magnesium silicon alloy conductor.', application:'Overhead lines specified for AL-59 alloy.' },
+  acar: { construction:'Aluminium strands with an aluminium alloy reinforcing core.', application:'Overhead transmission and distribution.' },
+  'eco-panther': { construction:'Trapezoidal aluminium alloy outer strands around a round core.', application:'Overhead conductor installations specified for ECO Panther.' },
+  'gi-earth-wire': { construction:'Stranded galvanised high carbon steel wires.', application:'Earthing and shielding for overhead networks.' },
+}

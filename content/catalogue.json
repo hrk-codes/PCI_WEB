@@ -1,0 +1,16 @@
+[
+  {"slug":"aerial-bunched-cable","name":"Aerial Bunched Cable","short":"AB Cable","family":"cables","summary":"An overhead cable assembly with insulated aluminium power cores bundled around a messenger wire for distribution networks.","pdf":"abcable.pdf"},
+  {"slug":"lt-xlpe-cable","name":"LT XLPE Cable","short":"LT XLPE Cable","family":"cables","summary":"Low tension power cable with cross-linked polyethylene insulation for distribution installations.","pdf":"xlpecable.pdf"},
+  {"slug":"pvc-power-cable","name":"PVC Power Cable","short":"PVC Power Cable","family":"cables","summary":"Power cable with PVC insulation for low voltage distribution and industrial applications.","pdf":"control-pvc-cable.pdf"},
+  {"slug":"control-cable","name":"Control Cable","short":"Control Cable","family":"cables","summary":"Multi-core cable for control circuits, instrumentation and automation in industrial installations.","pdf":"control-pvc-cable.pdf"},
+  {"slug":"service-cable","name":"Service Cable","short":"Service Cable","family":"cables","summary":"Cable for connecting the distribution supply to a customer service point.","pdf":null},
+  {"slug":"covered-conductor","name":"Covered Conductor for Overhead Lines","short":"Covered Conductor","family":"cables","summary":"Overhead conductor with a protective cover for medium voltage distribution. Contact PCI to confirm construction and rating.","pdf":"mvcc.pdf"},
+  {"slug":"aac","name":"All Aluminium Conductor (AAC)","short":"AAC","family":"conductors","summary":"A circular stranded aluminium conductor for overhead power networks.","pdf":"aac.pdf"},
+  {"slug":"aaac","name":"All Aluminium Alloy Conductor (AAAC)","short":"AAAC","family":"conductors","summary":"A stranded aluminium magnesium silicon alloy conductor for overhead lines.","pdf":"aaac.pdf"},
+  {"slug":"acsr","name":"Aluminium Conductor Steel Reinforced (ACSR)","short":"ACSR","family":"conductors","summary":"A stranded aluminium conductor around a steel core for overhead transmission and distribution.","pdf":"acsr.pdf"},
+  {"slug":"aacsr","name":"Aluminium Alloy Conductor Steel Reinforced (AACSR)","short":"AACSR","family":"conductors","summary":"A steel reinforced conductor with stranded aluminium alloy outer wires for overhead power lines.","pdf":"aacsr.pdf"},
+  {"slug":"al-59","name":"Aluminium Alloy Conductor (AL-59)","short":"AL-59","family":"conductors","summary":"An aluminium alloy overhead conductor. Refer to the PCI data sheet for construction and size options.","pdf":"al-59.pdf"},
+  {"slug":"acar","name":"Aluminium Conductor Alloy Reinforced (ACAR)","short":"ACAR","family":"conductors","summary":"An aluminium conductor with an aluminium alloy core designed to balance strength, weight and current carrying capacity.","pdf":"acar.pdf"},
+  {"slug":"eco-panther","name":"ECO Panther Conductor","short":"ECO Panther","family":"conductors","summary":"An overhead conductor with trapezoidal aluminium alloy strands around a round core.","pdf":"eco.pdf"},
+  {"slug":"gi-earth-wire","name":"Galvanised Steel Earth Wire","short":"GI Earth Wire","family":"earth-wire","summary":"Stranded galvanised high carbon steel wire for earthing and shielding on overhead networks.","pdf":"gi-ewire.pdf"}
+]

@@ -1,0 +1,142 @@
+{
+  "Utilities": [
+    {
+      "name": "West Bengal State Electricity Distribution Company",
+      "image": "/media/client-wbsedcl.webp"
+    },
+    {
+      "name": "Assam Power Distribution Company",
+      "image": "/media/client-apdcl.webp"
+    },
+    {
+      "name": "AEGCL",
+      "image": "/media/client-aegcl.webp"
+    },
+    {
+      "name": "AVVNL",
+      "image": "/media/client-avvnl.webp"
+    },
+    {
+      "name": "BSPTCL",
+      "image": "/media/client-bsptcl.webp"
+    },
+    {
+      "name": "JVVNL",
+      "image": "/media/client-jvvnl.webp"
+    },
+    {
+      "name": "CSPDCL",
+      "image": "/media/client-cspdcl.webp"
+    },
+    {
+      "name": "DVVNL",
+      "image": "/media/client-dvvnl.webp"
+    },
+    {
+      "name": "MSETCL",
+      "image": "/media/client-msetcl.webp"
+    },
+    {
+      "name": "MVVNL",
+      "image": "/media/client-mvvnl.webp"
+    },
+    {
+      "name": "UHBVN",
+      "image": "/media/client-uhbvn.webp"
+    },
+    {
+      "name": "TPNODL",
+      "image": "/media/client-tpnodl.webp"
+    }
+  ],
+  "Rail & public sector": [
+    {
+      "name": "CORE",
+      "image": "/media/client-core.webp"
+    },
+    {
+      "name": "IRCON",
+      "image": "/media/client-ircon.webp"
+    },
+    {
+      "name": "NCRTC",
+      "image": "/media/client-ncrtc.webp"
+    },
+    {
+      "name": "Rail Vikas Nigam",
+      "image": "/media/client-rvnl.webp"
+    },
+    {
+      "name": "DFCC",
+      "image": "/media/client-dfcc.webp"
+    },
+    {
+      "name": "Konkan Railway",
+      "image": "/media/client-konkan-railway.webp"
+    },
+    {
+      "name": "Northern Railway",
+      "image": "/media/client-northern-railway.webp"
+    },
+    {
+      "name": "East Central Railway",
+      "image": "/media/client-east-central-railway.webp"
+    },
+    {
+      "name": "CoalIndia",
+      "image": "/media/client-coalindia.webp"
+    }
+  ],
+  "International": [
+    {
+      "name": "NEA Nepal",
+      "image": "/media/client-nea-nepal.webp"
+    },
+    {
+      "name": "UETCL Uganda",
+      "image": "/media/client-uetcl-uganda.webp"
+    },
+    {
+      "name": "TCN Nigeria",
+      "image": "/media/client-tcn-nigeria.webp"
+    },
+    {
+      "name": "BPC Bhutan",
+      "image": "/media/client-bpc-bhutan.webp"
+    },
+    {
+      "name": "EDCL Rwanda",
+      "image": "/media/client-edcl-rwanda.webp"
+    },
+    {
+      "name": "EDM Mozambique",
+      "image": "/media/client-edm-mozambique.webp"
+    }
+  ],
+  "Renewables": [
+    {
+      "name": "ACME Solar",
+      "image": "/media/client-acme.webp"
+    },
+    {
+      "name": "ReNew",
+      "image": "/media/client-renew.webp"
+    },
+    {
+      "name": "Sprng Energy",
+      "image": "/media/client-sprng.webp"
+    },
+    {
+      "name": "Solarcraft",
+      "image": "/media/client-solarcraft.webp"
+    },
+    {
+      "name": "Oriano Solar",
+      "image": "/media/client-oriano.webp"
+    },
+    {
+      "name": "Sitac",
+      "image": "/media/client-sitac.webp"
+    }
+  ]
+}
