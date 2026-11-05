@@ -21,3 +21,7 @@ The generated studio image is retained as a fallback for no JavaScript, unavaila
 On viewports wider than 820px and taller than 700px, the scene stays beneath the measured header through 240 viewport heights of natural scrolling. All stages follow scroll position and reverse when scrolling upward. On smaller screens the final cable composition sits above the copy in normal flow. Reduced motion, the saved Quick info motion preference, and Skip animation show the final composition without the extended scroll area. The full story is server rendered and remains readable without JavaScript.
 
 Run `node scripts/test-about.mjs` against the local preview (or set `PCI_BROWSER_URL`) to verify the forward and reverse sequence, restored scroll position, keyboard access, motion preferences, mobile layout, resizing, static fallback and automated accessibility checks. Review the generated `test-results/about-*.png` screenshots for the individual stages.
+
+## Our Reach: a living Earth
+
+The navy and teal palette is retained on a live Three.js globe with accurate Natural Earth land geometry. India starts facing the visitor. Hovering over India previews a curved close view; click or touch locks it open. Raised arcs link the Dankuni hub to 14 client-linked destination states, and an accessible selector exposes each organisation. Nepal and Uganda remain in the world-view export milestones. Motion controls, static geographic artwork, state lists, pointer and keyboard interaction are documented and tested. See [geography and evidence notes](GEOGRAPHY.md).

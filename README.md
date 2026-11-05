@@ -33,6 +33,8 @@ The production test starts a separate loopback instance on port 3100 with an iso
 
 Run the browser checks with the local site running and Chrome or Edge installed. Set CHROME_PATH if the browser is installed elsewhere. These checks cover desktop and mobile layout, keyboard controls, reduced motion and automated accessibility. See [design and reference notes](DESIGN.md).
 
+The Reach globe uses locally hosted geographic data and the existing Three.js dependency. Run `node scripts/test-earth.mjs` for globe interactions, state points, client information, reduced motion, mobile layout and the static fallback. It also runs in the production test suite. Source references and geographic rebuilding instructions are in [GEOGRAPHY.md](GEOGRAPHY.md).
+
 ## Publish to staging, then production
 
 1. Push the Git history to a **private PCI repository**. Configure a Vercel project with the pinned Node and pnpm versions. Enable access protection for previews. Create separate staging and production PostgreSQL databases; keep staging free of real submission data. Choose a backed-up production database and place server and database in the same region when possible.

@@ -26,5 +26,8 @@ try {
   }
   if (!ready) throw new Error('Production server did not become ready.')
   await wait(run('scripts/smoke.mjs'))
-  if (process.env.PCI_SKIP_BROWSER !== '1') await wait(run('scripts/test-browser.mjs'))
+  if (process.env.PCI_SKIP_BROWSER !== '1') {
+    await wait(run('scripts/test-browser.mjs'))
+    await wait(run('scripts/test-earth.mjs'))
+  }
 } finally { server.kill() }

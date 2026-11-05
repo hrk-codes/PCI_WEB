@@ -6,6 +6,7 @@ import { Inquiry } from '@/components/inquiry'
 import { ProductGrid, Updates } from '@/components/catalogue'
 import { Ambient } from '@/components/ambient'
 import { AboutCable } from '@/components/about-cable'
+import { Reach } from '@/components/reach'
 import { address, catalogue, company, edited, siteUrl, structured } from '@/lib/content'
 
 export const dynamic = 'force-dynamic'
@@ -14,22 +15,6 @@ const select = (slugs: string[]) => slugs.map(slug=>catalogue.find(p=>p.slug===s
 const features = select(['eco-panther','lt-xlpe-cable','aerial-bunched-cable'])
 const range = select(['lt-xlpe-cable','acsr','aerial-bunched-cable','control-cable','pvc-power-cable','aaac','gi-earth-wire','eco-panther'])
 
-function Globe() {
-  return <svg className="globe" viewBox="0 0 500 340" role="img" aria-labelledby="reach-title">
-    <title id="reach-title">PCI manufacturing in West Bengal and export milestones in Nepal and Uganda</title>
-    <defs><radialGradient id="sphere" cx=".35" cy=".3"><stop stopColor="#286283"/><stop offset="1" stopColor="#071c2e"/></radialGradient><clipPath id="sphere-clip"><circle cx="245" cy="170" r="130"/></clipPath></defs>
-    <ellipse cx="245" cy="170" rx="188" ry="48" transform="rotate(-17 245 170)" fill="none" stroke="#5493a9" strokeOpacity=".32"/>
-    <circle cx="245" cy="170" r="130" fill="url(#sphere)" stroke="#69a4bb" strokeOpacity=".64"/>
-    <g clipPath="url(#sphere-clip)" stroke="#6cabc3" strokeOpacity=".33" fill="none">
-      <ellipse cx="245" cy="170" rx="90" ry="130"/><ellipse cx="245" cy="170" rx="42" ry="130"/>
-      <path d="M115 170h260M245 40v260M123 113q122 45 244 0M123 227q122-45 244 0M154 75q91 38 182 0M154 265q91-38 182 0"/>
-      <path d="m172 105 20-17 27 7 21-11 52 10 39 24 9 21-26 1-14 26-17 1-11 30-15-14-10-30-24-14-11 13-19-4-17-13-16-6zm17 60 32-10 21 10 12 31-22 39-16 13-11-31-18-20z" fill="#467f96" fillOpacity=".42"/>
-    </g><g fill="none" stroke="#ff854f" strokeWidth="1.5" strokeDasharray="3 5"><path d="M277 154Q256 110 217 191"/><path d="M277 154q-6-24-15-14"/></g>
-    <g fill="#ff854f"><circle cx="277" cy="154" r="5"/><circle cx="262" cy="140" r="4"/><circle cx="217" cy="191" r="4"/></g>
-    <g fill="#e1f0f7" fontSize="13" fontFamily="system-ui,sans-serif"><text x="287" y="163">WEST BENGAL</text><text x="252" y="123">NEPAL</text><text x="158" y="207">UGANDA</text></g>
-  </svg>
-}
-
 export default async function Home() {
   const homeCopy = await edited('home')
   return <>
@@ -37,7 +22,7 @@ export default async function Home() {
     <Hero copy={homeCopy}/>
     <AboutCable/>
     <section className="section soft ambient-host"><Ambient/><div className="wrap"><div className="section-top"><div><Kicker>Product spotlight</Kicker><h2>Featured products.</h2></div><TextLink href="/products/">Full catalogue</TextLink></div><ProductGrid items={features} feature/></div></section>
-    <section className="section reach ambient-host"><Ambient className="ambient-dark"/><div className="wrap split"><div><Kicker>Our reach</Kicker><h2>From West Bengal to wider horizons.</h2><p>Manufacturing in Dankuni. Supplying power networks in India and recording early export milestones in Uganda and Nepal.</p><TextLink href="/achievements/">Explore our milestones</TextLink></div><div className="reach-visual"><Globe/><div className="reach-note"><span aria-hidden="true"/><div><strong>Dankuni, West Bengal</strong><small>PCI manufacturing and works</small></div></div></div></div></section>
+    <Reach/>
     <section className="section wrap"><div className="section-top"><div><Kicker>What we make</Kicker><h2>Explore the range.</h2></div><p>Find products for power transmission, distribution, control and earthing.</p></div><ProductGrid items={range}/><div className="center action"><Link className="button" href="/products/">View all {catalogue.length} products <Arrow diagonal/></Link></div></section>
     <section className="section soft ambient-host"><Ambient/><div className="wrap center"><Kicker>PCI at a glance</Kicker><h2>Built on steady progress.</h2><div className="stats">{[['2013','Our journey began'],[catalogue.length,'Products in the catalogue'],[3,'Core product families'],[2,'First export milestones in 2022']].map(([n,label])=><div key={label}><strong>{n}</strong><span>{label}</span></div>)}</div></div></section>
     <section className="section wrap center"><Kicker>Where our work connects</Kicker><h2>Our clients and partners.</h2><Clients/><div className="action"><TextLink href="/clients/">Explore our clients</TextLink></div></section>
