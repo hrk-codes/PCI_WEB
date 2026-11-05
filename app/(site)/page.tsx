@@ -5,6 +5,7 @@ import { Hero, Clients, Timeline } from '@/components/interactions'
 import { Inquiry } from '@/components/inquiry'
 import { ProductGrid, Updates } from '@/components/catalogue'
 import { Ambient } from '@/components/ambient'
+import { AboutCable } from '@/components/about-cable'
 import { address, catalogue, company, edited, siteUrl, structured } from '@/lib/content'
 
 export const dynamic = 'force-dynamic'
@@ -34,10 +35,7 @@ export default async function Home() {
   return <>
     <script type="application/ld+json" dangerouslySetInnerHTML={{ __html:structured({ '@type':'Organization', name:company, url:siteUrl, logo:siteUrl+'/media/logo.webp', email:'info@pcicablesindustries.com', telephone:'+91-9062207003', address:{'@type':'PostalAddress', streetAddress:address.split(', Hooghly')[0], addressLocality:'Hooghly', addressRegion:'West Bengal', postalCode:'712311', addressCountry:'IN'} }) }}/>
     <Hero copy={homeCopy}/>
-    <section className="section wrap split story">
-      <figure className="photo-frame"><div><Picture src="/media/factory.webp" alt="PCI Cables manufacturing facility"/></div><figcaption>DANKUNI · WEST BENGAL, INDIA</figcaption></figure>
-      <div><Kicker>About PCI Cables</Kicker><h2>Building confidence into every connection.</h2><p className="lead">Cable and conductor manufacturing for the networks that move power forward.</p><p>From our works in Dankuni, PCI manufactures cables, overhead conductors and earth wire for utilities, infrastructure projects and industrial customers.</p><TextLink href="/about-us/">Our story</TextLink></div>
-    </section>
+    <AboutCable/>
     <section className="section soft ambient-host"><Ambient/><div className="wrap"><div className="section-top"><div><Kicker>Product spotlight</Kicker><h2>Featured products.</h2></div><TextLink href="/products/">Full catalogue</TextLink></div><ProductGrid items={features} feature/></div></section>
     <section className="section reach ambient-host"><Ambient className="ambient-dark"/><div className="wrap split"><div><Kicker>Our reach</Kicker><h2>From West Bengal to wider horizons.</h2><p>Manufacturing in Dankuni. Supplying power networks in India and recording early export milestones in Uganda and Nepal.</p><TextLink href="/achievements/">Explore our milestones</TextLink></div><div className="reach-visual"><Globe/><div className="reach-note"><span aria-hidden="true"/><div><strong>Dankuni, West Bengal</strong><small>PCI manufacturing and works</small></div></div></div></div></section>
     <section className="section wrap"><div className="section-top"><div><Kicker>What we make</Kicker><h2>Explore the range.</h2></div><p>Find products for power transmission, distribution, control and earthing.</p></div><ProductGrid items={range}/><div className="center action"><Link className="button" href="/products/">View all {catalogue.length} products <Arrow diagonal/></Link></div></section>

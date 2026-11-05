@@ -11,3 +11,13 @@ The PCI homepage recording sets the layout and palette: navy framing, warm orang
 The Quick info panel keeps the product catalogue, product range, quote request and phone number in reach. It opens on demand, traps focus while open, closes with Escape, and returns focus to the trigger. The motion switch is saved on the device. The site also honors the operating system’s reduced motion setting.
 
 Review the homepage, catalogue, product pages and forms at desktop and phone widths. Verify that the motion never hides text or controls, links keep their original meaning, and the site works with just a keyboard. Run the production checks against a separate database, then review the public copy and email delivery in protected staging before changing the domain.
+
+## About PCI: inside every connection
+
+The homepage About section combines a real-time Three.js cable scene with the earlier original PCI product images. The main scene has separate procedural cable jackets, armour, coloured insulation and individually modelled aluminium strands. Scroll changes the view and gently separates the inner layers, then moves the composition from the centre to the left before revealing the story. Pointer movement adds subtle parallax. The original AAC, ACSR and ECO Panther product images sit below it.
+
+The generated studio image is retained as a fallback for no JavaScript, unavailable WebGL or a lost rendering context. These models and generated artwork are illustrative and are not technical specifications for a PCI product. The original company catalogue documents remain the source for product details. See [ARTWORK.md](ARTWORK.md) for the fallback generation prompt and rendering approach.
+
+On viewports wider than 820px and taller than 700px, the scene stays beneath the measured header through 240 viewport heights of natural scrolling. All stages follow scroll position and reverse when scrolling upward. On smaller screens the final cable composition sits above the copy in normal flow. Reduced motion, the saved Quick info motion preference, and Skip animation show the final composition without the extended scroll area. The full story is server rendered and remains readable without JavaScript.
+
+Run `node scripts/test-about.mjs` against the local preview (or set `PCI_BROWSER_URL`) to verify the forward and reverse sequence, restored scroll position, keyboard access, motion preferences, mobile layout, resizing, static fallback and automated accessibility checks. Review the generated `test-results/about-*.png` screenshots for the individual stages.
