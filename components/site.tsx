@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { address, company } from '@/lib/content'
 import { AnalyticsPreference } from '@/components/analytics'
 import { Ambient } from '@/components/ambient'
+import { DesktopMenu } from '@/components/desktop-menu'
 
 export const menus = [
   { title: 'Company', items: [['About PCI','/about-us/'], ['Management','/management/'], ['Clients','/clients/'], ['Milestones','/achievements/'], ['Turnover','/turnover/']] },
@@ -18,11 +19,11 @@ export function Brand() {
 }
 export function Header() {
   return <header className="site-head" id="top">
-    <div className="head-meta"><div className="wrap meta-inner"><span>Manufactured in West Bengal, India</span><div><a href="mailto:info@pcicablesindustries.com">info@pcicablesindustries.com</a><a href="tel:+919062207003">+91 90622 07003</a></div></div></div>
+    <div className="head-meta"><div className="wrap meta-inner"><a className="meta-location" href="https://www.google.com/maps/search/?api=1&query=PCI+Cables+Industries+Pvt+Ltd+Om+Complex+Monber+Sastitala+Beneras+Road+Mrigola+Dankuni+Hooghly+712311" target="_blank" rel="noopener noreferrer">Manufactured in West Bengal, India</a><div><a href="https://mail.google.com/mail/?view=cm&fs=1&to=info%40pcicablesindustries.com" target="_blank" rel="noopener noreferrer">info@pcicablesindustries.com</a><a href="tel:+919062207003">+91 90622 07003</a></div></div></div>
     <div className="wrap navbar"><Brand/>
-      <nav className="main-nav" aria-label="Main navigation"><Link href="/">Home</Link>{menus.map(m=><details className="drop" key={m.title}><summary>{m.title}<span aria-hidden="true">⌄</span></summary><div>{m.items.map(([label, url])=><Link key={url} href={url}>{label}</Link>)}</div></details>)}<Link href="/contact-us/">Contact</Link></nav>
+      <nav className="main-nav" aria-label="Main navigation"><Link href="/">Home</Link>{menus.map(m=><DesktopMenu key={m.title} {...m}/>)}<Link href="/contact-us/">Contact</Link></nav>
       <Link className="button nav-cta" href="/request-quote/">Request a quote <Arrow diagonal/></Link>
-      <details className="mobile-nav"><summary>Menu <span aria-hidden="true">☰</span></summary><nav aria-label="Mobile navigation"><Link href="/">Home</Link>{menus.map(m=><details key={m.title}><summary>{m.title}</summary>{m.items.map(([label,url])=><Link key={url} href={url}>{label}</Link>)}</details>)}<Link href="/contact-us/">Contact</Link><Link href="/request-quote/">Request a quote</Link></nav></details>
+      <details className="mobile-nav"><summary>Menu <span aria-hidden="true">☰</span></summary><nav aria-label="Mobile navigation"><Link href="/">Home</Link>{menus.map(m=><details name="mobile-menu" key={m.title}><summary>{m.title}<span className="menu-chevron" aria-hidden="true"/></summary>{m.items.map(([label,url])=><Link key={url} href={url}>{label}</Link>)}</details>)}<Link href="/contact-us/">Contact</Link><Link href="/request-quote/">Request a quote</Link></nav></details>
     </div>
   </header>
 }
