@@ -16,6 +16,7 @@ const phase = (p: number, start: number, end: number) => {
 function CableArtwork() {
   return <div className="conductor-study" aria-hidden="true">
     <div className="conductor-halo"/>
+    <div className="conductor-blueprint"><span className="blueprint-label label-aluminium">ALUMINIUM<br/><b>Stranded conductor</b></span><span className="blueprint-label label-earth">EARTH WIRE<br/><b>Galvanised steel</b></span></div>
     <div className="conductor-caption"><span/> ENGINEERED FOR CONNECTION</div>
     <div className="conductor-main"><Image className="cable-fallback" src="/media/pci-cable-sculpture-v3.webp" width={1254} height={1254} alt="" sizes="(max-width: 820px) 94vw, 52vw"/><CableScene/></div>
     <div className="conductor-floor"/>

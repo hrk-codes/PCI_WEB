@@ -1,5 +1,6 @@
 import * as T from 'three'
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js'
+import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js'
 
 /** Procedural marketing models; dimensions do not specify an actual PCI SKU. */
 export function createCableScene(host: HTMLElement, section: HTMLElement) {
@@ -119,6 +120,39 @@ export function createCableScene(host: HTMLElement, section: HTMLElement) {
   stripe.scale.x=.7
   aerial.add(aerialCores);moving.push(aerialCores)
   aerial.scale.setScalar(.77);aerial.rotation.z=-.27;aerial.position.set(1.1,-.8,.4);root.add(aerial)
+  // Additional bare aluminium conductor and galvanised earth wire frame the main cutaways.
+  // Helical strands give these products a recognisably different construction and silhouette.
+  function strandedWire(radius:number,length:number,material:T.Material) {
+    const group=new T.Group()
+    const parts:T.BufferGeometry[]=[]
+    const strand=radius/5.15
+    const positions:[number,number][]=[[0,0]]
+    for(let ring=1;ring<=2;ring++) for(let i=0;i<ring*6;i++) {
+      positions.push([ring*strand*2.03,i*Math.PI*2/(ring*6)])
+    }
+    for(const [distance,start] of positions) {
+      const points=Array.from({length:49},(_,i)=>{
+        const t=i/48,angle=start+t*Math.PI*1.8
+        return new T.Vector3(Math.cos(angle)*distance,t*length-length/2,Math.sin(angle)*distance)
+      })
+      const curve=new T.CatmullRomCurve3(points)
+      parts.push(new T.TubeGeometry(curve,48,strand,8,false))
+      for(const end of [points[0],points[48]]) {
+        const cap=new T.CircleGeometry(strand,12)
+        cap.rotateX(end.y>0?-Math.PI/2:Math.PI/2)
+        cap.translate(end.x,end.y,end.z);parts.push(cap)
+      }
+    }
+    const merged=mergeGeometries(parts)
+    parts.forEach(part=>part.dispose())
+    geometry.push(merged)
+    group.add(new T.Mesh(merged,material))
+    return group
+  }
+  const bare=strandedWire(.245,3.05,aluminium)
+  bare.position.set(-1.9,-.5,.2);bare.rotation.z=.28;root.add(bare)
+  const earth=strandedWire(.16,2.65,steel)
+  earth.position.set(1.95,-.18,-.1);earth.rotation.z=-.24;root.add(earth)
   root.rotation.set(.02,-.35,-.08)
   let visible=true,frame=0,disposed=false,contextLost=false
   let progress=Number(getComputedStyle(section).getPropertyValue('--story-progress')) || 0
@@ -136,6 +170,9 @@ export function createCableScene(host: HTMLElement, section: HTMLElement) {
     root.rotation.x=.03+cy*.07
     root.rotation.z=-.1+turn*.06
     moving.forEach((g,i)=>{g.position.y=Math.sin(ease((progress-.12)/.5)*Math.PI)*(.13+i*.025)})
+    const spread=ease((progress-.12)/.5)
+    bare.position.x=-1.65-spread*.25;bare.rotation.y=spread*.2
+    earth.position.x=1.7+spread*.25;earth.rotation.y=-spread*.15
     renderer.render(scene,camera)
     host.dataset.ready='yes'
     canvas.dataset.progress=progress.toFixed(3)
@@ -147,7 +184,7 @@ export function createCableScene(host: HTMLElement, section: HTMLElement) {
     if(!width || !height) return
     renderer.setSize(width,height,false)
     camera.aspect=width/height
-    camera.position.set(4,4.7,10).multiplyScalar(.76*Math.max(1,.86/camera.aspect))
+    camera.position.set(4,4.7,10).multiplyScalar(.76*Math.max(1,1.06/camera.aspect))
     camera.lookAt(0,.05,0);camera.updateProjectionMatrix();schedule()
   }
   function onProgress(event:Event){progress=(event as CustomEvent<number>).detail;schedule()}
