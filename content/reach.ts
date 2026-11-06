@@ -1,7 +1,7 @@
 export const reachEvidence = {
   clientSource:'https://pcicablesindustries.com/clients/',
   clientSnapshot:'content/wordpress.json, clients entry',
-  verifiedOn:'2026-11-05',
+  verifiedOn:'2026-11-06',
   stateDirectory:'https://www.dtl.gov.in/content/202_6_stateutgencotranscodiscom.aspx',
   utilityDirectory:'https://www.ipds.gov.in/Form_IPDS_Res/RelatedLink.aspx',
   interpretation:'Client-linked states inferred from published client organisations. Pins represent states, not delivery sites. Arcs are relationships, not transport routes.',
@@ -22,6 +22,17 @@ export const reachStates = [
   {id:'punjab',name:'Punjab',lat:30.8,lon:75.4,client:'PSPCL',organisation:'Punjab State Power Corporation',source:'https://www.pspcl.in/'},
   {id:'rajasthan',name:'Rajasthan',lat:26.6,lon:74,client:'AVVNL / JVVNL',organisation:'Ajmer Vidyut Vitran Nigam / Jaipur Vidyut Vitran Nigam',source:reachEvidence.utilityDirectory},
   {id:'uttar-pradesh',name:'Uttar Pradesh',lat:27,lon:80.5,client:'DVVNL / MVVNL',organisation:'Dakshinanchal Vidyut Vitran Nigam / Madhyanchal Vidyut Vitran Nigam',source:reachEvidence.utilityDirectory},
+  {id:'tamil-nadu',name:'Tamil Nadu',lat:11.3,lon:78.7,client:'Chennai Metro / TNPDCL',organisation:'Chennai Metro Rail / Tamil Nadu Power Distribution Corporation',source:'https://chennaimetrorail.org/',logoEvidence:'2024/09/Chennai-Metro.png; 2026/09/TNPDCL.png'},
+  {id:'karnataka',name:'Karnataka',lat:14.6,lon:76,client:'Bengaluru Metro',organisation:'Bangalore Metro Rail Corporation',source:'https://www.bmrc.co.in/',logoEvidence:'2026/09/Bangaluru-Metro.png'},
+  {id:'telangana',name:'Telangana',lat:18.1,lon:79.1,client:'TSGENCO',organisation:'Telangana State Power Generation Corporation, published as TSGENCO',source:reachEvidence.stateDirectory,logoEvidence:'2024/01/TSGENCO.png'},
 ]
-export const reachExports=[{id:'nepal',name:'Nepal',lat:27.7,lon:85.3,client:'NEA Nepal',milestone:'First cable export, October 2022'},{id:'uganda',name:'Uganda',lat:.35,lon:32.6,client:'UETCL Uganda',milestone:'First conductor export, June 2022'}]
+export const reachExports=[
+  {id:'nepal',name:'Nepal',lat:27.7,lon:85.3,client:'NEA Nepal',milestone:'First cable export, October 2022',image:'/media/client-nea-nepal.webp',source:reachEvidence.clientSource},
+  {id:'uganda',name:'Uganda',lat:.35,lon:32.6,client:'UETCL Uganda',milestone:'First conductor export, June 2022',image:'/media/client-uetcl-uganda.webp',source:reachEvidence.clientSource},
+  {id:'bhutan',name:'Bhutan',lat:27.5,lon:90.4,client:'BPC Bhutan',milestone:'Published international client',image:'/media/client-bpc-bhutan.webp',source:'https://www.bpc.bt/overview/'},
+  {id:'nigeria',name:'Nigeria',lat:9.1,lon:7.4,client:'TCN Nigeria',milestone:'Conductor and GSW orders recorded in PCI news',image:'/media/client-tcn-nigeria.webp',source:reachEvidence.clientSource},
+  {id:'rwanda',name:'Rwanda',lat:-1.95,lon:30.1,client:'EDCL Rwanda',milestone:'Published international client',image:'/media/client-edcl-rwanda.webp',source:reachEvidence.clientSource},
+  {id:'mozambique',name:'Mozambique',lat:-18.7,lon:35.5,client:'EDM Mozambique',milestone:'Published international client',image:'/media/client-edm-mozambique.webp',source:'https://www.edm.co.mz/'},
+  {id:'philippines',name:'Philippines',lat:14.6,lon:121,client:'Linxon Philippines',milestone:'Published international client',image:'/media/client-linxon-philippines.webp',source:'https://linxon.com/project/traction-power-supply-distribution-and-1500-v-dc-overhead-catenary-system-manila-philippines/'},
+]
 export type ReachState={view:'world'|'india';selected:string|null;preview:string|null;paused:boolean;reduced:boolean;interacting:boolean}

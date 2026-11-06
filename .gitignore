@@ -1,5 +1,6 @@
 node_modules/
 .next/
+.next-animation-build/
 .env*
 !.env.example
 .data/

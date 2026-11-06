@@ -1,19 +1,19 @@
 import type { Metadata } from 'next'
-import Link from 'next/link'
-import { Arrow, Kicker, Picture, TextLink } from '@/components/site'
-import { Hero, Clients, Timeline } from '@/components/interactions'
+import { Kicker, Picture, TextLink } from '@/components/site'
+import { Hero, Timeline } from '@/components/interactions'
+import { ClientShowcase } from '@/components/client-showcase'
 import { Inquiry } from '@/components/inquiry'
 import { ProductGrid, Updates } from '@/components/catalogue'
 import { Ambient } from '@/components/ambient'
 import { AboutCable } from '@/components/about-cable'
 import { Reach } from '@/components/reach'
+import { ProductFilm } from '@/components/product-film'
 import { address, catalogue, company, edited, siteUrl, structured } from '@/lib/content'
 
 export const dynamic = 'force-dynamic'
 export const metadata: Metadata = { alternates: { canonical: '/' }, openGraph: { url: '/' } }
 const select = (slugs: string[]) => slugs.map(slug=>catalogue.find(p=>p.slug===slug)!).filter(Boolean)
 const features = select(['eco-panther','lt-xlpe-cable','aerial-bunched-cable'])
-const range = select(['lt-xlpe-cable','acsr','aerial-bunched-cable','control-cable','pvc-power-cable','aaac','gi-earth-wire','eco-panther'])
 
 export default async function Home() {
   const homeCopy = await edited('home')
@@ -23,9 +23,9 @@ export default async function Home() {
     <AboutCable/>
     <section className="section soft ambient-host"><Ambient/><div className="wrap"><div className="section-top"><div><Kicker>Product spotlight</Kicker><h2>Featured products.</h2></div><TextLink href="/products/">Full catalogue</TextLink></div><ProductGrid items={features} feature/></div></section>
     <Reach/>
-    <section className="section wrap"><div className="section-top"><div><Kicker>What we make</Kicker><h2>Explore the range.</h2></div><p>Find products for power transmission, distribution, control and earthing.</p></div><ProductGrid items={range}/><div className="center action"><Link className="button" href="/products/">View all {catalogue.length} products <Arrow diagonal/></Link></div></section>
+    <ProductFilm productCount={catalogue.length}/>
     <section className="section soft ambient-host"><Ambient/><div className="wrap center"><Kicker>PCI at a glance</Kicker><h2>Built on steady progress.</h2><div className="stats">{[['2013','Our journey began'],[catalogue.length,'Products in the catalogue'],[3,'Core product families'],[2,'First export milestones in 2022']].map(([n,label])=><div key={label}><strong>{n}</strong><span>{label}</span></div>)}</div></div></section>
-    <section className="section wrap center"><Kicker>Where our work connects</Kicker><h2>Our clients and partners.</h2><Clients/><div className="action"><TextLink href="/clients/">Explore our clients</TextLink></div></section>
+    <section className="section wrap center" aria-labelledby="home-clients-heading"><Kicker>Where our work connects</Kicker><h2 id="home-clients-heading">Our clients and partners.</h2><ClientShowcase/><div className="action"><TextLink href="/clients/">Explore our clients</TextLink></div></section>
     <section className="section soft"><div className="wrap split"><figure className="photo-frame"><div><Picture src="/media/testing.webp" alt="PCI Cables testing facility"/></div><figcaption>IN-HOUSE TESTING</figcaption></figure><div><Kicker>Quality and testing</Kicker><h2>Tested with purpose.</h2><p>See how PCI’s in-house laboratory supports its cable and conductor manufacturing work.</p><TextLink href="/testing/">Testing facilities</TextLink> <TextLink href="/certificates/">View certifications</TextLink></div></div></section>
     <section className="section wrap center"><Kicker>Our journey</Kicker><h2>Milestones that move us.</h2><Timeline/><div className="action"><TextLink href="/achievements/">View the full story</TextLink></div></section>
     <section className="section reach"><div className="wrap split"><div><Kicker>Inside PCI</Kicker><h2>See the work behind every connection.</h2><p>Take a look inside our facilities and see our team at work.</p><TextLink href="/gallery/">Explore the gallery</TextLink></div><div className="work-image"><Picture src="/media/plant.webp" alt="PCI Cables site in Dankuni"/></div></div></section>

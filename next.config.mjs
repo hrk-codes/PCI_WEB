@@ -3,6 +3,7 @@ import { readFileSync } from 'node:fs'
 const legacy = JSON.parse(readFileSync(new URL('./content/redirects.json', import.meta.url), 'utf8'))
 
 export default withPayload({
+  distDir: process.env.PCI_ISOLATED_BUILD === '1' ? '.next-animation-build' : '.next',
   poweredByHeader: false,
   devIndicators: false,
   trailingSlash: true,

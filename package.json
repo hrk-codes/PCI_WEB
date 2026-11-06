@@ -17,6 +17,8 @@
     "smoke": "node scripts/smoke.mjs",
     "setup": "node scripts/bootstrap.mjs && pnpm seed",
     "test:production": "node scripts/test-production.mjs",
+    "render:cable": "node scripts/edit-reference-cable.mjs",
+    "test:cable": "node scripts/test-aluminium-cable.mjs",
     "backup:local": "node --env-file-if-exists=.env scripts/backup-local.mjs",
     "staff:create": "node --env-file-if-exists=.env scripts/staff.mjs",
     "import:inquiries": "node --env-file-if-exists=.env scripts/import-inquiries.mjs"
@@ -43,6 +45,7 @@
     "@types/three": "^0.187.0",
     "axe-core": "^4.14.0",
     "cheerio": "^1.1.2",
+    "ffmpeg-static": "5.3.0",
     "playwright-core": "^1.64.1",
     "typescript": "^5.9.3"
   }

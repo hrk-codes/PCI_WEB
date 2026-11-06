@@ -115,6 +115,7 @@ export function createEarthScene(host:HTMLElement,data:EarthData,initial:ReachSt
   const viewport=host.parentElement!
   const hubLabel=viewport.querySelector<HTMLElement>('.earth-hub-label')
   const selectedLabel=viewport.querySelector<HTMLElement>('.earth-selected-label')
+  const pointButtons=new Map(Array.from(viewport.querySelectorAll<HTMLButtonElement>('[data-earth-point]')).map(button=>[button.dataset.earthPoint!,button]))
   function label(element:HTMLElement|null,position:T.Vector3){
     if(!element)return
     const world=root.localToWorld(position.clone()),normal=world.clone().normalize()
@@ -149,13 +150,22 @@ export function createEarthScene(host:HTMLElement,data:EarthData,initial:ReachSt
       route.traveller.visible=focus>.9&&reveal>0&&reveal<1
       route.traveller.position.copy(route.points[Math.floor(reveal*80)])
     })
-    international.forEach(route=>{route.line.visible=route.marker.visible=focus<.25;route.geometry.setDrawRange(0,81)})
+    international.forEach(route=>{
+      route.line.visible=route.marker.visible=focus<.25;route.geometry.setDrawRange(0,81)
+      route.material.opacity=chosen?(chosen===route.id?1:.3):.65
+      route.material.color.setHex(chosen===route.id?0xffcf9a:0xff8858)
+      route.marker.scale.setScalar(chosen===route.id?1.35:1)
+    })
     indiaMaterial.opacity=focus>.5?.7:hoverIndia?.8:.3
     hub.scale.setScalar(1-focus*.42);halo.scale.setScalar(1-focus*.4)
     root.updateMatrixWorld(true)
     label(hubLabel,hub.position)
-    const selected=domestic.find(r=>r.id===chosen)
-    if(selected && focus>.6){
+    for(const route of [...domestic,...international]){
+      const button=pointButtons.get(route.id)
+      if(button){if(route.marker.visible)label(button,route.marker.position);else button.hidden=true}
+    }
+    const selected=(state.view==='india'?domestic:international).find(r=>r.id===chosen)
+    if(selected && selected.marker.visible){
       label(selectedLabel,selected.marker.position)
       if(selectedLabel&&!selectedLabel.hidden&&hubLabel&&!hubLabel.hidden){
         const a=selectedLabel.getBoundingClientRect(),b=hubLabel.getBoundingClientRect()
@@ -165,8 +175,9 @@ export function createEarthScene(host:HTMLElement,data:EarthData,initial:ReachSt
     renderer.render(scene,camera)
     host.dataset.ready='yes';canvas.dataset.view=state.view;canvas.dataset.routes=String(domestic.filter(r=>r.line.visible).length);canvas.dataset.angle=angle.toFixed(5)
     canvas.dataset.focus=focus.toFixed(3)
+    canvas.dataset.internationalRoutes=String(international.filter(r=>r.line.visible).length)
     const rotating=state.view==='world'&&!state.paused&&!state.reduced&&!state.interacting&&!drag
-    if(rotating||moving<1||(state.view==='india'&&!state.paused&&!state.reduced&&elapsed<2.5))schedule()
+    if(rotating||moving<1||(state.view==='india'&&!state.paused&&!state.reduced&&elapsed<(domestic.length-1)*.12+.75))schedule()
   }
   function schedule(){if(!frame&&!disposed)frame=requestAnimationFrame(render)}
   function update(next:ReachState){
@@ -191,7 +202,7 @@ export function createEarthScene(host:HTMLElement,data:EarthData,initial:ReachSt
   function stateHit(event:PointerEvent){
     let nearest:string|null=null,best=event.pointerType==='touch'?25:17
     const rect=canvas.getBoundingClientRect()
-    domestic.forEach(route=>{
+    ;(state.view==='india'?domestic:international).forEach(route=>{
       if(!route.marker.visible)return
       const world=root.localToWorld(route.marker.position.clone())
       if(world.clone().normalize().dot(camera.position.clone().sub(world))<=0)return
@@ -213,10 +224,11 @@ export function createEarthScene(host:HTMLElement,data:EarthData,initial:ReachSt
     if(state.view==='india'){
       const id=stateHit(event);callbacks.hover(id);canvas.style.cursor=id?'pointer':'default';return
     }
-    const point=hit(event),inside=!!point&&inIndia(data,point.lat,point.lon)
+    const id=stateHit(event);callbacks.hover(id)
+    const point=hit(event),inside=!id&&!!point&&inIndia(data,point.lat,point.lon)
     if(inside&&!hoverIndia){hoverTimer=setTimeout(()=>{callbacks.india(false)},180)}
     if(!inside){clearTimeout(hoverTimer)}
-    hoverIndia=inside;canvas.style.cursor=inside?'pointer':'grab';schedule()
+    hoverIndia=inside;canvas.style.cursor=inside||id?'pointer':'grab';schedule()
   }
   function leave(){if(drag)return;clearTimeout(hoverTimer);hoverIndia=false;callbacks.hover(null);schedule()}
   function down(event:PointerEvent){
@@ -233,10 +245,10 @@ export function createEarthScene(host:HTMLElement,data:EarthData,initial:ReachSt
       if(moved){clearTimeout(hoverTimer);hoverIndia=false;schedule();return}
     }
     if(state.view==='india'){const id=stateHit(event);if(id)callbacks.select(id);else callbacks.india(true)}
-    else {const point=hit(event);if(point&&inIndia(data,point.lat,point.lon))callbacks.india(true)}
+    else {const id=stateHit(event);if(id)callbacks.select(id);else {const point=hit(event);if(point&&inIndia(data,point.lat,point.lon))callbacks.india(true)}}
   }
   function resize(){const w=host.clientWidth,h=host.clientHeight;if(!w||!h)return;renderer.setSize(w,h,false);camera.aspect=w/h;camera.updateProjectionMatrix();schedule()}
-  function contextLost(event:Event){event.preventDefault();endDrag();lost=true;delete host.dataset.ready;if(hubLabel)hubLabel.hidden=true;if(selectedLabel)selectedLabel.hidden=true}
+  function contextLost(event:Event){event.preventDefault();endDrag();lost=true;delete host.dataset.ready;if(hubLabel)hubLabel.hidden=true;if(selectedLabel)selectedLabel.hidden=true;pointButtons.forEach(button=>{button.hidden=true})}
   function restored(){lost=false;schedule()}
   function visibility(){last=performance.now();schedule()}
   const resizeObserver=new ResizeObserver(resize),intersection=new IntersectionObserver(entries=>{visible=entries[0].isIntersecting;last=performance.now();if(visible)schedule()})

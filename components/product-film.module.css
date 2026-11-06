@@ -1,0 +1,11 @@
+.scene{position:relative;isolation:isolate;overflow:hidden;color:#f5f8fa;background:radial-gradient(ellipse at 52% 45%,#385263 0%,#284656 30%,#142f42 54%,#0c2134 80%)}
+.scene :global(.kicker){color:#ff9a74}.scene :global(.section-top)>p{color:#c5d7e1}.scene :global(.section-top){position:relative;z-index:2}
+.frame{max-width:1120px;margin:0 auto}
+.film{width:100%;margin-block:10px 36px}
+.caption{display:flex;justify-content:space-between;align-items:center;gap:40px;position:relative;padding-top:12px}
+.eyebrow{display:block;color:#ff9a74;font-size:.65rem;font-weight:800;letter-spacing:.16em;text-transform:uppercase;margin-bottom:12px}
+.caption h3{font-size:clamp(1.7rem,2.6vw,2.6rem);margin-bottom:12px}
+.caption p{color:#d8e4eb;font-size:.91rem;line-height:1.55;max-width:52ch}
+.caption small{display:block;color:#b7c9d3;font-size:.69rem;line-height:1.5;max-width:60ch;margin-top:12px}
+.caption>a{flex-shrink:0;min-height:48px}
+@media(max-width:700px){.film{margin-block:8px 26px}.caption{flex-direction:column;align-items:flex-start;gap:22px}.caption>a{width:100%}}

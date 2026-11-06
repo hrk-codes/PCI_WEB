@@ -1,0 +1,31 @@
+.pci-cable-feature,.pci-cable-studio{position:relative;display:block;isolation:isolate;overflow:hidden;background:radial-gradient(ellipse at 57% 43%,#244760 0%,#102c43 41%,#061b2d 87%);color:#f5f8fa}
+.pci-cable-landscape{aspect-ratio:16/9}.pci-cable-portrait{aspect-ratio:9/16}
+.pci-cable-surface{position:absolute;inset:0}
+.pci-cable-studio:before{content:"";position:absolute;inset:0;z-index:2;pointer-events:none;background:linear-gradient(90deg,#03142281,transparent 25%,transparent 72%,#03142247),linear-gradient(0deg,#031422a6,transparent 30%)}
+.pci-cable-feature{background:#536d7e}.pci-cable-feature.pci-cable-portrait video,.pci-cable-feature.pci-cable-portrait .pci-cable-poster{object-fit:contain}
+.pci-cable-feature video,.pci-cable-poster,.pci-cable-studio canvas{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.pci-cable-poster{z-index:0}.pci-cable-feature video{z-index:1}.pci-cable-studio canvas{z-index:1;display:block}
+.pci-animation-brand{position:absolute;inset:0;z-index:4;pointer-events:none;display:flex;align-items:stretch;padding:clamp(18px,3vw,64px)}
+.pci-animation-brand-inner{display:flex;width:100%;flex-direction:column;justify-content:space-between}
+.pci-animation-brand-name{display:flex;align-items:center;width:max-content;border-top:1px solid #c7dde273;padding-top:13px;filter:drop-shadow(0 2px 14px #06182c)}
+.pci-animation-brand-name img{width:clamp(90px,10vw,170px);height:auto;object-fit:contain}
+.pci-animation-brand-copy{display:flex;flex-direction:column;align-items:flex-start;gap:5px;max-width:80%;text-shadow:0 2px 18px #06182c}
+.pci-animation-brand-copy span{font-size:clamp(8px,.9vw,15px);font-weight:700;letter-spacing:.22em;color:#ff9b78}.pci-animation-brand-copy strong{font-size:clamp(23px,3.3vw,62px);font-weight:600;letter-spacing:-.05em;line-height:1}.pci-animation-brand-copy small{margin-top:7px;font-size:clamp(8px,.9vw,15px);color:#d6e4e9}
+.pci-cable-portrait .pci-animation-brand{padding:8%}.pci-cable-portrait .pci-animation-brand-name img{width:clamp(110px,20vw,170px)}.pci-cable-portrait .pci-animation-brand-copy{max-width:100%}.pci-cable-portrait .pci-animation-brand-copy span{font-size:clamp(8px,2.2vw,15px)}.pci-cable-portrait .pci-animation-brand-copy strong{font-size:clamp(28px,6vw,55px)}.pci-cable-portrait .pci-animation-brand-copy small{font-size:clamp(9px,2vw,15px)}
+.pci-studio-orbit{position:absolute;left:50%;top:48%;z-index:0;width:55%;aspect-ratio:1;border:1px solid #77a9bd24;border-radius:50%;transform:translate(-50%,-50%) rotateX(40deg)}.pci-studio-orbit-two{width:76%;border-color:#77a9bd12}
+.pci-studio-light{position:absolute;inset:14% 22%;z-index:0;background:radial-gradient(ellipse,#6db7c72c,transparent 69%);filter:blur(28px)}
+.pci-studio-coordinate{position:absolute;z-index:3;top:13%;bottom:15%;width:1px;background:linear-gradient(transparent,#9fbbc52a,transparent)}.pci-studio-coordinate-left{left:8%}.pci-studio-coordinate-right{right:8%}
+@media(prefers-reduced-motion:reduce){.pci-cable-feature video{display:none}}[data-pci-motion=paused] .pci-cable-feature video{display:none}
+
+.pci-cable-feature.pci-cable-interactive{overflow:visible;background:transparent;perspective:1100px}
+.pci-cable-interactive::before{content:'';position:absolute;z-index:-1;left:14%;right:10%;bottom:1%;height:9%;background:#020e1c99;border-radius:50%;filter:blur(22px);pointer-events:none}
+.pci-cable-interactive::after{content:'';position:absolute;z-index:-2;inset:2% 9% 6%;background:radial-gradient(ellipse at var(--cable-light-x,50%) 45%,#518d9d3b,transparent 68%);filter:blur(28px);pointer-events:none}
+.pci-cable-interactive .pci-cable-surface{transform:translate3d(var(--cable-x,0px),var(--cable-y,0px),0) rotateX(var(--cable-rx,0deg)) rotateY(var(--cable-ry,0deg));transition:transform .55s cubic-bezier(.2,.7,.3,1);mask-image:linear-gradient(90deg,transparent,#000 5%,#000 95%,transparent),linear-gradient(0deg,transparent,#000 9%,#000 91%,transparent);mask-composite:intersect}
+.pci-cable-interactive .pci-cable-surface::after{content:'';position:absolute;inset:0;z-index:3;pointer-events:none;background:radial-gradient(ellipse at 52% 45%,#102d4010 25%,#102b4059 85%)}
+.pci-cable-interactive video,.pci-cable-interactive .pci-cable-poster{filter:brightness(.88) saturate(.9)}
+.pci-cable-toggle{position:absolute;inset:0;z-index:5;border:0;padding:0;background:transparent;color:#d9e7ee;cursor:pointer;border-radius:8px;touch-action:pan-y}
+.pci-cable-toggle:focus-visible{outline:2px solid #ff9a74;outline-offset:7px}
+.pci-cable-toggle span{position:absolute;right:5%;bottom:4%;font-size:.66rem;font-weight:700;letter-spacing:.05em;opacity:0;transition:opacity .2s;text-shadow:0 1px 8px #071b2b}
+.pci-cable-toggle:hover span,.pci-cable-toggle:focus-visible span{opacity:1}
+@media(prefers-reduced-motion:reduce){.pci-cable-interactive .pci-cable-surface{transform:none;transition:none}}
+[data-pci-motion=paused] .pci-cable-interactive .pci-cable-surface{transform:none;transition:none}
