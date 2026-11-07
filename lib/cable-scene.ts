@@ -154,14 +154,14 @@ export function createCableScene(host: HTMLElement, section: HTMLElement) {
   const earth=strandedWire(.16,2.65,steel)
   earth.position.set(1.95,-.18,-.1);earth.rotation.z=-.24;root.add(earth)
   root.rotation.set(.02,-.35,-.08)
-  let visible=true,frame=0,disposed=false,contextLost=false
+  let visible=true,frame=0,disposed=false,contextLost=false,sized=false
   let progress=Number(getComputedStyle(section).getPropertyValue('--story-progress')) || 0
   let px=0,py=0,cx=0,cy=0
   const smooth=(a:number,b:number,p:number)=>a+(b-a)*p
   const ease=(p:number)=>{const t=Math.max(0,Math.min(1,p));return t*t*(3-2*t)}
   function render() {
     frame=0
-    if(disposed || !visible || contextLost) return
+    if(disposed || !visible || contextLost || !sized) return
     const staticMode=section.dataset.mode!=='cinematic'
     if(staticMode){px=0;py=0}
     cx=smooth(cx,px,.14);cy=smooth(cy,py,.14)
@@ -174,17 +174,20 @@ export function createCableScene(host: HTMLElement, section: HTMLElement) {
     bare.position.x=-1.65-spread*.25;bare.rotation.y=spread*.2
     earth.position.x=1.7+spread*.25;earth.rotation.y=-spread*.15
     renderer.render(scene,camera)
-    host.dataset.ready='yes'
+    if (renderer.getContext().isContextLost()) return
     canvas.dataset.progress=progress.toFixed(3)
+    if (host.dataset.ready !== 'yes') host.dataset.ready = 'yes'
     if(Math.abs(px-cx)+Math.abs(py-cy)>.001) schedule()
   }
   function schedule(){if(!frame)frame=requestAnimationFrame(render)}
   function resize(){
-    const {width,height}=host.getBoundingClientRect()
-    if(!width || !height) return
+    // The shared CSS transform belongs to the artwork, not the camera viewport.
+    const { clientWidth: width, clientHeight: height } = host
+    sized = width > 0 && height > 0
+    if (!sized) return
     renderer.setSize(width,height,false)
     camera.aspect=width/height
-    camera.position.set(4,4.7,10).multiplyScalar(.76*Math.max(1,1.06/camera.aspect))
+    camera.position.set(4,4.7,10).multiplyScalar(.82*Math.max(1,1.06/camera.aspect))
     camera.lookAt(0,.05,0);camera.updateProjectionMatrix();schedule()
   }
   function onProgress(event:Event){progress=(event as CustomEvent<number>).detail;schedule()}

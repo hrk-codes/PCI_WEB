@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef } from 'react'
+import { useLayoutEffect, useRef } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { CableScene } from '@/components/cable-scene'
@@ -18,7 +18,11 @@ function CableArtwork() {
     <div className="conductor-halo"/>
     <div className="conductor-blueprint"><span className="blueprint-label label-aluminium">ALUMINIUM<br/><b>Stranded conductor</b></span><span className="blueprint-label label-earth">EARTH WIRE<br/><b>Galvanised steel</b></span></div>
     <div className="conductor-caption"><span/> ENGINEERED FOR CONNECTION</div>
-    <div className="conductor-main"><Image className="cable-fallback" src="/media/pci-cable-sculpture-v3.webp" width={1254} height={1254} alt="" sizes="(max-width: 820px) 94vw, 52vw"/><CableScene/></div>
+    <div className="conductor-main">
+      <Image className="cable-fallback cable-fallback-opening" src="/media/about-cable-opening.webp" width={848} height={800} alt="" sizes="(max-width: 820px) 94vw, 52vw" />
+      <Image className="cable-fallback cable-fallback-settled" src="/media/about-cable-settled.webp" width={848} height={800} alt="" sizes="(max-width: 820px) 94vw, 52vw" />
+      <CableScene />
+    </div>
     <div className="conductor-floor"/>
     <div className="conductor-references"><div className="satellite-one"><Image src="/media/story-aac-conductor.webp" width={570} height={300} alt="" sizes="(max-width:820px) 28vw, 16vw"/><span><b>01</b> AAC</span></div><div className="satellite-two"><Image src="/media/story-acsr-conductor.webp" width={570} height={300} alt="" sizes="(max-width:820px) 28vw, 16vw"/><span><b>02</b> ACSR</span></div><div className="reference-last"><Image src="/media/story-eco-conductor.webp" width={570} height={300} alt="" sizes="(max-width:820px) 28vw, 16vw"/><span><b>03</b> ECO Panther</span></div></div>
   </div>
@@ -27,7 +31,7 @@ function CableArtwork() {
 export function AboutCable() {
   const section = useRef<HTMLElement>(null)
   const finish = useRef<() => void>(() => {})
-  useEffect(() => {
+  useLayoutEffect(() => {
     const el = section.current!
     const header = document.querySelector<HTMLElement>('.site-head')
     const reduced = matchMedia('(prefers-reduced-motion: reduce)')
@@ -44,14 +48,18 @@ export function AboutCable() {
       set('--story-line-3', phase(p,.68,.8))
       set('--story-copy', phase(p,.78,.88))
       set('--story-progress',p)
+      const pose = p < .33 ? 'opening' : 'settled'
+      if (el.dataset.cablePose !== pose) el.dataset.cablePose = pose
       el.dispatchEvent(new CustomEvent('pci-cable-progress',{detail:p}))
     }
-    function update() {
-      frame = 0
-      if (!near || mode !== 'cinematic') return
+    function drawFromScroll() {
       const rect = el.getBoundingClientRect()
       const travel = el.offsetHeight - (innerHeight - headerHeight)
       draw(clamp((headerHeight - rect.top) / Math.max(1,travel)))
+    }
+    function update() {
+      frame = 0
+      if (near && mode === 'cinematic') drawFromScroll()
     }
     function schedule() { if (!frame && near) frame = requestAnimationFrame(update) }
     function configure() {
@@ -61,11 +69,11 @@ export function AboutCable() {
       el.style.setProperty('--story-header', `${headerHeight}px`)
       mode = reduced.matches || document.documentElement.dataset.pciMotion === 'paused' || skipped ? 'static' : large.matches ? 'cinematic' : 'flow'
       el.dataset.mode = mode
-      draw(1)
       if (wasPinned && mode !== 'cinematic' && rect.top < headerHeight && rect.bottom > headerHeight) {
         window.scrollTo({top:scrollY + rect.top - headerHeight,behavior:'instant'})
       }
-      update()
+      if (mode === 'cinematic') drawFromScroll()
+      else draw(1)
     }
     finish.current = () => { skipped = true; configure() }
     const intersection = new IntersectionObserver(entries => {
