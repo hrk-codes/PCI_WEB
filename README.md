@@ -12,6 +12,8 @@ Requires Node.js 24.22.1 or newer in the Node 24 series, and pnpm 11.25.0. In th
 
 Open **http://127.0.0.1:3000/**. Open **http://127.0.0.1:3000/admin/** and create the first staff account on the private local machine. There is no shared default password. For the optimized build, run `pnpm build` then `pnpm start`.
 
+On Windows, `start-local.cmd` starts the same development server directly with Node. Run it from your own terminal or double-click it and keep its window open. The first homepage request may take about 20 seconds while Next.js compiles the page and Payload opens the local database; later requests are much faster. A server started inside a temporary Codex command session may stop when that session resets.
+
 `pnpm setup` creates an ignored local secret and SQLite database, then adds missing content records. Running it again preserves edits. Keep .env, .data, and submission exports private.
 
 ## Maintain content

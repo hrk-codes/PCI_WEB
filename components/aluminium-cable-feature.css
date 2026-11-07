@@ -15,7 +15,8 @@
 .pci-studio-orbit{position:absolute;left:50%;top:48%;z-index:0;width:55%;aspect-ratio:1;border:1px solid #77a9bd24;border-radius:50%;transform:translate(-50%,-50%) rotateX(40deg)}.pci-studio-orbit-two{width:76%;border-color:#77a9bd12}
 .pci-studio-light{position:absolute;inset:14% 22%;z-index:0;background:radial-gradient(ellipse,#6db7c72c,transparent 69%);filter:blur(28px)}
 .pci-studio-coordinate{position:absolute;z-index:3;top:13%;bottom:15%;width:1px;background:linear-gradient(transparent,#9fbbc52a,transparent)}.pci-studio-coordinate-left{left:8%}.pci-studio-coordinate-right{right:8%}
-@media(prefers-reduced-motion:reduce){.pci-cable-feature video{display:none}}[data-pci-motion=paused] .pci-cable-feature video{display:none}
+@media(prefers-reduced-motion:reduce){.pci-cable-feature:not(.pci-cable-interactive) video{display:none}}
+[data-pci-motion=paused] .pci-cable-feature:not(.pci-cable-interactive) video,.pci-cable-motion-blocked video{display:none}
 
 .pci-cable-feature.pci-cable-interactive{overflow:visible;background:transparent;perspective:1100px}
 .pci-cable-interactive::before{content:'';position:absolute;z-index:-1;left:14%;right:10%;bottom:1%;height:9%;background:#020e1c99;border-radius:50%;filter:blur(22px);pointer-events:none}
@@ -28,4 +29,3 @@
 .pci-cable-toggle span{position:absolute;right:5%;bottom:4%;font-size:.66rem;font-weight:700;letter-spacing:.05em;opacity:0;transition:opacity .2s;text-shadow:0 1px 8px #071b2b}
 .pci-cable-toggle:hover span,.pci-cable-toggle:focus-visible span{opacity:1}
 @media(prefers-reduced-motion:reduce){.pci-cable-interactive .pci-cable-surface{transform:none;transition:none}}
-[data-pci-motion=paused] .pci-cable-interactive .pci-cable-surface{transform:none;transition:none}

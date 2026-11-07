@@ -1,11 +1,145 @@
-.scene{position:relative;isolation:isolate;overflow:hidden;color:#f5f8fa;background:radial-gradient(ellipse at 52% 45%,#385263 0%,#284656 30%,#142f42 54%,#0c2134 80%)}
-.scene :global(.kicker){color:#ff9a74}.scene :global(.section-top)>p{color:#c5d7e1}.scene :global(.section-top){position:relative;z-index:2}
-.frame{max-width:1120px;margin:0 auto}
-.film{width:100%;margin-block:10px 36px}
-.caption{display:flex;justify-content:space-between;align-items:center;gap:40px;position:relative;padding-top:12px}
-.eyebrow{display:block;color:#ff9a74;font-size:.65rem;font-weight:800;letter-spacing:.16em;text-transform:uppercase;margin-bottom:12px}
-.caption h3{font-size:clamp(1.7rem,2.6vw,2.6rem);margin-bottom:12px}
-.caption p{color:#d8e4eb;font-size:.91rem;line-height:1.55;max-width:52ch}
-.caption small{display:block;color:#b7c9d3;font-size:.69rem;line-height:1.5;max-width:60ch;margin-top:12px}
-.caption>a{flex-shrink:0;min-height:48px}
-@media(max-width:700px){.film{margin-block:8px 26px}.caption{flex-direction:column;align-items:flex-start;gap:22px}.caption>a{width:100%}}
+.scene {
+  --film-carbon: #17181b;
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  color: #fcf8f3;
+  background:
+    radial-gradient(ellipse at 86% 82%, #a4562c2e, transparent 47%),
+    radial-gradient(ellipse at 81% 45%, #3a4249 0%, transparent 52%),
+    linear-gradient(180deg, transparent, var(--film-carbon) clamp(5rem, 12vw, 10rem), #171514 100%),
+    linear-gradient(90deg, #0a2035, #0c2339 25%, #0d253d 50%, #0e263e 75%, #0d253d);
+}
+
+.transition {
+  position: absolute;
+  inset: 0 0 auto;
+  width: 100%;
+  height: clamp(2.75rem, 7vw, 7rem);
+  pointer-events: none;
+}
+
+.stage {
+  display: grid;
+  gap: clamp(1rem, 3vw, 1.75rem);
+}
+
+.copy {
+  position: relative;
+  z-index: 1;
+  max-inline-size: 29rem;
+}
+
+.copy :global(.kicker) {
+  color: #ff9a74;
+  margin-bottom: 0.85rem;
+}
+
+.copy h2 {
+  font-size: clamp(2.5rem, 5.4vw, 5rem);
+  line-height: 0.98;
+  text-wrap: balance;
+}
+
+.details {
+  margin-block-start: clamp(1.2rem, 2.5vw, 1.8rem);
+}
+
+.details h3 {
+  margin-block-end: 0.5rem;
+  font-size: clamp(1.25rem, 2.1vw, 1.7rem);
+}
+
+.details p {
+  max-inline-size: 36ch;
+  color: #e8e1db;
+  line-height: 1.55;
+}
+
+.catalogue {
+  margin-block-start: 1.4rem;
+}
+
+.catalogue small {
+  display: block;
+  max-inline-size: 39ch;
+  margin-block-start: 0.8rem;
+  color: #c9bfb6;
+  font-size: 0.75rem;
+  line-height: 1.5;
+}
+
+.film {
+  width: 100%;
+  min-width: 0;
+}
+
+.scene .film :global(.pci-cable-surface) {
+  mask-image:
+    linear-gradient(90deg, transparent, #000 5%, #000 92%, transparent),
+    linear-gradient(0deg, transparent, #000 12%, #000 88%, transparent);
+}
+
+.scene .film :global(.pci-cable-surface)::after {
+  background: radial-gradient(ellipse at 66% 50%, transparent 38%, #24232955 100%);
+}
+
+.scene .film :is(video, :global(.pci-cable-poster)) {
+  filter: brightness(0.98) saturate(0.92);
+}
+
+@media (min-width: 900px) {
+  .stage {
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+    align-items: center;
+    gap: 0;
+  }
+
+  .copy {
+    grid-area: 1 / 1 / 2 / 6;
+    padding-block: 1rem;
+  }
+
+  .copy h2 {
+    max-inline-size: 10ch;
+  }
+
+  .film {
+    grid-area: 1 / 4 / 2 / -1;
+  }
+
+  .scene .film :global(.pci-cable-surface)::after {
+    background:
+      linear-gradient(90deg, var(--film-carbon), #17181beb 10%, #17181ba6 23%, transparent 45%),
+      radial-gradient(ellipse at 70% 50%, transparent 42%, #24232955 100%);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  :global(html:not([data-pci-motion=paused])) .copy[data-film-entrance=waiting]:not(:focus-within) > div {
+    opacity: 0;
+  }
+
+  :global(html:not([data-pci-motion=paused])) .copy[data-film-entrance=running]:not(:focus-within) > div {
+    animation: settle 440ms cubic-bezier(0.2, 0.75, 0.25, 1) var(--film-delay, 0ms) both;
+  }
+
+  .copy > :nth-child(2) {
+    --film-delay: 90ms;
+  }
+
+  .copy > :nth-child(3) {
+    --film-delay: 180ms;
+  }
+}
+
+@keyframes settle {
+  from {
+    opacity: 0;
+    transform: translateY(-16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

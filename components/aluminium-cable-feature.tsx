@@ -18,7 +18,9 @@ export function AluminiumCableFeature({ layout = 'landscape', branding = 'none',
   const [failed, setFailed] = useState(false)
   const [playing, setPlaying] = useState(false)
   const [motionBlocked, setMotionBlocked] = useState(true)
+  const [ready, setReady] = useState(false)
   const intendedPause = useRef(false)
+  const requestedPlayback = useRef(false)
   const pointerFrame = useRef(0)
   const resetDepth = () => {
     cancelAnimationFrame(pointerFrame.current)
@@ -34,12 +36,15 @@ export function AluminiumCableFeature({ layout = 'landscape', branding = 'none',
     const element = video.current
     const container = host.current
     if (!element || !container) return
+    setReady(true)
     const reduced = matchMedia('(prefers-reduced-motion: reduce)')
     let visible = false
     const update = () => {
-      const blocked = reduced.matches || document.documentElement.dataset.pciMotion === 'paused'
+      // The homepage film is foreground content, not background motion.
+      // Reduced-motion visitors can still opt in by activating the film.
+      const blocked = (reduced.matches && !requestedPlayback.current) || (!interactive && document.documentElement.dataset.pciMotion === 'paused')
       setMotionBlocked(blocked)
-      if (visible && !blocked && !document.hidden && !intendedPause.current) element.play().catch(() => { /* A direct click can retry blocked autoplay. */ })
+      if (visible && !blocked && !document.hidden && !intendedPause.current) element.play().catch(() => setPlaying(false))
       else element.pause()
     }
     const observer = new IntersectionObserver(entries => { visible = entries[0].isIntersecting; update() }, { threshold: 0.1 })
@@ -50,19 +55,26 @@ export function AluminiumCableFeature({ layout = 'landscape', branding = 'none',
     document.addEventListener('visibilitychange', update)
     update()
     return () => { observer.disconnect(); preference.disconnect(); reduced.removeEventListener('change', update); document.removeEventListener('visibilitychange', update); cancelAnimationFrame(pointerFrame.current); element.pause() }
-  }, [layout, branding, failed])
+  }, [layout, branding, failed, interactive])
 
   useEffect(() => { if (!playing || motionBlocked) resetDepth() }, [playing, motionBlocked])
 
   function togglePlayback() {
     const element = video.current
-    if (!element || motionBlocked) return
+    if (!element) return
+    if (motionBlocked) {
+      requestedPlayback.current = true
+      intendedPause.current = false
+      setMotionBlocked(false)
+      element.play().catch(() => setPlaying(false))
+      return
+    }
     intendedPause.current = !element.paused
     if (intendedPause.current) element.pause()
     else element.play().catch(() => setPlaying(false))
   }
 
-  return <div ref={host} className={`pci-cable-feature pci-cable-${layout} ${interactive ? 'pci-cable-interactive' : ''} ${className}`} aria-label="Cable structure with silver aluminium cores" onPointerLeave={resetDepth} onPointerMove={event => {
+  return <div ref={host} className={`pci-cable-feature pci-cable-${layout} ${interactive ? 'pci-cable-interactive' : ''} ${motionBlocked ? 'pci-cable-motion-blocked' : ''} ${className}`} aria-label="Cable structure with silver aluminium cores" onPointerLeave={resetDepth} onPointerMove={event => {
     if (!interactive || !playing || motionBlocked || event.pointerType !== 'mouse' || !matchMedia('(hover: hover) and (pointer: fine)').matches) return
     const bounds = event.currentTarget.getBoundingClientRect()
     const x = Math.max(-1, Math.min(1, (event.clientX - bounds.left) / bounds.width * 2 - 1))
@@ -82,6 +94,6 @@ export function AluminiumCableFeature({ layout = 'landscape', branding = 'none',
     {!failed && <video key={base} ref={video} muted loop playsInline controls={interactive ? false : controls} preload="none" poster={poster} aria-label="Aluminum cable structure animation" onPlay={() => setPlaying(true)} onPause={() => setPlaying(false)} onError={() => setFailed(true)}><source src={`${base}.webm`} type="video/webm"/><source src={`${base}.mp4`} type="video/mp4"/></video>}
     {branding === 'overlay' && <CableBrand/>}
     </div>
-    {interactive && !motionBlocked && !failed && <button type="button" className="pci-cable-toggle" onClick={togglePlayback} aria-label={playing ? 'Pause cable animation' : 'Play cable animation'}><span aria-hidden="true">Click to {playing ? 'pause' : 'play'}</span></button>}
+    {interactive && ready && !failed && <button type="button" className="pci-cable-toggle" onClick={togglePlayback} aria-label={playing ? 'Pause cable animation' : 'Play cable animation'}><span aria-hidden="true">Click to {playing ? 'pause' : 'play'}</span></button>}
   </div>
 }
