@@ -5,13 +5,13 @@ import Image from 'next/image'
 import { Arrow, Kicker, PageHead, Picture, TextLink } from '@/components/site'
 import { ProductGrid, Updates, articleImages } from '@/components/catalogue'
 import { Inquiry } from '@/components/inquiry'
-import { Clients } from '@/components/interactions'
+import { ClientDirectory } from '@/components/client-directory'
 import { Turnover } from '@/components/turnover'
 import { productNotes } from '@/content/product-notes'
-import { address, articles, catalogue, company, edited, families, publicDocs, siteUrl, structured } from '@/lib/content'
+import { address, articles, catalogue, cleanHtml, company, edited, families, publicDocs, siteUrl, structured } from '@/lib/content'
 
 export const dynamic = 'force-dynamic'
-type Props = { params: Promise<{ segments: string[] }>; searchParams: Promise<{ product?: string }> }
+type Props = { params: Promise<{ segments: string[] }>; searchParams: Promise<Record<string, string | string[] | undefined>> }
 const intros: Record<string, [string,string]> = {
   products: ['Explore the product range.', 'Find cables, overhead conductors and earth wire for power distribution, transmission and industrial projects.'],
   cables: ['Cables', 'Explore PCI’s power, control and service cable range, including aerial bunched cable and LT XLPE cable.'],
@@ -25,6 +25,7 @@ const intros: Record<string, [string,string]> = {
   blog: ['Stories and updates', 'Events, project news and manufacturing updates from PCI Cables.'],
   news: ['PCI Cables news', 'Company milestones, product developments and industry events.'],
   turnover: ['Company turnover', 'PCI Cables’ published financial year turnover from 2015–16 through 2024–25.'],
+  clients: ['Clients', 'Explore the organisations PCI Cables has supplied across utilities, rail and public sector, international markets, and renewable energy.'],
 }
 const pages = new Map(publicDocs.map(d=>[d.slug,d]))
 const pagePhotos: Record<string,string> = {
@@ -49,6 +50,18 @@ async function resolve(segments: string[]) {
   if (segments.length !== 1 || (!intros[first] && !pages.has(first))) notFound()
   const doc = pages.get(first)
   const revision = await edited(first)
+  if (first === 'clients') {
+    const summary = revision?.summary.trim()
+    const html = revision?.html.trim()
+    return {
+      slug: first,
+      title: revision?.title || intros.clients[0],
+      summary: summary && summary !== doc?.summary.trim() ? summary : intros.clients[1],
+      html: html && html !== cleanHtml(doc?.html || '').trim() ? html : '',
+      product: undefined,
+      article: undefined,
+    }
+  }
   return { slug:first, title:revision?.title || intros[first]?.[0] || doc!.title, summary:revision?.summary || intros[first]?.[1] || doc!.summary, html:revision?.html || doc?.html || '', product:undefined, article:undefined }
 }
 
@@ -75,7 +88,8 @@ function Privacy() {
 
 export default async function PublicPage({ params, searchParams }: Props) {
   const { segments } = await params
-  const { product: selected } = await searchParams
+  const filters = await searchParams
+  const selected = typeof filters.product === 'string' ? filters.product : undefined
   const d = await resolve(segments)
   const url = siteUrl+'/'+segments.join('/')+'/'
   const breadcrumbs = { '@type':'BreadcrumbList', itemListElement:[
@@ -106,7 +120,7 @@ export default async function PublicPage({ params, searchParams }: Props) {
   } else if (d.slug==='turnover') {
     body = <div className="reading"><Turnover/></div>
   } else if (d.slug==='clients') {
-    body = <><Clients all/><div className="reading spaced"><Rich html={d.html}/></div></>
+    body = <ClientDirectory filters={filters}>{d.html ? <Rich html={d.html} /> : null}</ClientDirectory>
   } else if (d.slug==='blog' || d.slug==='news') {
     body = <><Updates/>{d.slug==='news' && <div className="reading spaced"><Rich html={d.html}/></div>}</>
   } else if (d.slug==='gallery') {
@@ -115,5 +129,5 @@ export default async function PublicPage({ params, searchParams }: Props) {
     body = <div className="reading"><Rich html={d.html}/></div>
   }
   const image = !d.product && !d.article && pagePhotos[d.slug]
-  return <><script type="application/ld+json" dangerouslySetInnerHTML={{__html:structured(breadcrumbs)}}/>{schema && <script type="application/ld+json" dangerouslySetInnerHTML={{__html:structured(schema)}}/>}<PageHead label={d.product?'Products':d.article?'Updates':d.title} title={d.title} intro={d.summary} image={image ? '/media/'+image : undefined}/><div className="section wrap">{body}</div></>
+  return <><script type="application/ld+json" dangerouslySetInnerHTML={{__html:structured(breadcrumbs)}}/>{schema && <script type="application/ld+json" dangerouslySetInnerHTML={{__html:structured(schema)}}/>}<PageHead label={d.product?'Products':d.article?'Updates':d.title} title={d.title} intro={d.summary} image={image ? '/media/'+image : undefined}/><div className={d.slug === 'clients' ? 'wrap' : 'section wrap'}>{body}</div></>
 }

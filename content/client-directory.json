@@ -1,0 +1,25 @@
+{
+  "utilities": [
+    "AEGCL", "APDCL", "ARPDOP", "AVVNL", "BSPGCL", "BSPTCL", "CSPDCL", "DVVNL",
+    "GETCO", "HVNL", "JBVNL", "JUSNL", "JVVNL Jaipur", "JVVNL", "KSEB", "MPPKVVCL",
+    "MPPKVVCL1", "MPMKVVCL", "MSEDCL", "MSETCL", "MVVNL", "Govt of Mizoram",
+    "NCPDCL", "NHPC", "PSPCL", "PBBNL", "PDDJK", "PUDUCHERRY", "PVVNL", "RVNL",
+    "SBPDCL", "TPCODL", "TPNODL", "TPSODL", "TPWODL", "TNPDCL", "TPTL", "TSECL",
+    "TSGENCO", "UHBVN", "WBSEDCL", "WBSETCL", "WBPDCL"
+  ],
+  "rail-public": [
+    "Bangaluru Metro", "Chennai Metro", "Coal India", "CORE", "Delhi Metro", "DFCC",
+    "East Central Railway", "East Coast Railway", "IRCON", "IREL", "Kolkata Metro",
+    "Konkan Railway", "Mumbai Metro", "NCRTC", "North Eastern Railway",
+    "North-Central Railway", "Northern Railway", "Patna Metro", "RVNL",
+    "South Eastern Railway", "South Central Railway"
+  ],
+  "international": [
+    "BPC – Bhutan", "EDCL – Rwanda", "EDM – Mozambique", "HIMA Ciment – Uganda",
+    "KONEXA", "Linxon – Philippines", "NEA – Nepal", "TCN – Nigeria", "UETCL – Uganda"
+  ],
+  "renewables": [
+    "ACME", "AVAADA", "EDF Renouvelable", "Jindal Renewable", "Oriano", "Renew Power",
+    "Sitac", "SolarCraft", "Sprng"
+  ]
+}
