@@ -6,6 +6,7 @@ import { Arrow, Kicker, PageHead, Picture, TextLink } from '@/components/site'
 import { ProductGrid, Updates, articleImages } from '@/components/catalogue'
 import { Inquiry } from '@/components/inquiry'
 import { ClientDirectory } from '@/components/client-directory'
+import { MilestoneStory } from '@/components/milestone-story'
 import { Turnover } from '@/components/turnover'
 import { productNotes } from '@/content/product-notes'
 import { address, articles, catalogue, cleanHtml, company, edited, families, publicDocs, siteUrl, structured } from '@/lib/content'
@@ -26,6 +27,7 @@ const intros: Record<string, [string,string]> = {
   news: ['PCI Cables news', 'Company milestones, product developments and industry events.'],
   turnover: ['Company turnover', 'PCI Cables’ published financial year turnover from 2015–16 through 2024–25.'],
   clients: ['Clients', 'Explore the organisations PCI Cables has supplied across utilities, rail and public sector, international markets, and renewable energy.'],
+  achievements: ['Built connection by connection.', 'Follow PCI Cables from its first years in West Bengal through cable and conductor manufacturing, first exports and new product milestones.'],
 }
 const pages = new Map(publicDocs.map(d=>[d.slug,d]))
 const pagePhotos: Record<string,string> = {
@@ -50,13 +52,14 @@ async function resolve(segments: string[]) {
   if (segments.length !== 1 || (!intros[first] && !pages.has(first))) notFound()
   const doc = pages.get(first)
   const revision = await edited(first)
-  if (first === 'clients') {
+  if (first === 'clients' || first === 'achievements') {
+    const title = revision?.title.trim()
     const summary = revision?.summary.trim()
     const html = revision?.html.trim()
     return {
       slug: first,
-      title: revision?.title || intros.clients[0],
-      summary: summary && summary !== doc?.summary.trim() ? summary : intros.clients[1],
+      title: title && title !== doc?.title.trim() ? title : intros[first][0],
+      summary: summary && summary !== doc?.summary.trim() ? summary : intros[first][1],
       html: html && html !== cleanHtml(doc?.html || '').trim() ? html : '',
       product: undefined,
       article: undefined,
@@ -69,8 +72,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { segments } = await params
   const d = await resolve(segments)
   const url = '/'+segments.join('/')+'/'
-  const images = d.product ? ['/media/'+d.product.slug+'.webp'] : d.article ? ['/media/'+articleImages[d.article.slug]] : ['/media/hero-cables.webp']
-  return { title:d.title, description:d.summary, alternates:{canonical:url}, openGraph:{ title:d.title, description:d.summary, url, images, type:d.article?'article':'website' } }
+  const title = d.slug === 'achievements' && d.title === intros.achievements[0] ? 'Milestones' : d.title
+  const images = d.product ? ['/media/'+d.product.slug+'.webp'] : d.article ? ['/media/'+articleImages[d.article.slug]] : [d.slug === 'achievements' ? '/media/plant.webp' : '/media/hero-cables.webp']
+  return { title, description:d.summary, alternates:{canonical:url}, openGraph:{ title, description:d.summary, url, images, type:d.article?'article':'website' } }
 }
 
 function Rich({ html }: { html: string }) { return <div className="rich" dangerouslySetInnerHTML={{ __html: html }}/> }
@@ -95,8 +99,14 @@ export default async function PublicPage({ params, searchParams }: Props) {
   const breadcrumbs = { '@type':'BreadcrumbList', itemListElement:[
     {'@type':'ListItem',position:1,name:'Home',item:siteUrl+'/'},
     ...(d.product ? [{'@type':'ListItem',position:2,name:'Products',item:siteUrl+'/products/'}] : d.article ? [{'@type':'ListItem',position:2,name:'Blog',item:siteUrl+'/blog/'}] : []),
-    {'@type':'ListItem',position:d.product||d.article?3:2,name:d.title,item:url},
+    {'@type':'ListItem',position:d.product||d.article?3:2,name:d.slug === 'achievements' ? 'Milestones' : d.title,item:url},
   ] }
+  if (d.slug === 'achievements') {
+    return <>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: structured(breadcrumbs) }} />
+      <MilestoneStory title={d.title} intro={d.summary}>{d.html ? <Rich html={d.html} /> : null}</MilestoneStory>
+    </>
+  }
   const schema = d.product ? {'@type':'Product', name:d.title, description:d.summary, image:siteUrl+'/media/'+d.product.slug+'.webp', url, manufacturer:{'@type':'Organization',name:company}} : d.article ? {'@type':'Article',headline:d.title,description:d.summary,datePublished:d.article.date+'+05:30',image:siteUrl+'/media/'+articleImages[d.article.slug],mainEntityOfPage:url,author:{'@type':'Organization',name:company,url:siteUrl}} : null
   let body: React.ReactNode
   if (d.product) {
