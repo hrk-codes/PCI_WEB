@@ -28,7 +28,7 @@ function wireAt(xPercent: number) {
 }
 const placed = conductors.map((item, i) => {
   const x = 13 + i * (74 / (conductors.length - 1))
-  return {...item, x, y:wireAt(x)}
+  return {...item, x, y:wireAt(x), t:(x / 100 * 1200 - WIRE.x0) / (WIRE.x1 - WIRE.x0)}
 })
 
 function Tower({ x }: { x: number }) {
@@ -43,10 +43,11 @@ export function ConductorLine() {
     const el = ref.current!
     const reduced = matchMedia('(prefers-reduced-motion: reduce)')
     const still = () => reduced.matches || document.documentElement.dataset.pciMotion === 'paused'
-    // Text and links are visible by default (no JavaScript, reduced motion); the entrance only runs when the span is still below the fold.
-    if (still() || el.getBoundingClientRect().top < innerHeight * .8) return
+    // Text and links are visible by default (no JavaScript, reduced motion). With motion allowed, the span hides
+    // its line and conductors, then plays once per page load when it is reached (or straight away if already on screen).
+    if (still()) return
     el.dataset.entrance = 'waiting'
-    const show = () => { el.dataset.entrance = 'running'; io.disconnect(); el.removeEventListener('focusin', show) }
+    const show = () => { io.disconnect(); el.removeEventListener('focusin', show); requestAnimationFrame(() => requestAnimationFrame(() => { el.dataset.entrance = 'running' })) }
     const io = new IntersectionObserver(entries => { if (entries[0].isIntersecting) show() }, {threshold:.3})
     io.observe(el)
     el.addEventListener('focusin', show)
@@ -59,9 +60,11 @@ export function ConductorLine() {
         <Tower x={WIRE.x1}/>
         <path className="line-wire" pathLength={1} d={wirePath}/>
         <path className="line-wire line-wire-two" pathLength={1} d={`M${WIRE.x0 - 8} 20 C 340 98, 860 98, ${WIRE.x1 + 8} 20`}/>
+        <path className="line-spark" pathLength={1} d={wirePath}/>
+        <path className="line-spark line-spark-core" pathLength={1} d={wirePath}/>
       </svg>
       <ul className="conductor-list" aria-label="Featured overhead conductors">
-        {placed.map((item, i) => <li key={item.slug} style={{'--i':i, '--x':`${item.x}%`, '--y':`${item.y}%`} as CSSProperties}>
+        {placed.map((item, i) => <li key={item.slug} style={{'--i':i, '--x':`${item.x}%`, '--y':`${item.y}%`, '--t':item.t.toFixed(3)} as CSSProperties}>
           <Link href={`/products/${item.slug}/`}>
             <span className="conductor-clamp" aria-hidden="true"/>
             <Image src={`/media/${item.slug}.webp`} width={570} height={300} alt="" sizes="(max-width: 820px) 46vw, 16vw"/>
