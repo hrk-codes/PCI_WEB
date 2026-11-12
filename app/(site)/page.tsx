@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { Kicker, Picture, TextLink } from '@/components/site'
-import { Hero, Timeline } from '@/components/interactions'
+import { Timeline } from '@/components/interactions'
+import { HeroFilm } from '@/components/hero'
 import { ClientShowcase } from '@/components/client-showcase'
 import { Inquiry } from '@/components/inquiry'
 import { ProductGrid, Updates } from '@/components/catalogue'
@@ -19,7 +20,7 @@ export default async function Home() {
   const homeCopy = await edited('home')
   return <>
     <script type="application/ld+json" dangerouslySetInnerHTML={{ __html:structured({ '@type':'Organization', name:company, url:siteUrl, logo:siteUrl+'/media/logo.webp', email:'info@pcicablesindustries.com', telephone:'+91-9062207003', address:{'@type':'PostalAddress', streetAddress:address.split(', Hooghly')[0], addressLocality:'Hooghly', addressRegion:'West Bengal', postalCode:'712311', addressCountry:'IN'} }) }}/>
-    <Hero copy={homeCopy}/>
+    <HeroFilm copy={homeCopy} productCount={catalogue.length}/>
     <AboutCable/>
     <section className="section soft ambient-host"><Ambient/><div className="wrap"><div className="section-top"><div><Kicker>Product spotlight</Kicker><h2>Featured products.</h2></div><TextLink href="/products/">Full catalogue</TextLink></div><ProductGrid items={features} feature/></div></section>
     <Reach/>

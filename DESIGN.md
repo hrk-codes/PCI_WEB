@@ -12,6 +12,22 @@ The Quick info panel keeps the product catalogue, product range, quote request a
 
 Review the homepage, catalogue, product pages and forms at desktop and phone widths. Verify that the motion never hides text or controls, links keep their original meaning, and the site works with just a keyboard. Run the production checks against a separate database, then review the public copy and email delivery in protected staging before changing the domain.
 
+## Homepage hero: the "Current" film
+
+The first screen is a full-height film behind an editorial introduction: the kicker "PCI Cables · Dankuni, India", the headline (editable through the CMS `home` entry), a supporting line, *Explore our products* and *Request a quote*, chapter chips, a facts strip and a pause/play button.
+
+The film is original: a 12-second seamless loop rendered offline from the site's own procedural cable models (`lib/hero-film-scene.ts`, sharing builders with the About scene through `lib/cable-models.ts`). It is illustrative, not a technical specification.
+
+1. **Conductors (0–4 s).** An ACSR conductor is stranded live: the galvanised steel core and two aluminium layers turn with opposite lay and run through a closing die. The layers step down like a cutaway so the structure is visible.
+2. **Cables (4–8 s).** The camera pulls back from a four-core armoured cable while its armour wires drop into place and the cores twist together, with a wound cable drum and companion conductors behind.
+3. **Earth wire (8–12 s).** A dusk transmission line with lattice towers, disc insulator strings, vibration dampers and the earth wire at the peaks. A drum pays conductor up to the first tower and an orange pulse travels along the line.
+
+The encoded video starts 8.5 s into the film, so its first frame and the poster are the dusk line. Short dips to navy hide each cut and the loop point. The chapter chips (Conductors · Cables · Earth wire) follow the film's playback position and link to each product family.
+
+The poster image is the LCP element; the video uses `preload="none"` and only downloads when it is allowed to play. It pauses off screen and in hidden tabs. Reduced motion and the saved Quick info pause show the poster without downloading the film; the play button still lets a visitor start it. Phones in portrait get a 1080 × 1350 cut. The text stays readable without JavaScript.
+
+To re-render after changing the scene, run the site (`pnpm dev`) and then `pnpm render:hero` (optionally `--layout=landscape` or `--layout=portrait`). Preview the film live, or freeze a frame, at `/hero-film/` (`?t=4.5`); the page is not indexed. Run `node scripts/test-hero.mjs` to check playback, chapter sync, the pause button, off-screen pausing, motion preferences, the phone film, the no-JavaScript poster and accessibility.
+
 ## About PCI: inside every connection
 
 The homepage About section tells one story in three beats on a single pinned stage. The shared timeline lives in `lib/about-timeline.ts` and drives both the CSS variables and the Three.js scene.

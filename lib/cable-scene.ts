@@ -1,7 +1,7 @@
 import * as T from 'three'
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js'
-import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js'
 import { aboutTimeline, clamp } from '@/lib/about-timeline'
+import { createCableKit } from '@/lib/cable-models'
 
 type Anchor = {name:string,object:T.Object3D,path?:SVGPathElement|null,dot?:SVGCircleElement|null,label?:HTMLElement|null,ax:number,ay:number,left:boolean,last:string}
 
@@ -34,12 +34,9 @@ export function createCableScene(host: HTMLElement, section: HTMLElement) {
   const rim = new T.DirectionalLight(0xd4e9ff,1.8)
   rim.position.set(5,3,-2)
   scene.add(key,rim,new T.HemisphereLight(0xffffff,0x39454c,.8))
-  const rubber = new T.MeshPhysicalMaterial({color:0x10151b,roughness:.37,metalness:.12,clearcoat:.25,clearcoatRoughness:.42})
-  const aluminium = new T.MeshStandardMaterial({color:0xa7afb7,metalness:1,roughness:.19})
-  const steel = new T.MeshStandardMaterial({color:0x99a5ad,metalness:.92,roughness:.3})
-  const bedding = new T.MeshStandardMaterial({color:0x252a2d,roughness:.7})
-  const colours = [0xd7513d,0xd5ab30,0x236f9d,0x262e37].map(color=>new T.MeshPhysicalMaterial({color,roughness:.31,metalness:.08,clearcoat:.25}))
-  const yellow = new T.MeshStandardMaterial({color:0xf1bf34,roughness:.4})
+  const kit = createCableKit()
+  const {rubber,aluminium,steel,bedding,colours,yellow} = kit.materials
+  const {cylinder,bundle,collar,strandedWire,track} = kit
 
   // Energy pulse: a soft orange band scrolling along additive shells. No post-processing.
   const band = new Uint8Array(128*4)
@@ -60,48 +57,11 @@ export function createCableScene(host: HTMLElement, section: HTMLElement) {
 
   const root = new T.Group()
   scene.add(root)
-  const geometry: T.BufferGeometry[] = []
-  function cylinder(parent:T.Object3D,r:number,length:number,y:number,material:T.Material,x=0,z=0) {
-    const geo = material===rubber ? new T.LatheGeometry([
-      new T.Vector2(0,-length/2),new T.Vector2(r*.94,-length/2),
-      new T.Vector2(r,-length/2+.035),new T.Vector2(r,length/2-.035),
-      new T.Vector2(r*.96,length/2),new T.Vector2(0,length/2),
-    ],64) : new T.CylinderGeometry(r,r,length,48,1)
-    geometry.push(geo)
-    const mesh = new T.Mesh(geo,material)
-    mesh.position.set(x,y,z); parent.add(mesh)
-    return mesh
-  }
   function shell(parent:T.Object3D,r:number,length:number,y:number,material:T.Material,x=0,z=0) {
-    const geo = new T.CylinderGeometry(r,r,length,40,1,true)
-    geometry.push(geo)
+    const geo = track(new T.CylinderGeometry(r,r,length,40,1,true))
     const mesh = new T.Mesh(geo,material)
     mesh.position.set(x,y,z); mesh.visible=false; mesh.renderOrder=2
     parent.add(mesh); shells.push(mesh)
-  }
-  function bundle(parent:T.Object3D,r:number,bottom:number,top:number,x=0,z=0) {
-    // Closely packed, individually modelled round strands, including their end faces.
-    const strand = r / 5.15
-    const geo = new T.CylinderGeometry(strand,strand,top-bottom,12,1)
-    geometry.push(geo)
-    const positions: [number,number][] = [[0,0]]
-    for (let ring=1;ring<=2;ring++) for (let i=0;i<ring*6;i++) {
-      const angle=i*Math.PI*2/(ring*6)
-      positions.push([Math.cos(angle)*strand*2.03*ring,Math.sin(angle)*strand*2.03*ring])
-    }
-    const instances = new T.InstancedMesh(geo,aluminium,positions.length)
-    const matrix = new T.Matrix4()
-    for(let i=0;i<positions.length;i++) {
-      matrix.makeTranslation(x+positions[i][0],(bottom+top)/2,z+positions[i][1])
-      instances.setMatrixAt(i,matrix)
-    }
-    parent.add(instances)
-  }
-  function collar(parent:T.Object3D,r:number,y:number,material:T.Material) {
-    const geo = new T.TorusGeometry(r,.025,10,64)
-    geometry.push(geo)
-    const mesh = new T.Mesh(geo,material)
-    mesh.rotation.x=Math.PI/2;mesh.position.y=y;parent.add(mesh)
   }
   // Anchor points sit on the camera-facing side of each layer.
   const facing = new T.Vector3(.37,0,.93).normalize()
@@ -119,8 +79,7 @@ export function createCableScene(host: HTMLElement, section: HTMLElement) {
   collar(sheathG,.565,.425,rubber)
   cylinder(beddingG,.535,.65,.7,bedding)
   collar(beddingG,.53,1.04,bedding)
-  const armourGeo = new T.CylinderGeometry(.024,.024,.62,10,1)
-  geometry.push(armourGeo)
+  const armourGeo = track(new T.CylinderGeometry(.024,.024,.62,10,1))
   const armourMesh = new T.InstancedMesh(armourGeo,steel,54)
   const mat = new T.Matrix4()
   for(let i=0;i<54;i++) {
@@ -173,33 +132,6 @@ export function createCableScene(host: HTMLElement, section: HTMLElement) {
   stripe.scale.x=.7
   aerial.scale.setScalar(.77);aerial.rotation.z=-.27;aerial.position.set(1.1,-.8,.4);root.add(aerial)
   // Additional bare aluminium conductor and galvanised earth wire frame the main cutaways.
-  function strandedWire(radius:number,length:number,material:T.Material) {
-    const group=new T.Group()
-    const parts:T.BufferGeometry[]=[]
-    const strand=radius/5.15
-    const positions:[number,number][]=[[0,0]]
-    for(let ring=1;ring<=2;ring++) for(let i=0;i<ring*6;i++) {
-      positions.push([ring*strand*2.03,i*Math.PI*2/(ring*6)])
-    }
-    for(const [distance,start] of positions) {
-      const points=Array.from({length:49},(_,i)=>{
-        const t=i/48,angle=start+t*Math.PI*1.8
-        return new T.Vector3(Math.cos(angle)*distance,t*length-length/2,Math.sin(angle)*distance)
-      })
-      const curve=new T.CatmullRomCurve3(points)
-      parts.push(new T.TubeGeometry(curve,48,strand,8,false))
-      for(const end of [points[0],points[48]]) {
-        const cap=new T.CircleGeometry(strand,12)
-        cap.rotateX(end.y>0?-Math.PI/2:Math.PI/2)
-        cap.translate(end.x,end.y,end.z);parts.push(cap)
-      }
-    }
-    const merged=mergeGeometries(parts)
-    parts.forEach(part=>part.dispose())
-    geometry.push(merged)
-    group.add(new T.Mesh(merged,material))
-    return group
-  }
   const bare=strandedWire(.245,3.05,aluminium)
   shell(bare,.262,3.05,0,pulseB)
   bare.position.set(-1.9,-.5,.2);bare.rotation.z=.28;root.add(bare)
@@ -343,8 +275,8 @@ export function createCableScene(host: HTMLElement, section: HTMLElement) {
     host.removeEventListener('pointermove',pointer);host.removeEventListener('pointerleave',leave)
     canvas.removeEventListener('webglcontextlost',lost);canvas.removeEventListener('webglcontextrestored',restored)
     document.removeEventListener('visibilitychange',onVisibility)
-    geometry.forEach(g=>g.dispose())
-    ;[rubber,aluminium,steel,bedding,yellow,pulseA,pulseB,glow,...colours].forEach(m=>m.dispose())
+    kit.dispose()
+    ;[pulseA,pulseB,glow].forEach(m=>m.dispose())
     bandTexture.dispose();bandTextureB.dispose()
     environment.dispose();pmrem.dispose();renderer.dispose();canvas.remove();delete host.dataset.ready
     if(art)delete art.dataset.anchors

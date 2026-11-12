@@ -4,23 +4,6 @@ import Image from 'next/image'
 import Link from 'next/link'
 import clientData from '@/content/clients.json'
 
-const slides = [
-  { title: 'The power behind every connection.', summary: 'Cables, overhead conductors and earth wire for power networks across India and beyond.', image: 'hero-cables.webp', href: '/products/', cta: 'Explore our products' },
-  { title: 'Engineered for what comes next.', summary: 'Explore the cable and conductor manufacturing and testing capabilities behind every PCI product.', image: 'hero-range.webp', href: '/testing/', cta: 'See our capabilities' },
-]
-
-export function Hero({ copy }: { copy: { title: string; summary: string } | null }) {
-  const [index, setIndex] = useState(0)
-  const current = index === 0 && copy ? { ...slides[0], ...copy } : slides[index]
-  return <section className="hero" aria-roledescription="carousel" aria-label="PCI Cables introduction">
-    <div className="hero-media" key={current.image}><Image src={'/media/'+current.image} alt="" fill preload={index === 0} sizes="100vw"/></div>
-    <div className="hero-shade"/>
-    <div className="wrap hero-content" aria-live="polite"><div className="kicker"><span/> PCI CABLES INDUSTRIES</div>
-      <h1>{current.title}</h1><p>{current.summary}</p><Link className="button" href={current.href}>{current.cta} <span aria-hidden="true">↗</span></Link>
-    </div>
-    <div className="wrap hero-controls"><div className="slide-count"><strong>0{index + 1}</strong><span/><span>02</span></div><div><button aria-label="Previous slide" onClick={()=>setIndex((index+slides.length-1)%slides.length)}>←</button><button aria-label="Next slide" onClick={()=>setIndex((index+1)%slides.length)}>→</button></div></div>
-  </section>
-}
 
 const clients: Record<string, {name: string; image: string}[]> = clientData
 export function Clients({ all = false }: { all?: boolean }) {

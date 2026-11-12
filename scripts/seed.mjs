@@ -19,7 +19,7 @@ const descriptions = {
 for (const doc of docs) if (descriptions[doc.slug]) [doc.title,doc.summary] = descriptions[doc.slug]
 const catalogue = await read('content/catalogue.json')
 docs.push(...catalogue.map(p => ({ slug: 'product:'+p.slug, title: p.name, summary: p.summary, kind: 'product', html: '' })))
-docs.push({ slug: 'home', title: 'The power behind every connection.', summary: 'Cables, overhead conductors and earth wire for power networks across India and beyond.', kind: 'home', html: '' })
+docs.push({ slug: 'home', title: 'Engineered to carry the current.', summary: 'Cables, overhead conductors and earth wire from Dankuni, made for power networks across India and beyond.', kind: 'home', html: '' })
 for (const doc of docs) {
   if ((await payload.count({ collection: 'site-content', where: { slug: { equals: doc.slug } } })).totalDocs) continue
   const { slug, title, summary, kind, html } = doc
