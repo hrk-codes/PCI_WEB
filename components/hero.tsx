@@ -3,7 +3,6 @@
 import { Fragment, useEffect, useRef, useState, type CSSProperties } from 'react'
 import Link from 'next/link'
 import { getImageProps } from 'next/image'
-import { chapterAtTime, heroChapters } from '@/lib/hero-film-timeline'
 import './hero.css'
 
 export const heroDefaults = {
@@ -29,7 +28,6 @@ export function HeroFilm({ copy, productCount }: { copy: Copy; productCount: num
   const { title, summary } = copy ?? heroDefaults
   const section = useRef<HTMLElement>(null)
   const video = useRef<HTMLVideoElement>(null)
-  const chapters = useRef<HTMLAnchorElement[]>([])
   const [playing, setPlaying] = useState(false)
   const [failed, setFailed] = useState(false)
   const choice = useRef<'auto' | 'play' | 'pause'>('auto')
@@ -39,19 +37,8 @@ export function HeroFilm({ copy, productCount }: { copy: Copy; productCount: num
     const el = section.current!, film = video.current
     if (!film) return
     const reduced = matchMedia('(prefers-reduced-motion: reduce)')
-    let visible = true, frame = 0, active = ''
+    let visible = true
     const motionOff = () => reduced.matches || document.documentElement.dataset.pciMotion === 'paused'
-    function paint() {
-      frame = 0
-      const { chapter, progress } = chapterAtTime(film!.currentTime)
-      if (chapter.key !== active) {
-        active = chapter.key
-        el.dataset.chapter = active
-        for (const link of chapters.current) link.dataset.active = String(link.dataset.key === active)
-      }
-      chapters.current.find(link => link.dataset.key === active)?.style.setProperty('--p', progress.toFixed(3))
-      if (!film!.paused) frame = requestAnimationFrame(paint)
-    }
     function update() {
       const allowed = choice.current === 'play' || (choice.current === 'auto' && !motionOff())
       if (allowed && visible && !document.hidden) {
@@ -59,8 +46,8 @@ export function HeroFilm({ copy, productCount }: { copy: Copy; productCount: num
       } else film!.pause()
     }
     sync.current = update
-    const onPlaying = () => { setPlaying(true); el.dataset.film = 'playing'; if (!frame) frame = requestAnimationFrame(paint) }
-    const onPause = () => { setPlaying(false); cancelAnimationFrame(frame); frame = 0 }
+    const onPlaying = () => { setPlaying(true); el.dataset.film = 'playing' }
+    const onPause = () => { setPlaying(false) }
     const observer = new IntersectionObserver(entries => { visible = entries[0].isIntersecting; update() }, {threshold:.05})
     const preference = new MutationObserver(() => { if (choice.current === 'auto') update() })
     film.addEventListener('playing', onPlaying); film.addEventListener('pause', onPause)
@@ -70,7 +57,7 @@ export function HeroFilm({ copy, productCount }: { copy: Copy; productCount: num
     document.addEventListener('visibilitychange', update)
     update()
     return () => {
-      cancelAnimationFrame(frame); observer.disconnect(); preference.disconnect()
+      observer.disconnect(); preference.disconnect()
       film.removeEventListener('playing', onPlaying); film.removeEventListener('pause', onPause)
       reduced.removeEventListener('change', update); document.removeEventListener('visibilitychange', update)
       film.pause()
@@ -83,8 +70,7 @@ export function HeroFilm({ copy, productCount }: { copy: Copy; productCount: num
   }
 
   const words = title.split(' ')
-  const poster = chapterAtTime(0)
-  return <section ref={section} className="hero-film" aria-label="PCI Cables introduction" data-chapter={poster.chapter.key} data-film="poster">
+  return <section ref={section} className="hero-film" aria-label="PCI Cables introduction" data-film="poster">
     <div className="hero-film-media" aria-hidden="true">
       <Poster/>
       {!failed && <video ref={video} className="hero-film-video" muted loop playsInline preload="none" disablePictureInPicture onError={() => setFailed(true)}>
@@ -103,11 +89,6 @@ export function HeroFilm({ copy, productCount }: { copy: Copy; productCount: num
         <Link className="button" href="/products/">Explore our products <span aria-hidden="true">↗</span></Link>
         <Link className="hero-film-ghost" href="/request-quote/">Request a quote</Link>
       </div>
-      <nav className="hero-chapters" aria-label="Product families">
-        {heroChapters.map((chapter, i) => <Link key={chapter.key} href={chapter.href} data-key={chapter.key} data-active={String(chapter.key === poster.chapter.key)} ref={node => { if (node) chapters.current[i] = node }}>
-          <small aria-hidden="true">0{i + 1}</small>{chapter.label}<i aria-hidden="true"/>
-        </Link>)}
-      </nav>
     </div>
     <div className="wrap hero-film-bar">
       <ul className="hero-facts" aria-label="PCI at a glance">

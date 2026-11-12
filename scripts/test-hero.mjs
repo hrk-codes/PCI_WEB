@@ -34,11 +34,6 @@ try {
   await page.waitForTimeout(1200)
   assert.ok(await page.locator('.hero-film-video').evaluate(v => v.currentTime) > start, 'Film plays')
   assert.equal(await page.locator('.hero-film-video').evaluate(v => v.currentSrc.includes('landscape')), true, 'Desktop uses the landscape film')
-  for (const [seek, key] of [[.5, 'earth-wire'], [4, 'conductors'], [8, 'cables']]) {
-    await page.locator('.hero-film-video').evaluate((v, t) => { v.currentTime = t }, seek)
-    await page.waitForFunction(k => document.querySelector('.hero-film')?.dataset.chapter === k, key)
-    assert.equal(await page.locator(`.hero-chapters a[data-key="${key}"]`).getAttribute('data-active'), 'true', `${key} chip follows the film`)
-  }
   await page.screenshot({path:'test-results/hero-desktop.png'})
   await page.getByRole('button', {name:'Pause background film'}).click()
   await page.getByRole('button', {name:'Play background film'}).waitFor()
@@ -50,16 +45,15 @@ try {
   await page.evaluate(() => window.scrollTo({top:0, behavior:'instant'}))
   await page.waitForFunction(() => !document.querySelector('.hero-film-video').paused)
   assert.deepEqual(await axe(page), [], 'Hero accessibility')
-  const chips = await page.locator('.hero-chapters a').evaluateAll(links => links.map(a => new URL(a.href).pathname))
-  assert.deepEqual(chips, ['/conductors/', '/cables/', '/earth-wire/'])
+  assert.equal(await page.getByRole('navigation', {name:'Product families', exact:true}).count(), 0, 'Hero product family strip is removed')
   const short = await open({viewport:{width:1055, height:772}})
   const fit = await short.evaluate(() => {
     const r = s => document.querySelector(s).getBoundingClientRect()
     const hit = (a, b) => !(a.right <= b.left || b.right <= a.left || a.bottom <= b.top || b.bottom <= a.top)
-    return {bar:hit(r('.hero-film-bar'), r('.info-trigger')) && hit(r('.hero-facts'), r('.info-trigger')), onScreen:r('.hero-chapters').bottom <= innerHeight}
+    return {bar:hit(r('.hero-film-bar'), r('.info-trigger')) && hit(r('.hero-facts'), r('.info-trigger')), onScreen:r('.hero-film-actions').bottom <= innerHeight}
   })
   assert.equal(fit.bar, false, 'Quick info button does not cover the facts')
-  assert.equal(fit.onScreen, true, 'Chapters fit above the fold at 1055 × 772')
+  assert.equal(fit.onScreen, true, 'Hero actions fit above the fold at 1055 × 772')
   await short.waitForTimeout(1500)
   await short.screenshot({path:'test-results/hero-1055.png'})
   const reduced = await open({reducedMotion:'reduce'})
@@ -69,11 +63,7 @@ try {
   await reduced.getByRole('button', {name:'Play background film'}).click()
   await reduced.waitForFunction(() => document.querySelector('.hero-film')?.dataset.film === 'playing', null, {timeout:15000})
   const paused = await open()
-  await paused.evaluate(() => { localStorage.setItem('pci-motion', 'paused') })
-  await paused.getByRole('button', {name:'Quick info'}).click()
-  await paused.getByLabel('Pause background motion').check()
-  await paused.keyboard.press('Escape')
-  await paused.waitForFunction(() => document.querySelector('.hero-film-video').paused)
+  await paused.evaluate(() => { localStorage.setItem('pci-pause-motion', 'yes') })
   await paused.reload({waitUntil:'domcontentloaded'})
   await paused.waitForTimeout(800)
   assert.equal(await paused.locator('.hero-film-video').evaluate(v => v.paused), true, 'Saved pause keeps the film still')
@@ -88,5 +78,5 @@ try {
   assert.equal(await noJS.locator('.hero-film-poster').isVisible(), true, 'No-JavaScript poster')
   assert.equal(await noJS.locator('h1').evaluate(h => getComputedStyle(h).opacity), '1', 'No-JavaScript heading visible')
   assert.deepEqual(errors, [])
-  console.log('Hero: film playback, chapter sync, pause/play, offscreen pause, reduced motion, saved pause, phone portrait film, no-JS poster and accessibility passed.')
+  console.log('Hero: film playback, removed product strip, pause/play, offscreen pause, reduced motion, saved pause, phone portrait film, no-JS poster and accessibility passed.')
 } finally { await browser.close() }
