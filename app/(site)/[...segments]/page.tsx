@@ -9,6 +9,8 @@ import { ClientDirectory } from '@/components/client-directory'
 import { MilestoneStory } from '@/components/milestone-story'
 import { Turnover } from '@/components/turnover'
 import { productNotes } from '@/content/product-notes'
+import { productSamples } from '@/content/product-samples'
+import { ProductSampleFilm } from '@/components/product-sample-film'
 import { address, articles, catalogue, cleanHtml, company, edited, families, publicDocs, siteUrl, structured } from '@/lib/content'
 
 export const dynamic = 'force-dynamic'
@@ -112,7 +114,9 @@ export default async function PublicPage({ params, searchParams }: Props) {
   if (d.product) {
     const product = d.product
     const notes = productNotes[product.slug]
+    const sample = productSamples[product.slug]
     body = <><div className="split detail"><div className="detail-image"><Picture src={'/media/'+product.slug+'.webp'} alt={d.title} priority/></div><div><Kicker>{families[product.family]}</Kicker><h2>Product information</h2>{d.html ? <Rich html={d.html}/> : notes && <dl className="product-facts"><div><dt>Construction</dt><dd>{notes.construction}</dd></div><div><dt>Applications</dt><dd>{notes.application}</dd></div></dl>}<p>Include the size, quantity and applicable standard in your quote request so PCI can confirm the right specification.</p><div className="detail-links"><Link className="button" href={'/request-quote/?product='+product.slug}>Request a quote <Arrow diagonal/></Link><a className="button outline" href={'/media/'+(product.pdf || 'catalogue.pdf')}>{product.pdf ? 'Download datasheet' : 'Download catalogue'} <Arrow diagonal/></a></div></div></div>
+      {sample && <ProductSampleFilm sample={sample} name={d.title}/>}
       <div className="related"><Kicker>Keep exploring</Kicker><h2>Related products.</h2><ProductGrid items={catalogue.filter(p=>p.family===product.family && p.slug!==product.slug).slice(0,4)}/><TextLink href={'/'+product.family+'/'}>See all {families[product.family].toLowerCase()}</TextLink></div></>
   } else if (d.article) {
     body = <article className="reading"><div className="article-hero"><Picture src={'/media/'+articleImages[d.article.slug]} alt="" priority/></div><Rich html={d.html}/><TextLink href="/blog/">All stories</TextLink></article>

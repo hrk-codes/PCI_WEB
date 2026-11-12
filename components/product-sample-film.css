@@ -1,0 +1,21 @@
+/* Product pages: a real PCI display sample, filmed at the works. */
+.sample-film{position:relative;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,auto);align-items:center;gap:clamp(28px,5vw,72px);margin-top:clamp(48px,7vw,84px);padding:clamp(28px,4.5vw,56px);color:#f3f6f8;background:radial-gradient(ellipse at 78% 40%,#1f405a 0%,transparent 60%),linear-gradient(135deg,#0d2236,#081b2e);overflow:hidden}
+.sample-film-copy{max-width:44ch}
+.sample-film-kicker{justify-content:flex-start;color:#ff9a74;margin:0 0 14px}
+.sample-film h2{margin:0;color:#fff;font-size:clamp(2rem,3.6vw,3.2rem)}
+.sample-film-copy p{margin:16px 0 0;color:#d8e2e8;font-size:1.02rem;line-height:1.6}
+.sample-film-copy small{display:block;margin-top:18px;color:#a9bac5;font-size:.76rem;line-height:1.5}
+.sample-film-frame{position:relative;margin:0;width:min(340px,30vw);aspect-ratio:9/16;border:1px solid #ffffff24;background:#05121e;box-shadow:0 30px 60px -30px #000c}
+.sample-film-poster,.sample-film-video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.sample-film-video{opacity:0;transition:opacity .6s ease}
+.sample-film[data-film=playing] .sample-film-video{opacity:1}
+.sample-film-frame figcaption{position:absolute;left:0;right:0;bottom:0;padding:34px 14px 12px;background:linear-gradient(0deg,#05121ee6,transparent);color:#e6edf1;font-size:.74rem;font-weight:700;letter-spacing:.02em;pointer-events:none}
+.sample-film-toggle{position:absolute;top:12px;right:12px;z-index:2;display:grid;place-items:center;width:44px;height:44px;border:1px solid #ffffff66;border-radius:50%;background:#05121eb3;color:#fff;cursor:pointer}
+.sample-film-toggle:hover{background:var(--orange);border-color:var(--orange);color:var(--navy)}
+.sample-film-toggle:focus-visible{outline:3px solid #8fd0ff;outline-offset:3px}
+.sample-film-toggle [data-icon=pause]{width:12px;height:12px;border-left:4px solid currentColor;border-right:4px solid currentColor}
+.sample-film-toggle [data-icon=play]{width:0;height:0;margin-left:3px;border-top:7px solid transparent;border-bottom:7px solid transparent;border-left:11px solid currentColor}
+@media(max-width:760px){
+  .sample-film{grid-template-columns:1fr}
+  .sample-film-frame{width:min(320px,100%);justify-self:center}
+}
