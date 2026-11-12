@@ -4,7 +4,8 @@ import { Timeline } from '@/components/interactions'
 import { HeroFilm } from '@/components/hero'
 import { ClientShowcase } from '@/components/client-showcase'
 import { Inquiry } from '@/components/inquiry'
-import { ProductGrid, Updates } from '@/components/catalogue'
+import { Updates } from '@/components/catalogue'
+import { ConductorLine } from '@/components/conductor-line'
 import { Ambient } from '@/components/ambient'
 import { AboutCable } from '@/components/about-cable'
 import { Reach } from '@/components/reach'
@@ -13,8 +14,6 @@ import { address, catalogue, company, edited, siteUrl, structured } from '@/lib/
 
 export const dynamic = 'force-dynamic'
 export const metadata: Metadata = { alternates: { canonical: '/' }, openGraph: { url: '/' } }
-const select = (slugs: string[]) => slugs.map(slug=>catalogue.find(p=>p.slug===slug)!).filter(Boolean)
-const features = select(['eco-panther','lt-xlpe-cable','aerial-bunched-cable'])
 
 export default async function Home() {
   const homeCopy = await edited('home')
@@ -22,7 +21,7 @@ export default async function Home() {
     <script type="application/ld+json" dangerouslySetInnerHTML={{ __html:structured({ '@type':'Organization', name:company, url:siteUrl, logo:siteUrl+'/media/logo.webp', email:'info@pcicablesindustries.com', telephone:'+91-9062207003', address:{'@type':'PostalAddress', streetAddress:address.split(', Hooghly')[0], addressLocality:'Hooghly', addressRegion:'West Bengal', postalCode:'712311', addressCountry:'IN'} }) }}/>
     <HeroFilm copy={homeCopy} productCount={catalogue.length}/>
     <AboutCable/>
-    <section className="section soft ambient-host"><Ambient/><div className="wrap"><div className="section-top"><div><Kicker>Product spotlight</Kicker><h2>Featured products.</h2></div><TextLink href="/products/">Full catalogue</TextLink></div><ProductGrid items={features} feature/></div></section>
+    <section className="section soft ambient-host"><Ambient/><div className="wrap"><div className="section-top"><div><Kicker>Product spotlight</Kicker><h2>Featured products.</h2></div><TextLink href="/products/">Full catalogue</TextLink></div><ConductorLine/></div></section>
     <Reach/>
     <ProductFilm productCount={catalogue.length}/>
     <section className="section soft ambient-host"><Ambient/><div className="wrap center"><Kicker>PCI at a glance</Kicker><h2>Built on steady progress.</h2><div className="stats">{[['2013','Our journey began'],[catalogue.length,'Products in the catalogue'],[3,'Core product families'],[2,'First export milestones in 2022']].map(([n,label])=><div key={label}><strong>{n}</strong><span>{label}</span></div>)}</div></div></section>

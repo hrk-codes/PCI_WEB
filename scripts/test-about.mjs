@@ -7,7 +7,6 @@ const browser = await chromium.launch({executablePath:process.env.CHROME_PATH ||
 const url = process.env.PCI_BROWSER_URL || 'http://127.0.0.1:3000/'
 await mkdir('test-results',{recursive:true})
 const errors = []
-const products = ['aac','aaac','acsr','aacsr','acar','eco-panther']
 async function open(options={}) {
   const page = await browser.newPage({viewport:{width:1440,height:950},...options})
   page.on('pageerror',e=>errors.push(e.message))
@@ -79,15 +78,12 @@ try {
   assert.ok(centre.x-left.x>150,'Cable moves left before the story is fully shown')
   assert.equal(await page.locator('.cable-webgl canvas').getAttribute('data-pulse'),'idle','Pulse stops once the story settles')
   assert.equal(await page.locator('.cable-fallback-settled').evaluate(el=>el.complete && el.naturalWidth>0),true,'Settled cable frame loaded')
-  assert.equal(await page.locator('.about-range a').count(),6,'Six conductors in the range')
-  assert.deepEqual(await page.locator('.about-range a').evaluateAll(links=>links.map(a=>new URL(a.href).pathname)),products.map(slug=>`/products/${slug}/`))
-  assert.ok((await page.locator('.about-range li').evaluateAll(items=>items.map(li=>Number(getComputedStyle(li).opacity)))).every(o=>o===1),'All conductors revealed')
+  assert.equal(await page.locator('.about-cable a[href^="/products/"]').count(),0,'Conductors now live in Featured products, not the About story')
   assert.equal(await page.locator('[aria-hidden=true] a, [aria-hidden=true] .anatomy, [aria-hidden=true] .about-stats').count(),0,'Links and facts are not hidden from assistive technology')
   await progress(page,1)
   assert.deepEqual(await page.locator('[data-count-to]').allTextContents(),['14','17','7'],'Figures finish counting')
   assert.deepEqual(await page.locator('.about-stats .about-sr').allTextContents(),['14','17','7'],'Screen readers get the final figures')
   await progress(page,.1)
-  assert.equal(await opacity(page,'.about-range li:first-child'),0,'Reverse scrolling retracts the range')
   assert.equal(await opacity(page,'.about-copy h2'),0,'Reverse scrolling hides the headline')
   assert.equal(await opacity(page,'.about-stats'),0,'Reverse scrolling hides the figures')
   await progress(page,.55)
@@ -114,19 +110,14 @@ try {
   const fit = await short.evaluate(()=>{
     const r=s=>document.querySelector(s).getBoundingClientRect()
     const hit=(a,b)=>!(a.right<=b.left||b.right<=a.left||a.bottom<=b.top||b.bottom<=a.top)
-    return {copyRail:hit(r('.about-description'),r('.about-range')),statsButton:hit(r('.about-stats'),r('.info-trigger')),railBase:r('.about-range').bottom<=r('.about-baseline').top+30}
+    return {statsButton:hit(r('.about-stats'),r('.info-trigger')),copyAboveBase:r('.about-description').bottom<=r('.about-baseline').top,artAboveBase:r('.conductor-main').bottom<=r('.about-baseline').bottom+40}
   })
-  assert.deepEqual(fit,{copyRail:false,statsButton:false,railBase:true},'1055x772 composition fits')
+  assert.deepEqual(fit,{statsButton:false,copyAboveBase:true,artAboveBase:true},'1055x772 composition fits')
   const keyboard = await open()
   await progress(keyboard,.2)
   await keyboard.locator('.about-skip').focus()
   await keyboard.keyboard.press('Tab')
   assert.equal(await opacity(keyboard,'.about-description'),1,'Keyboard focus reveals the story')
-  const ribbon = await open()
-  await progress(ribbon,.2)
-  await ribbon.locator('.about-range a').first().focus()
-  assert.equal(await ribbon.locator('.about-cable').getAttribute('data-mode'),'static','Focusing a product finishes the story')
-  assert.equal(await opacity(ribbon,'.about-range li:first-child'),1,'Focused product is visible')
   const paused = await open()
   await progress(paused,.5)
   await paused.getByRole('button',{name:'Quick info'}).click()
@@ -142,8 +133,6 @@ try {
   await mobile.locator('.about-cable').scrollIntoViewIfNeeded()
   assert.equal(await mobile.locator('.about-cable').getAttribute('data-mode'),'flow')
   assert.equal(await overflow(mobile),false)
-  const row = await mobile.locator('.about-range').evaluate(el=>({scrolls:el.scrollWidth>el.clientWidth,snap:getComputedStyle(el).scrollSnapType}))
-  assert.ok(row.scrolls && row.snap.includes('x'),'Phone range swipes sideways')
   assert.deepEqual(await axe(mobile),[],'Phone accessibility')
   await mobile.screenshot({path:'test-results/about-mobile.png',fullPage:false})
   await mobile.locator('.about-cable').screenshot({path:'test-results/about-mobile-section.png'})

@@ -16,16 +16,6 @@ const anatomy = [
   {anchor:'sheath', name:'Outer sheath', note:'PVC / PE, weather-ready'},
 ]
 
-/** Overhead conductor range (names follow content/catalogue.json `short`). */
-const range = [
-  {slug:'aac', name:'AAC', note:'All aluminium'},
-  {slug:'aaac', name:'AAAC', note:'Alloy strength'},
-  {slug:'acsr', name:'ACSR', note:'Steel-cored'},
-  {slug:'aacsr', name:'AACSR', note:'Alloy, steel-cored'},
-  {slug:'acar', name:'ACAR', note:'Alloy-reinforced'},
-  {slug:'eco-panther', name:'ECO Panther', note:'Trapezoidal strands'},
-]
-
 const stats = [
   {label:'Products', value:14, count:true},
   {label:'Indian states', value:17, count:true},
@@ -34,16 +24,6 @@ const stats = [
 ]
 
 const headline = ['Building', 'confidence', 'into every', 'connection.']
-
-/** Decorative transmission line: two lattice towers and the sagging conductor between them. */
-function PowerLine() {
-  return <svg className="about-line" viewBox="0 0 1200 120" preserveAspectRatio="none" aria-hidden="true" focusable="false">
-    <path className="line-tower" pathLength={1} d="M40 118 L58 18 L76 118 M46 86 L70 86 M50 60 L66 60 M54 38 L62 38 M47 86 L66 60 M69 86 L50 60 M30 30 L86 30 M36 22 L80 22"/>
-    <path className="line-tower" pathLength={1} d="M1124 118 L1142 18 L1160 118 M1130 86 L1154 86 M1134 60 L1150 60 M1138 38 L1146 38 M1131 86 L1150 60 M1153 86 L1134 60 M1114 30 L1170 30 M1120 22 L1164 22"/>
-    <path className="line-wire" pathLength={1} d="M34 30 C 330 98, 870 98, 1166 30"/>
-    <path className="line-wire line-wire-two" pathLength={1} d="M40 22 C 340 84, 860 84, 1160 22"/>
-  </svg>
-}
 
 export function AboutCable() {
   const section = useRef<HTMLElement>(null)
@@ -62,8 +42,6 @@ export function AboutCable() {
       set('--settle', tl.settle)
       set('--headline-in', tl.headlineIn)
       set('--headline', tl.headline)
-      set('--range', tl.range)
-      set('--line-draw', tl.lineDraw)
       set('--story-copy', tl.copy)
       set('--stats', tl.stats)
       set('--story-progress', p)
@@ -155,12 +133,6 @@ export function AboutCable() {
           <h2 id="about-pci-title" tabIndex={-1}>{headline.map((word, i) => <span key={word} className="hw" style={{'--i':i} as CSSProperties}>{word}{i < headline.length - 1 ? ' ' : ''}</span>)}</h2>
           <div className="about-description"><p className="lead">Cable and conductor manufacturing for the networks that move power forward.</p><p>From our works in Dankuni, PCI manufactures cables, overhead conductors and earth wire for utilities, infrastructure projects and industrial customers.</p><Link className="text-link" href="/about-us/">Our story <span aria-hidden="true">↗</span></Link></div>
         </div>
-      </div>
-      <div className="wrap about-rail">
-        <PowerLine/>
-        <ul className="about-range" aria-label="Overhead conductors">
-          {range.map((item, i) => <li key={item.slug} style={{'--i':i} as CSSProperties}><Link href={`/products/${item.slug}/`}><Image src={`/media/${item.slug}.webp`} width={570} height={300} alt="" sizes="(max-width: 820px) 40vw, 14vw"/><b>{item.name}</b><small>{item.note}</small></Link></li>)}
-        </ul>
       </div>
       <div className="wrap about-baseline">
         <div className="about-chapters" aria-hidden="true"><span data-tick="anatomy">01 Anatomy</span><span data-tick="range">02 Range</span><span data-tick="reach">03 Reach</span><div className="about-progress"><span/></div></div>

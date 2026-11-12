@@ -1,5 +1,5 @@
 /* About PCI: "Inside every connection". Variables default to the finished state (no JS, static, flow). */
-.about-cable{--anatomy:0;--settle:1;--headline-in:1;--headline:1;--range:1;--line-draw:1;--story-copy:1;--stats:1;--story-progress:1;--story-header:106px;position:relative;background:var(--paper)}
+.about-cable{--anatomy:0;--settle:1;--headline-in:1;--headline:1;--story-copy:1;--stats:1;--story-progress:1;--story-header:106px;position:relative;background:var(--paper)}
 .about-sr{position:absolute;width:1px;height:1px;margin:-1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
 .about-stage{position:relative;isolation:isolate;overflow:clip;padding:32px 0 24px;background:radial-gradient(ellipse at 34% 43%,#e5e7de77,transparent 65%),var(--paper)}
 .about-topline{display:flex;justify-content:space-between;align-items:center;position:relative;z-index:3;border-bottom:1px solid #cbd2c9;padding-bottom:20px}.about-topline .kicker{margin:0}
@@ -43,19 +43,6 @@
 .hw{--w:clamp(0,calc(var(--headline) * 4 - var(--i)),1);color:rgb(19 40 58 / var(--w));-webkit-text-stroke:1px rgb(19 40 58 / calc((1 - var(--w)) * .38))}
 .about-description{margin-top:25px;max-width:44ch;opacity:var(--story-copy);transform:translateY(calc((1 - var(--story-copy)) * 20px))}.about-description .lead{font-size:1rem;line-height:1.55;margin-bottom:16px}.about-description p{font-size:.95rem;line-height:1.75}.about-description .text-link{margin-top:22px;min-height:36px}
 
-/* Conductor range hanging on a drawn power line */
-.about-rail{position:relative;z-index:2;margin-top:18px}
-.about-line{position:absolute;left:0;top:-14px;width:100%;height:calc(100% + 14px);overflow:visible;pointer-events:none}
-.about-line path{fill:none;stroke:#9aa8a1;stroke-width:1.2;stroke-dasharray:1;stroke-dashoffset:calc(1 - var(--line-draw))}
-.about-line .line-wire{stroke:#b8c3bc}.about-line .line-wire-two{stroke:#d0d8d1}
-.about-range{position:relative;list-style:none;margin:0;padding:0 6.5%;display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:10px}
-.about-range li{--r:clamp(0,calc((var(--range) - var(--i) * .09) * 2.2),1);min-width:0;opacity:var(--r);transform:translateY(calc((1 - var(--r)) * 28px + sin((var(--i) + .5) / 6 * 180deg) * 22px))}
-.about-range a{display:grid;justify-items:center;gap:2px;padding:6px 6px 8px;min-height:44px;border-radius:10px;color:var(--ink);text-align:center;transition:transform .25s ease,background-color .25s ease}
-.about-range a:hover{transform:translateY(-4px);background:#ffffffa8}.about-range a:focus-visible{outline:3px solid #217fac;outline-offset:2px}
-.about-range img{width:100%;height:58px;object-fit:contain;filter:drop-shadow(2px 5px 4px #10243918)}
-.about-range b{font-size:.72rem;font-weight:800;letter-spacing:.02em}
-.about-range small{font-size:.6rem;color:#435951;line-height:1.3}
-.about-range a:hover b{color:var(--orange-dark)}
 
 /* Baseline: chapters, progress and figures */
 .about-baseline{position:relative;z-index:2;display:flex;align-items:center;gap:24px;margin-top:16px;border-top:1px solid #cbd2c9;padding-top:14px;color:#53665f}
@@ -76,9 +63,8 @@
 .about-cable[data-mode=cinematic] .about-composition{flex:1;min-height:0;padding-top:0}
 .about-cable[data-mode=cinematic] .about-art{position:absolute;left:0;top:0;width:48%;height:100%;transform:translate3d(calc((1 - var(--settle)) * 54%),0,0);will-change:transform}
 .about-cable[data-mode=cinematic] .about-visual{position:absolute;inset:0;height:auto}
-.about-cable[data-mode=cinematic] .conductor-main{inset:-6% -38% -10%}
+.about-cable[data-mode=cinematic] .conductor-main{inset:-4% -32% 5%}
 .about-cable[data-mode=cinematic] .about-copy{grid-column:2;padding:12px 0}
-.about-cable[data-mode=cinematic] .about-rail{flex:none;margin-top:6px}
 .about-cable[data-mode=cinematic] .about-chapters{display:flex}
 .about-cable[data-mode=cinematic] .anatomy{position:absolute;inset:0;margin:0;display:block;pointer-events:none}
 .about-cable[data-mode=cinematic] .anatomy li{position:absolute;width:clamp(150px,15vw,205px);padding:0 0 0 24px;opacity:clamp(0,calc((var(--anatomy) - var(--k) * .12) * 2.5),1)}
@@ -106,8 +92,6 @@
   .about-cable[data-mode=cinematic] .about-description p{font-size:.84rem;line-height:1.62}
   .about-cable[data-mode=cinematic] .about-description .lead{font-size:.92rem;margin-bottom:8px}
   .about-cable[data-mode=cinematic] .about-description .text-link{margin-top:8px}
-  .about-cable[data-mode=cinematic] .about-range img{height:42px}
-  .about-cable[data-mode=cinematic] .about-range li{transform:translateY(calc((1 - var(--r)) * 22px + sin((var(--i) + .5) / 6 * 180deg) * 14px))}
   .about-cable[data-mode=cinematic] .about-baseline{margin-top:8px;padding-top:10px}
   .about-cable[data-mode=cinematic] .about-stats dd{font-size:1.05rem}
 }
@@ -121,11 +105,6 @@
   .about-copy{padding:30px 0 30px}
   .about-copy h2{font-size:clamp(2.2rem,7vw,4rem);max-width:none}
   .about-description{max-width:55ch}
-  .about-line{display:none}
-  .about-rail{margin-top:0}
-  .about-range{display:flex;gap:10px;padding:0 0 6px;overflow-x:auto;scroll-snap-type:x mandatory;overscroll-behavior-x:contain;max-width:100%}
-  .about-range li{flex:0 0 clamp(124px,38%,190px);scroll-snap-align:start;transform:none}
-  .about-range a{border:1px solid #d6ddd5;background:#ffffff80}
   .about-baseline{flex-wrap:wrap;gap:12px;padding-bottom:56px}
   .about-stats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px 20px;width:100%;margin:0}
 }
