@@ -107,7 +107,9 @@ export function AboutCable() {
   }, [])
   return <section ref={section} className="about-cable" aria-labelledby="about-pci-title">
     <div className="about-stage">
-      <div className="about-marquee" aria-hidden="true"><span data-words="CABLES · CONDUCTORS · EARTH WIRE · CABLES · CONDUCTORS · EARTH WIRE ·"/></div>
+      <div className="about-brand-watermark" aria-hidden="true">
+        <Image src="/media/logo.webp" width={165} height={107} alt="" sizes="(max-width: 820px) 76vw, 43vw" />
+      </div>
       <div className="wrap about-topline"><div className="kicker"><span aria-hidden="true"/> About PCI Cables</div><a className="about-skip" href="#about-pci-title" onClick={event => { event.preventDefault(); finish.current(); document.getElementById('about-pci-title')?.focus({preventScroll:true}) }}>Skip animation <span aria-hidden="true">↘</span></a></div>
       <div className="wrap about-composition">
         <div className="about-art">

@@ -5,9 +5,9 @@
 .about-topline{display:flex;justify-content:space-between;align-items:center;position:relative;z-index:3;border-bottom:1px solid #cbd2c9;padding-bottom:20px}.about-topline .kicker{margin:0}
 .about-skip{display:none;font-size:.72rem;font-weight:700;color:#4f5f66;align-items:center;gap:8px;min-height:30px}.about-skip:hover{color:var(--orange-dark)}
 
-/* Background type */
-.about-marquee{display:none;position:absolute;left:0;top:30%;z-index:-1;white-space:nowrap;pointer-events:none;transform:translate3d(calc(4% - var(--story-progress) * 46%),0,0);will-change:transform}
-.about-marquee span::before{content:attr(data-words);font-size:clamp(6rem,13vw,12.5rem);font-weight:800;letter-spacing:-.04em;line-height:1;color:transparent;-webkit-text-stroke:1px #1024391c}
+/* The original PCI CABLES mark, cropped above the small legal company caption. */
+.about-brand-watermark{position:absolute;left:50%;top:41%;z-index:-1;width:clamp(19rem,43vw,40rem);aspect-ratio:165/97;overflow:hidden;pointer-events:none;user-select:none;opacity:calc(.2 - var(--settle) * .04);filter:saturate(.85);transform:translate3d(calc(-50% - var(--settle) * 52%),calc(-50% - var(--story-progress) * 12px),0) scale(calc(1.035 - var(--settle) * .035));transform-origin:center}
+.about-brand-watermark img{display:block;width:100%;height:auto;max-width:none}
 
 /* Composition */
 .about-composition{position:relative;display:grid;grid-template-columns:1fr 1fr;gap:7%;align-items:center;padding-top:22px}
@@ -59,7 +59,7 @@
 .about-cable[data-mode=cinematic]{height:240svh}
 .about-cable[data-mode=cinematic] .about-stage{position:sticky;top:var(--story-header);height:calc(100svh - var(--story-header));display:flex;flex-direction:column;padding:25px 0 16px}
 .about-cable[data-mode=cinematic] .about-skip{display:inline-flex}
-.about-cable[data-mode=cinematic] .about-marquee{display:block}
+.about-cable[data-mode=cinematic] .about-brand-watermark{will-change:transform}
 .about-cable[data-mode=cinematic] .about-composition{flex:1;min-height:0;padding-top:0}
 .about-cable[data-mode=cinematic] .about-art{position:absolute;left:0;top:0;width:48%;height:100%;transform:translate3d(calc((1 - var(--settle)) * 54%),0,0);will-change:transform}
 .about-cable[data-mode=cinematic] .about-visual{position:absolute;inset:0;height:auto}
@@ -99,6 +99,7 @@
 /* Phones and small tablets */
 @media(max-width:820px){
   .about-stage{padding-top:28px}
+  .about-brand-watermark{top:230px;width:min(76vw,26rem);transform:translate3d(-50%,-50%,0);opacity:.16}
   .about-composition{grid-template-columns:1fr;gap:0}
   .about-visual{height:clamp(300px,82vw,420px)}
   .conductor-main{inset:-2% -6% 0}
