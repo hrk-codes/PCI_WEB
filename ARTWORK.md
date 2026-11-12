@@ -8,8 +8,14 @@ Use case: product-mockup. Generate a premium photorealistic 3D industrial cable 
 
 ## Runtime presentation
 
-The homepage uses two transparent WebP frames captured from the live scene at its opening and settled positions. The canvas replaces the selected frame after its first successful draw. The scene contains procedural cable jackets with bevelled edges, steel armour wires, separate coloured insulation cores, and instanced aluminium strand bundles. Scroll changes the model's rotation and subtly separates its layers; mouse movement adds a restrained view adjustment. The complete composition moves from centre to left before the story appears.
+The live scene (`lib/cable-scene.ts`) is procedural: bevelled cable jackets, instanced steel armour wires, separate coloured insulation cores, instanced aluminium strand bundles, and helical strand geometry for the bare aluminium conductor and the galvanised earth wire. The four-core armoured cable is built as separate layer groups (sheath, armour, bedding, insulation, strands) so the anatomy beat can pull them apart along the cable's length. Each layer carries an anchor point that the scene projects to the screen on every rendered frame to draw the leader lines. The energy pulse is a scrolling soft band on additive shells around the conductors, with no post-processing.
 
-The 3D code loads near the section, renders on demand, caps pixel density, stops rendering off screen, and disposes GPU resources on unmount. If WebGL cannot initialise or the context is lost, the image stays visible. Reduced motion and the saved pause setting render a stationary final pose. Original AAC, ACSR and ECO Panther imagery is retained beneath the scene in all modes.
+**Projection rule.** The leader lines share a coordinate space with `.about-art`. The canvas and every element between it and `.about-art` may only be moved with CSS `translate`; adding CSS rotation or scale there would detach the lines from the cable. Rotation and scale belong in the scene.
 
-Two additional live models frame the three cable cutaways: a bare aluminium conductor and a slimmer steel earth wire. Both use helical strand geometry with closed end faces. Their spacing responds to scroll progress and reverses on upward scrolling. Faint grid lines and material callouts enrich the surrounding space while keeping the PCI introduction clear.
+The homepage shows two transparent WebP frames (1280 × 800) until the canvas first draws, and again if WebGL is unavailable or the context is lost: `about-cable-opening.webp` is the exploded anatomy pose and `about-cable-settled.webp` is the finished composition. After changing the geometry or poses, regenerate both with the site running:
+
+```
+node scripts/capture-about-cable.mjs
+```
+
+The 3D code loads near the section, renders on demand (the pulse runs a time-limited loop only while visible), caps pixel density, stops rendering off screen, and disposes GPU resources on unmount. Reduced motion and the saved pause setting render a stationary final pose. The earlier generated studio image above is kept for reference only.

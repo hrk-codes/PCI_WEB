@@ -16,7 +16,7 @@ export function CableScene() {
         const { createCableScene } = await import('@/lib/cable-scene')
         if (!stopped) dispose = createCableScene(host, section)
       } catch { /* The server-rendered artwork remains visible if WebGL is unavailable. */ }
-    }, {rootMargin:'350px'})
+    }, {rootMargin:'600px'})
     observer.observe(host)
     return () => { stopped = true; observer.disconnect(); dispose?.() }
   }, [])
