@@ -53,7 +53,7 @@ try {
     await page.locator('[data-product-viewer] canvas[data-ready=yes]').waitFor({ timeout: 30000 })
     assert.ok((await page.locator('link[rel=canonical]').getAttribute('href')).endsWith(`/products/${product.slug}/`))
     assert.ok(await fits(page))
-    const imageName = product.slug === 'control-cable' ? 'control-cable-copper' : product.slug
+    const imageName = product.slug === 'control-cable' ? 'control-cable-copper' : ['pvc-power-cable', 'lt-xlpe-cable'].includes(product.slug) ? `${product.slug}-sector` : product.slug
     assert.equal((await page.request.get(`${base}/media/products/${imageName}.webp`)).status(), 200)
     if (!expectedCounts[product.slug]) {
       assert.equal(await page.getByRole('heading', { name: 'Specify it with PCI.' }).count(), 1)

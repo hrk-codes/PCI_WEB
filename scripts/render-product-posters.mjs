@@ -23,7 +23,7 @@ try {
     })
     await page.waitForFunction(() => document.querySelector('[data-product-viewer] canvas').width === 1800)
     const image = await canvas.screenshot({ omitBackground: true })
-    const imageName = product.slug === 'control-cable' ? 'control-cable-copper' : product.slug
+    const imageName = product.slug === 'control-cable' ? 'control-cable-copper' : ['pvc-power-cable', 'lt-xlpe-cable'].includes(product.slug) ? `${product.slug}-sector` : product.slug
     await sharp(image).webp({ quality: 90, effort: 5 }).toFile(`public/media/products/${imageName}.webp`)
     console.log(`Captured ${product.slug} at 1800 × 1350`)
     if (product.slug === 'control-cable') {

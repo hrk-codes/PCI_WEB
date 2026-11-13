@@ -12,6 +12,6 @@ export const productSamples: Record<string, ProductSample> = {
   'aerial-bunched-cable': { video: '/media/samples/aerial-bunched-cable.mp4', poster: '/media/samples/aerial-bunched-cable.webp', label: '3C × 95 + 70 + 16 mm² aerial bunched cable' },
   'covered-conductor': { video: '/media/samples/covered-conductor.mp4', poster: '/media/samples/covered-conductor.webp', label: 'Covered conductor display sample' },
   'control-cable': { video: '/media/samples/control-cable.mp4', poster: '/media/samples/control-cable.webp', label: '12C × 2.5 mm² armoured control cable', reference: { image: '/media/samples/control-cable-copper.webp', label: 'Four-core copper control cable display sample' } },
-  'lt-xlpe-cable': { video: '/media/samples/lt-xlpe-cable.mp4', poster: '/media/samples/lt-xlpe-cable.webp', label: 'Four-core A2XWY armoured XLPE cable' },
+  'lt-xlpe-cable': { video: '/media/samples/lt-xlpe-cable.mp4', poster: '/media/samples/lt-xlpe-cable.webp', label: 'Four-core A2XWY armoured XLPE cable', reference: { image: '/media/samples/lt-xlpe-sector-reference.webp', label: 'Sector-shaped aluminium cores and blue sheath — PCI display sample' } },
   'pvc-power-cable': { video: '/media/samples/pvc-power-cable.mp4', poster: '/media/samples/pvc-power-cable.webp', label: '2C × 10 mm² AYY PVC cable' },
 }

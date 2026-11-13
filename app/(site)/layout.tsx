@@ -14,5 +14,5 @@ export const metadata: Metadata = {
   verification: { google: process.env.GOOGLE_SITE_VERIFICATION },
 }
 export default function Layout({ children }: { children: React.ReactNode }) {
-  return <html lang="en-IN"><body><a className="skip" href="#main">Skip to content</a><Header/><main id="main">{children}</main><Footer/><QuickInfo/></body></html>
+  return <html lang="en-IN" data-scroll-behavior="smooth"><body><a className="skip" href="#main">Skip to content</a><Header/><main id="main">{children}</main><Footer/><QuickInfo/></body></html>
 }

@@ -6,6 +6,7 @@ import { OutputPass } from 'three/addons/postprocessing/OutputPass.js'
 import { createStudioEnvironment } from './studio'
 import { buildConductor, conductorMaterials, constructions, type ConductorKind } from './conductor-models'
 import { createCableKit } from './cable-models'
+import { createPowerCoreGeometry, powerCoreStrands } from './power-cable-cores'
 
 export type ProductViewerApi = ReturnType<typeof createProductViewer>
 
@@ -123,29 +124,63 @@ function productModel(slug: string) {
       built.group.position.y = 2.9
       conductor.add(built.group)
       disposers.push(built.dispose)
-    } else {
+    } else if (slug === 'pvc-power-cable' || slug === 'lt-xlpe-cable') {
       const xlpe = slug === 'lt-xlpe-cable'
-      const count = xlpe ? 4 : slug === 'pvc-power-cable' ? 2 : 1
-      const radius = count === 1 ? .44 : .8
-      sleeve(layer(), radius, radius - .1, -2.8, .3, xlpe ? blue : rubber)
+      const count = xlpe ? 4 : 2
+      const coreRadius = xlpe ? .587 : .565
+      const coreBase = xlpe ? 1.75 : .3
+      sleeve(layer(new T.Vector3(0, -.55, 0)), xlpe ? .8 : .64, xlpe ? .72 : .568, -2.8, .3, xlpe ? blue : rubber)
       if (xlpe) {
-        const armour = layer()
-        const wires = 60
-        for (let index = 0; index < wires; index++) {
-          const angle = index * Math.PI * 2 / wires
-          kit.cylinder(armour, .031, 4.1, -.75, steel, Math.cos(angle) * (radius - .15), Math.sin(angle) * (radius - .15))
+        const armour = layer(new T.Vector3(0, .5, 0))
+        const buriedArmour = new T.Group()
+        armour.add(buriedArmour)
+        buriedSections.push(buriedArmour)
+        for (let index = 0; index < 68; index++) {
+          const angle = index * Math.PI * 2 / 68
+          const x = Math.cos(angle) * .684, z = Math.sin(angle) * .684
+          kit.cylinder(armour, .03, 1, .8, steel, x, z)
+          kit.cylinder(buriedArmour, .03, 3.1, -1.25, steel, x, z)
         }
-        sleeve(layer(), radius - .2, radius - .27, -2.8, 1.75, bedding)
+        const innerSheath = layer(new T.Vector3(0, 1.15, 0))
+        sleeve(innerSheath, .65, .59, .3, coreBase, bedding)
+        const buriedSheath = new T.Group()
+        innerSheath.add(buriedSheath)
+        sleeve(buriedSheath, .65, .59, -2.8, .3, bedding)
+        buriedSections.push(buriedSheath)
       }
-      const cores = layer()
+      const strandRadius = .026
+      const positions = powerCoreStrands(count, coreRadius - .052, .064, strandRadius)
       for (let index = 0; index < count; index++) {
-        let x = 0, z = 0
-        if (count === 4) {
-          x = index % 2 ? .25 : -.25; z = index < 2 ? .25 : -.25
-        } else if (count === 2) x = index ? .31 : -.31
-        const insulation = count === 2 && index === 1 ? colours[3] : colours[index % colours.length]
-        core(cores, count === 1 ? .29 : .285, x, z, insulation, 3.05 + (index % 3) * .15)
+        const angle = index * Math.PI * 2 / count + (count === 2 ? Math.PI / 2 : 0)
+        // Rotate each complete sector about the cable axis, rather than offsetting round cores.
+        const direction = angle + (count === 4 ? Math.PI / 4 : 0)
+        const insulation = layer(new T.Vector3(Math.cos(direction) * .35, 1.8, Math.sin(direction) * .35))
+        const conductor = layer(new T.Vector3(Math.cos(direction) * .35, 2.45, Math.sin(direction) * .35))
+        insulation.rotation.y = conductor.rotation.y = -angle
+        const material = count === 2 && index === 1 ? colours[3] : colours[index]
+        const top = 3.05 + (index % 2) * .08
+        function section(parent: T.Group, bottom: number, insulationTop: number, metalTop: number, hidden = false) {
+          const shell = new T.Mesh(kit.track(createPowerCoreGeometry(count, coreRadius, bottom, insulationTop)), material)
+          const strandGeometry = kit.track(new T.CylinderGeometry(strandRadius, strandRadius, metalTop - bottom, 12, 1))
+          const strands = new T.InstancedMesh(strandGeometry, aluminium, positions.length)
+          const matrix = new T.Matrix4()
+          positions.forEach(([x, z], strand) => {
+            matrix.makeTranslation(x, (bottom + metalTop) / 2, z)
+            strands.setMatrixAt(strand, matrix)
+          })
+          if (hidden) {
+            const shellFill = new T.Group(), metalFill = new T.Group()
+            shellFill.add(shell); metalFill.add(strands)
+            insulation.add(shellFill); conductor.add(metalFill)
+            buriedSections.push(shellFill, metalFill)
+          } else { parent.add(shell); conductor.add(strands) }
+        }
+        section(insulation, coreBase, top - .55, top)
+        section(insulation, -2.8, coreBase, coreBase, true)
       }
+    } else {
+      sleeve(layer(), .44, .34, -2.8, .3, rubber)
+      core(layer(), .29, 0, 0, colours[0], 3.05)
     }
     // Kit cylinders are built along Y; conductor models use Z. Keep one viewing convention.
     root.rotation.x = Math.PI / 2
@@ -194,6 +229,9 @@ export function createProductViewer(canvas: HTMLCanvasElement, slug: string, onR
   renderer.toneMappingExposure = 1.1
   const scene = new T.Scene()
   const camera = new T.PerspectiveCamera(30, 1, .1, 100)
+  const endCamera = new T.OrthographicCamera(-1, 1, 1, -1, .1, 100)
+  const packedPowerCable = slug === 'pvc-power-cable' || slug === 'lt-xlpe-cable'
+  let orthographicEnd = false
   const environment = createStudioEnvironment(renderer)
   scene.environment = environment.texture
   scene.environmentIntensity = .85
@@ -201,6 +239,7 @@ export function createProductViewer(canvas: HTMLCanvasElement, slug: string, onR
   // between strands and layers. The live viewer skips it to stay light.
   const poster = new URLSearchParams(location.search).has('poster')
   let composer: EffectComposer | null = null, ao: GTAOPass | null = null
+  let composerCamera: T.Camera | null = null
   const key = new T.DirectionalLight(0xfff5e8, 3.2); key.position.set(-4, 7, 8)
   const rim = new T.DirectionalLight(0xc9e1ff, 3); rim.position.set(6, 3, -4)
   scene.add(key, rim, new T.HemisphereLight(0xe5efff, 0x798a86, 1.3))
@@ -219,22 +258,36 @@ export function createProductViewer(canvas: HTMLCanvasElement, slug: string, onR
     renderer.setSize(width, height, false)
     camera.aspect = width / height
     model.group.rotation.set(pitch, yaw, roll)
-    if (slug === 'control-cable') {
+    if (slug === 'control-cable' || packedPowerCable) {
       const bounds = visibleBounds(model.group)
       const size = bounds.getSize(new T.Vector3()), centre = bounds.getCenter(new T.Vector3())
       const distance = Math.max(size.y, size.x / camera.aspect) / (2 * Math.tan(T.MathUtils.degToRad(camera.fov / 2))) * 1.14 / zoom + size.z / 2
       camera.position.set(centre.x, centre.y, centre.z + distance)
       camera.lookAt(centre)
+      if (orthographicEnd) {
+        // A true axial section: perspective must not make the near cores look larger than the jacket.
+        const halfHeight = Math.max(size.y, size.x / camera.aspect) * .57 / zoom
+        endCamera.left = -halfHeight * camera.aspect; endCamera.right = halfHeight * camera.aspect
+        endCamera.top = halfHeight; endCamera.bottom = -halfHeight
+        endCamera.position.set(centre.x, centre.y, centre.z + 15)
+        endCamera.lookAt(centre)
+        endCamera.updateProjectionMatrix()
+      }
     } else {
       camera.position.set(0, 0, 10.6 / zoom / Math.min(camera.aspect, 1))
       camera.lookAt(0, 0, 0)
     }
     camera.updateProjectionMatrix()
+    const renderCamera = orthographicEnd ? endCamera : camera
     if (poster) {
+      if (composer && composerCamera !== renderCamera) {
+        ao?.dispose(); composer.dispose(); composer = null
+      }
       if (!composer) {
         composer = new EffectComposer(renderer)
-        composer.addPass(new RenderPass(scene, camera))
-        ao = new GTAOPass(scene, camera, width, height)
+        composerCamera = renderCamera
+        composer.addPass(new RenderPass(scene, renderCamera))
+        ao = new GTAOPass(scene, renderCamera, width, height)
         ao.updateGtaoMaterial({radius:.6, distanceExponent:1.4, thickness:2, scale:1.4, samples:32})
         ao.blendIntensity = 1
         composer.addPass(ao)
@@ -243,12 +296,12 @@ export function createProductViewer(canvas: HTMLCanvasElement, slug: string, onR
       composer.setPixelRatio(renderer.getPixelRatio())
       composer.setSize(width, height)
       composer.render()
-    } else renderer.render(scene, camera)
+    } else renderer.render(scene, renderCamera)
     canvas.dataset.ready = 'yes'
     onReady(true)
   }
   function request() { if (!disposed && !frame) frame = requestAnimationFrame(paint) }
-  function rotate(x: number, y = 0) { yaw += x; pitch = T.MathUtils.clamp(pitch + y, -1.4, 1.4); request() }
+  function rotate(x: number, y = 0) { orthographicEnd = false; yaw += x; pitch = T.MathUtils.clamp(pitch + y, -1.4, 1.4); request() }
   function pointerDown(event: PointerEvent) {
     if (event.button !== 0) return
     drag = { id: event.pointerId, x: event.clientX, y: event.clientY, yaw, pitch }
@@ -256,6 +309,7 @@ export function createProductViewer(canvas: HTMLCanvasElement, slug: string, onR
   }
   function pointerMove(event: PointerEvent) {
     if (!drag || drag.id !== event.pointerId) return
+    orthographicEnd = false
     yaw = drag.yaw + (event.clientX - drag.x) * .009
     pitch = T.MathUtils.clamp(drag.pitch + (event.clientY - drag.y) * .006, -1.4, 1.4)
     request()
@@ -280,8 +334,8 @@ export function createProductViewer(canvas: HTMLCanvasElement, slug: string, onR
     rotate,
     zoom(value: number) { zoom = value; request() },
     separate(value: number) { model.separate(value); request() },
-    reset() { yaw = initial.yaw; pitch = initial.pitch; roll = initial.roll; zoom = 1; model.separate(0); request() },
-    endView() { yaw = 0; pitch = 0; roll = 0; zoom = slug === 'control-cable' ? 1 : 2; request(); return zoom },
+    reset() { orthographicEnd = false; yaw = initial.yaw; pitch = initial.pitch; roll = initial.roll; zoom = 1; model.separate(0); request() },
+    endView() { orthographicEnd = packedPowerCable; yaw = 0; pitch = 0; roll = 0; zoom = slug === 'control-cable' || packedPowerCable ? 1 : 2; request(); return zoom },
     dispose() {
       disposed = true
       cancelAnimationFrame(frame)
