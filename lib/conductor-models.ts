@@ -48,9 +48,9 @@ function twist(geo: T.BufferGeometry, turnsPerUnit: number) {
  * Builds a conductor along +z, its stepped end at z = 0 and its body running back to z = -length.
  * `wire` is the round wire diameter; trapezoidal layers keep the same layer thickness.
  */
-export function buildConductor(kind: ConductorKind, materials = conductorMaterials(), {length = 14, wire = .2, step = .55} = {}) {
+export function buildConductor(kind: ConductorKind, materials = conductorMaterials(), {length = 14, wire = .2, step = .55, layers: selectedLayers = constructions[kind]}: {length?:number; wire?:number; step?:number; layers?:Layer[]} = {}) {
   const group = new T.Group()
-  const layers = constructions[kind]
+  const layers = selectedLayers
   const geometries: T.BufferGeometry[] = []
   let inner = 0
   const lay = 11 * wire * layers.length // lay length grows with the conductor diameter, as in real stranding

@@ -2,11 +2,14 @@ import Link from 'next/link'
 import { Arrow, Picture, TextLink } from '@/components/site'
 import { catalogue, families, editedMany, articles } from '@/lib/content'
 type Item = typeof catalogue[number]
+export function productImage(product: Item) {
+  return `/media/products/${product.slug}.webp`
+}
 
 export async function ProductGrid({ items, feature = false }: { items: Item[]; feature?: boolean }) {
   const titles = await editedMany(items.map(item => 'product:'+item.slug))
   return <div className={'product-grid '+(feature?'feature-grid':'')}>{items.map(item=><Link className="product-card" key={item.slug} href={'/products/'+item.slug+'/'}>
-    <div className="product-image"><Picture src={'/media/'+item.slug+'.webp'} alt="" sizes="(max-width: 700px) 50vw, 25vw"/></div>
+    <div className="product-image"><Picture src={productImage(item)} alt="" sizes="(max-width: 700px) 50vw, 25vw"/></div>
     <div className="product-label">{feature && <small>{families[item.family]}</small>}<strong>{titles.get('product:'+item.slug)?.title || item.name}</strong><Arrow diagonal/></div>
   </Link>)}</div>
 }

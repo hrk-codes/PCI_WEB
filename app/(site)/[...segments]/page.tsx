@@ -3,14 +3,12 @@ import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
 import { Arrow, Kicker, PageHead, Picture, TextLink } from '@/components/site'
-import { ProductGrid, Updates, articleImages } from '@/components/catalogue'
+import { ProductGrid, Updates, articleImages, productImage } from '@/components/catalogue'
 import { Inquiry } from '@/components/inquiry'
 import { ClientDirectory } from '@/components/client-directory'
 import { MilestoneStory } from '@/components/milestone-story'
 import { Turnover } from '@/components/turnover'
-import { productNotes } from '@/content/product-notes'
-import { productSamples } from '@/content/product-samples'
-import { ProductSampleFilm } from '@/components/product-sample-film'
+import { ProductDetail } from '@/components/product-detail'
 import { address, articles, catalogue, cleanHtml, company, edited, families, publicDocs, siteUrl, structured } from '@/lib/content'
 
 export const dynamic = 'force-dynamic'
@@ -75,7 +73,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const d = await resolve(segments)
   const url = '/'+segments.join('/')+'/'
   const title = d.slug === 'achievements' && d.title === intros.achievements[0] ? 'Milestones' : d.title
-  const images = d.product ? ['/media/'+d.product.slug+'.webp'] : d.article ? ['/media/'+articleImages[d.article.slug]] : [d.slug === 'achievements' ? '/media/plant.webp' : '/media/hero-cables.webp']
+  const images = d.product ? [productImage(d.product)] : d.article ? ['/media/'+articleImages[d.article.slug]] : [d.slug === 'achievements' ? '/media/plant.webp' : '/media/hero-cables.webp']
   return { title, description:d.summary, alternates:{canonical:url}, openGraph:{ title, description:d.summary, url, images, type:d.article?'article':'website' } }
 }
 
@@ -109,15 +107,14 @@ export default async function PublicPage({ params, searchParams }: Props) {
       <MilestoneStory title={d.title} intro={d.summary}>{d.html ? <Rich html={d.html} /> : null}</MilestoneStory>
     </>
   }
-  const schema = d.product ? {'@type':'Product', name:d.title, description:d.summary, image:siteUrl+'/media/'+d.product.slug+'.webp', url, manufacturer:{'@type':'Organization',name:company}} : d.article ? {'@type':'Article',headline:d.title,description:d.summary,datePublished:d.article.date+'+05:30',image:siteUrl+'/media/'+articleImages[d.article.slug],mainEntityOfPage:url,author:{'@type':'Organization',name:company,url:siteUrl}} : null
+  const schema = d.product ? {'@type':'Product', name:d.title, description:d.summary, image:siteUrl+productImage(d.product), url, manufacturer:{'@type':'Organization',name:company}} : d.article ? {'@type':'Article',headline:d.title,description:d.summary,datePublished:d.article.date+'+05:30',image:siteUrl+'/media/'+articleImages[d.article.slug],mainEntityOfPage:url,author:{'@type':'Organization',name:company,url:siteUrl}} : null
   let body: React.ReactNode
   if (d.product) {
-    const product = d.product
-    const notes = productNotes[product.slug]
-    const sample = productSamples[product.slug]
-    body = <><div className="split detail"><div className="detail-image"><Picture src={'/media/'+product.slug+'.webp'} alt={d.title} priority/></div><div><Kicker>{families[product.family]}</Kicker><h2>Product information</h2>{d.html ? <Rich html={d.html}/> : notes && <dl className="product-facts"><div><dt>Construction</dt><dd>{notes.construction}</dd></div><div><dt>Applications</dt><dd>{notes.application}</dd></div></dl>}<p>Include the size, quantity and applicable standard in your quote request so PCI can confirm the right specification.</p><div className="detail-links"><Link className="button" href={'/request-quote/?product='+product.slug}>Request a quote <Arrow diagonal/></Link><a className="button outline" href={'/media/'+(product.pdf || 'catalogue.pdf')}>{product.pdf ? 'Download datasheet' : 'Download catalogue'} <Arrow diagonal/></a></div></div></div>
-      {sample && <ProductSampleFilm sample={sample} name={d.title}/>}
-      <div className="related"><Kicker>Keep exploring</Kicker><h2>Related products.</h2><ProductGrid items={catalogue.filter(p=>p.family===product.family && p.slug!==product.slug).slice(0,4)}/><TextLink href={'/'+product.family+'/'}>See all {families[product.family].toLowerCase()}</TextLink></div></>
+    return <>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: structured(breadcrumbs) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: structured(schema!) }} />
+      <ProductDetail product={d.product} title={d.title} summary={d.summary}>{d.html ? <Rich html={d.html} /> : null}</ProductDetail>
+    </>
   } else if (d.article) {
     body = <article className="reading"><div className="article-hero"><Picture src={'/media/'+articleImages[d.article.slug]} alt="" priority/></div><Rich html={d.html}/><TextLink href="/blog/">All stories</TextLink></article>
   } else if (d.slug==='products' || families[d.slug]) {

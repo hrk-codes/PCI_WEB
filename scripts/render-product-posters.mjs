@@ -1,0 +1,26 @@
+// Capture the manually controlled product models as high-resolution fallback artwork.
+// Run against the local preview. No product video is played or downloaded.
+import { mkdir, readFile } from 'node:fs/promises'
+import { chromium } from 'playwright-core'
+import sharp from 'sharp'
+
+const products = JSON.parse(await readFile(new URL('../content/catalogue.json', import.meta.url), 'utf8'))
+const base = (process.env.PCI_BROWSER_URL || 'http://127.0.0.1:3000').replace(/\/$/, '')
+await mkdir('public/media/products', { recursive: true })
+const browser = await chromium.launch({ executablePath: process.env.CHROME_PATH || 'C:/Program Files/Google/Chrome/Application/chrome.exe' })
+try {
+  const page = await browser.newPage({ viewport: { width: 1280, height: 1000 }, deviceScaleFactor: 1.5, reducedMotion: 'reduce' })
+  for (const product of products) {
+    const response = await page.goto(`${base}/products/${product.slug}/`, { waitUntil: 'domcontentloaded' })
+    if (response.status() !== 200) throw Error(`${product.slug} did not load`)
+    const canvas = page.locator('[data-product-viewer] canvas[data-ready=yes]')
+    await canvas.waitFor({ timeout: 30000 })
+    await canvas.evaluate(element => {
+      element.parentElement.style.cssText += ';position:fixed;top:0;left:0;width:1200px;height:900px;z-index:99;'
+    })
+    await page.waitForFunction(() => document.querySelector('[data-product-viewer] canvas').width === 1800)
+    const image = await canvas.screenshot({ omitBackground: true })
+    await sharp(image).webp({ quality: 90, effort: 5 }).toFile(`public/media/products/${product.slug}.webp`)
+    console.log(`Captured ${product.slug} at 1800 × 1350`)
+  }
+} finally { await browser.close() }
