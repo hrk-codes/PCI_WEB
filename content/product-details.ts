@@ -132,9 +132,11 @@ export const productDetails: Record<string, ProductDetail> = {
   'control-cable': {
     pages: [4], standards: [],
     layers: [
-      { name: 'Multiple conductor cores', detail: 'A multi-conductor construction for control and instrumentation circuits.' },
-      { name: 'Insulation and inner sheath', detail: 'Individual cores are insulated and assembled beneath an inner sheath.' },
-      { name: 'Armour and outer sheath', detail: 'The catalogue’s illustration shows armour beneath the outer sheath.' },
+      { name: 'Outer sheath', detail: 'A black protective outer jacket surrounds the cable, as shown in PCI’s new sample recording and catalogue illustration.' },
+      { name: 'Steel wire armour', detail: 'A layer of metallic armour wires sits between the outer jacket and the inner sheath.' },
+      { name: 'Inner sheath', detail: 'The black inner sheath encloses the assembled insulated cores beneath the armour.' },
+      { name: 'Core insulation', detail: 'The new display sample has four individually insulated cores in red, yellow, blue and black.' },
+      { name: 'Copper strands', detail: 'Stranded copper conductors run inside the insulation. The model shows a clean copper finish. Core count and conductor size depend on the specified construction.' },
     ],
     application: 'Automation and instrumentation applications, including measuring and regulating transmissions in automated processes.',
     notes: [],

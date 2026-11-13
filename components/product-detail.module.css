@@ -24,6 +24,9 @@
 .viewerControls label { display: grid; gap: 8px; color: #345464; font-size: .71rem; font-weight: 700; }
 .viewerControls input { width: 100%; min-width: 0; margin: 0; height: 26px; accent-color: #244b62; cursor: pointer; }
 .viewerNote { padding: 0 16px 16px; font-size: .69rem; color: #4e6672; }
+.viewerLayers { padding: 0 16px 16px; color: #345464; font-size: .68rem; }
+.viewerLayers > span { font-weight: 700; }
+.viewerLayers ol { display: flex; flex-wrap: wrap; gap: 6px 18px; margin: 8px 0 0; padding-left: 14px; }
 .sampleReference { border-top: 1px solid #b9cbcd; }
 .sampleReference > summary { min-height: 44px; padding: 12px 16px; cursor: pointer; color: #2d5369; font-size: .75rem; font-weight: 700; }
 .sampleReference figure { margin: 0; padding: 8px 16px 20px; }

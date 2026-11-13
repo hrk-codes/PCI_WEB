@@ -66,7 +66,7 @@ export async function ProductDetail({ product, title, summary, children }: { pro
             </div>
           </div>
           <div className={styles.heroFigure} id="product-construction">
-            <ProductViewer slug={product.slug} name={product.short} poster={productImage(product)} />
+            <ProductViewer slug={product.slug} name={product.short} poster={productImage(product)} layers={product.slug === 'control-cable' ? detail.layers.map(layer => layer.name) : undefined} />
           </div>
         </div>
         <dl className={styles.heroFacts}>

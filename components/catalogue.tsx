@@ -3,7 +3,7 @@ import { Arrow, Picture, TextLink } from '@/components/site'
 import { catalogue, families, editedMany, articles } from '@/lib/content'
 type Item = typeof catalogue[number]
 export function productImage(product: Item) {
-  return `/media/products/${product.slug}.webp`
+  return `/media/products/${product.slug === 'control-cable' ? 'control-cable-copper' : product.slug}.webp`
 }
 
 export async function ProductGrid({ items, feature = false }: { items: Item[]; feature?: boolean }) {

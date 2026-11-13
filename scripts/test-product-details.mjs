@@ -53,7 +53,8 @@ try {
     await page.locator('[data-product-viewer] canvas[data-ready=yes]').waitFor({ timeout: 30000 })
     assert.ok((await page.locator('link[rel=canonical]').getAttribute('href')).endsWith(`/products/${product.slug}/`))
     assert.ok(await fits(page))
-    assert.equal((await page.request.get(`${base}/media/products/${product.slug}.webp`)).status(), 200)
+    const imageName = product.slug === 'control-cable' ? 'control-cable-copper' : product.slug
+    assert.equal((await page.request.get(`${base}/media/products/${imageName}.webp`)).status(), 200)
     if (!expectedCounts[product.slug]) {
       assert.equal(await page.getByRole('heading', { name: 'Specify it with PCI.' }).count(), 1)
       assert.equal(await page.locator('[data-spec-entry]').count(), 0)
@@ -115,6 +116,21 @@ try {
   await mobile.setViewportSize({ width: 720, height: 500 })
   assert.ok(await fits(mobile), 'Directory fits at 200% equivalent width')
   await mobile.close()
+
+  const control = await open('control-cable')
+  const controlCanvas = control.locator('[data-product-viewer] canvas[data-ready=yes]')
+  await controlCanvas.waitFor()
+  const controlStart = await controlCanvas.screenshot()
+  const layers = control.getByLabel('Separate layers', { exact: true })
+  await layers.focus(); await control.keyboard.press('End')
+  await control.waitForTimeout(150)
+  assert.equal(controlStart.equals(await controlCanvas.screenshot()), false, 'Control cable separates into its cutaway sections')
+  await control.getByRole('button', { name: 'Reset', exact: true }).click()
+  await control.waitForTimeout(150)
+  assert.equal(controlStart.equals(await controlCanvas.screenshot()), true, 'Control cable reassembles without drift')
+  await control.getByText('View PCI’s display sample reference', { exact: true }).click()
+  assert.ok(await control.getByAltText('Four-core copper control cable display sample').evaluate(async img => { await img.decode(); return img.naturalWidth > 0 }))
+  await control.close()
 
   const staticPage = await open('aac', { javaScriptEnabled: false })
   assert.equal(await staticPage.locator('[data-spec-entry]').count(), 108, 'Every AAC entry is server rendered')

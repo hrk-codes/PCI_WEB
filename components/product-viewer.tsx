@@ -6,7 +6,7 @@ import type { ProductViewerApi } from '@/lib/product-viewer'
 import { productSamples } from '@/content/product-samples'
 import styles from './product-detail.module.css'
 
-export function ProductViewer({ slug, name, poster }: { slug: string; name: string; poster: string }) {
+export function ProductViewer({ slug, name, poster, layers = [] }: { slug: string; name: string; poster: string; layers?: string[] }) {
   const canvas = useRef<HTMLCanvasElement>(null)
   const api = useRef<ProductViewerApi | null>(null)
   const [ready, setReady] = useState(false)
@@ -14,6 +14,7 @@ export function ProductViewer({ slug, name, poster }: { slug: string; name: stri
   const [separation, setSeparation] = useState(0)
   const id = useId()
   const sample = productSamples[slug]
+  const reference = sample?.reference || (sample ? { image: sample.poster, label: sample.label } : undefined)
   useEffect(() => {
     let disposed = false
     const element = canvas.current!
@@ -28,7 +29,7 @@ export function ProductViewer({ slug, name, poster }: { slug: string; name: stri
     }, { rootMargin: '150px' })
     observer.observe(element)
     return () => { disposed = true; observer.disconnect(); api.current?.dispose(); api.current = null }
-  }, [slug])
+  }, [slug, poster])
   function reset() { api.current?.reset(); setZoom(1); setSeparation(0) }
 
   return <div className={styles.viewer} data-product-viewer={slug}>
@@ -46,16 +47,17 @@ export function ProductViewer({ slug, name, poster }: { slug: string; name: stri
       <div className={styles.viewerButtons}>
         <button type="button" disabled={!ready} onClick={() => api.current?.rotate(-.3)} aria-label="Rotate product left">↶</button>
         <button type="button" disabled={!ready} onClick={() => api.current?.rotate(.3)} aria-label="Rotate product right">↷</button>
-        <button type="button" disabled={!ready} onClick={() => { api.current?.endView(); setZoom(2) }}>End view</button>
+        <button type="button" disabled={!ready} onClick={() => { const next = api.current?.endView(); if (next) setZoom(next) }}>End view</button>
         <button type="button" disabled={!ready} onClick={reset}>Reset</button>
       </div>
       <label htmlFor={`${id}-zoom`}>Zoom<input id={`${id}-zoom`} type="range" min=".8" max="2.2" step=".05" value={zoom} disabled={!ready} onChange={event => { const value = Number(event.target.value); setZoom(value); api.current?.zoom(value) }} /></label>
       <label htmlFor={`${id}-layers`}>Separate layers<input id={`${id}-layers`} type="range" min="0" max="1" step=".05" value={separation} disabled={!ready} onChange={event => { const value = Number(event.target.value); setSeparation(value); api.current?.separate(value) }} /></label>
     </div>
+    {layers.length > 0 && <div className={styles.viewerLayers}><span>Outside → inside</span><ol>{layers.map(layer => <li key={layer}>{layer}</li>)}</ol></div>}
     <p className={styles.viewerNote}>Illustrative construction. Use the size directory for the dimensions of your selected specification.</p>
-    {sample && <details className={styles.sampleReference}>
+    {reference && <details className={styles.sampleReference}>
       <summary>View PCI’s display sample reference</summary>
-      <figure><Image src={sample.poster} width={864} height={1536} alt={sample.label} sizes="(max-width: 600px) 70vw, 260px" /><figcaption>{sample.label}. Still extracted from PCI’s sample recording.</figcaption></figure>
+      <figure><Image src={reference.image} width={864} height={1536} alt={reference.label} sizes="(max-width: 600px) 70vw, 260px" /><figcaption>{reference.label}. Still extracted from PCI’s sample recording.</figcaption></figure>
     </details>}
   </div>
 }
