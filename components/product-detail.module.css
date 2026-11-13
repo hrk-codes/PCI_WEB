@@ -47,7 +47,7 @@
 .sectionHeading h2 { font-size: clamp(2rem, 3.5vw, 3.4rem); }
 .sectionHeading h3 { font-size: clamp(1.5rem, 2.6vw, 2.2rem); }
 .sectionHeading > p { max-width: 45ch; font-size: .92rem; }
-.overviewGrid { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, .85fr); gap: clamp(24px, 4vw, 56px); }
+.overviewGrid { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, .85fr); align-items: start; gap: clamp(24px, 4vw, 56px); }
 .construction { padding: clamp(22px, 3vw, 36px); border: 1px solid #cbd7d5; background: #fffdf8; }
 .construction h3 { font-size: 1.7rem; }
 .construction ol { list-style: none; margin: 28px 0 0; padding: 0; display: grid; gap: 24px; }
@@ -62,7 +62,7 @@
 .standards li { border: 1px solid #c2d1d2; padding: 7px 10px; font-size: .73rem; font-weight: 700; color: #304d5b; }
 .application .overviewNote { margin-top: 25px; padding-top: 20px; border-top: 1px solid #cbd7d5; }
 .strandPanel { margin-top: 30px; padding: clamp(22px, 3vw, 36px); background: #e9eeeb; }
-.strandGrid { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 16px; }
+.strandGrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: 16px; }
 .strandGrid svg { display: block; width: 100%; max-height: 115px; filter: drop-shadow(0 8px 4px #203c4918); }
 .strandGrid figure { margin: 0; text-align: center; }
 .strandGrid figcaption { margin-top: 15px; color: #294756; font-size: .78rem; font-weight: 700; }
@@ -118,14 +118,14 @@
 .enquiry h2 { font-size: clamp(1.8rem, 3vw, 2.8rem); }
 .enquiry > p { max-width: 70ch; margin-block: 20px; }
 .downloads { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px; }
-.document, .quoteCard { display: flex; flex-direction: column; align-items: start; padding: clamp(22px, 3vw, 34px); background: #fffdf8; border: 1px solid #c3d1d1; }
+.document, .quoteCard { display: flex; flex-direction: column; align-items: start; padding: clamp(20px, 2.4vw, 28px); background: #fffdf8; border: 1px solid #c3d1d1; }
 .document > span:first-child { color: #6b5b4d; font-size: .7rem; font-weight: 800; letter-spacing: .1em; }
-.document h3, .quoteCard h3 { margin-block: 18px 14px; font-size: 1.6rem; }
+.document h3, .quoteCard h3 { margin-block: 12px 10px; font-size: clamp(1.25rem, 1.8vw, 1.45rem); }
 .document p, .quoteCard p { font-size: .87rem; }
-.documentAction { display: inline-flex; align-items: center; gap: 12px; margin-top: auto; padding-top: 28px; font-size: .8rem; font-weight: 700; color: #24506a; }
+.documentAction { display: inline-flex; align-items: center; gap: 12px; margin-top: auto; padding-top: 18px; font-size: .8rem; font-weight: 700; color: #24506a; }
 .document:hover { border-color: #4f7585; background: #f1f4ee; }
 .quoteCard { background: #e8eeeb; }
-.quoteCard :global(.button) { margin-top: 24px; }
+.quoteCard :global(.button) { margin-top: 18px; }
 .quoteCard :global(.kicker) { margin-bottom: 0; }
 
 @media (max-width: 1050px) {

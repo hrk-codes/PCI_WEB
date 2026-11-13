@@ -17,6 +17,9 @@ const descriptions = {
   turnover:['Company turnover','PCI Cables’ published financial year turnover from 2015–16 through 2024–25.'],
 }
 for (const doc of docs) if (descriptions[doc.slug]) [doc.title,doc.summary] = descriptions[doc.slug]
+// Complete titles and summaries for pages whose imported excerpts were cut off (also applied by fix-page-copy.mjs).
+const pageCopy = await read('content/page-copy.json')
+for (const doc of docs) if (pageCopy[doc.slug]) { doc.title = pageCopy[doc.slug].title || doc.title; doc.summary = pageCopy[doc.slug].summary }
 const catalogue = await read('content/catalogue.json')
 docs.push(...catalogue.map(p => ({ slug: 'product:'+p.slug, title: p.name, summary: p.summary, kind: 'product', html: '' })))
 docs.push({ slug: 'home', title: 'Engineered to carry the current.', summary: 'Cables, overhead conductors and earth wire from Dankuni, made for power networks across India and beyond.', kind: 'home', html: '' })

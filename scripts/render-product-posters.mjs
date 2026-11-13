@@ -12,10 +12,12 @@ const browser = await chromium.launch({ executablePath: process.env.CHROME_PATH 
 try {
   const page = await browser.newPage({ viewport: { width: 1280, height: 1000 }, deviceScaleFactor: 1.5, reducedMotion: 'reduce' })
   for (const product of products.filter(product => !only.length || only.includes(product.slug))) {
-    const response = await page.goto(`${base}/products/${product.slug}/`, { waitUntil: 'domcontentloaded' })
+    const response = await page.goto(`${base}/products/${product.slug}/?poster=1`, { waitUntil: 'domcontentloaded' })
     if (response.status() !== 200) throw Error(`${product.slug} did not load`)
     const canvas = page.locator('[data-product-viewer] canvas[data-ready=yes]')
     await canvas.waitFor({ timeout: 30000 })
+    // Keep the viewer's badge and controls out of the artwork.
+    await page.addStyleTag({ content: '[data-product-viewer] span{visibility:hidden!important}' })
     await canvas.evaluate(element => {
       element.parentElement.style.cssText += ';position:fixed;top:0;left:0;width:1200px;height:900px;z-index:99;'
     })

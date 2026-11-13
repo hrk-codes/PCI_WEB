@@ -1,5 +1,9 @@
 import * as T from 'three'
-import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js'
+import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js'
+import { RenderPass } from 'three/addons/postprocessing/RenderPass.js'
+import { GTAOPass } from 'three/addons/postprocessing/GTAOPass.js'
+import { OutputPass } from 'three/addons/postprocessing/OutputPass.js'
+import { createStudioEnvironment } from './studio'
 import { buildConductor, conductorMaterials, constructions, type ConductorKind } from './conductor-models'
 import { createCableKit } from './cable-models'
 
@@ -190,12 +194,13 @@ export function createProductViewer(canvas: HTMLCanvasElement, slug: string, onR
   renderer.toneMappingExposure = 1.1
   const scene = new T.Scene()
   const camera = new T.PerspectiveCamera(30, 1, .1, 100)
-  const pmrem = new T.PMREMGenerator(renderer)
-  const room = new RoomEnvironment()
-  const environment = pmrem.fromScene(room, .04)
-  room.dispose()
+  const environment = createStudioEnvironment(renderer)
   scene.environment = environment.texture
   scene.environmentIntensity = .85
+  // Poster capture (scripts/render-product-posters.mjs opens the page with ?poster=1) adds ambient occlusion
+  // between strands and layers. The live viewer skips it to stay light.
+  const poster = new URLSearchParams(location.search).has('poster')
+  let composer: EffectComposer | null = null, ao: GTAOPass | null = null
   const key = new T.DirectionalLight(0xfff5e8, 3.2); key.position.set(-4, 7, 8)
   const rim = new T.DirectionalLight(0xc9e1ff, 3); rim.position.set(6, 3, -4)
   scene.add(key, rim, new T.HemisphereLight(0xe5efff, 0x798a86, 1.3))
@@ -225,7 +230,20 @@ export function createProductViewer(canvas: HTMLCanvasElement, slug: string, onR
       camera.lookAt(0, 0, 0)
     }
     camera.updateProjectionMatrix()
-    renderer.render(scene, camera)
+    if (poster) {
+      if (!composer) {
+        composer = new EffectComposer(renderer)
+        composer.addPass(new RenderPass(scene, camera))
+        ao = new GTAOPass(scene, camera, width, height)
+        ao.updateGtaoMaterial({radius:.6, distanceExponent:1.4, thickness:2, scale:1.4, samples:32})
+        ao.blendIntensity = 1
+        composer.addPass(ao)
+        composer.addPass(new OutputPass())
+      }
+      composer.setPixelRatio(renderer.getPixelRatio())
+      composer.setSize(width, height)
+      composer.render()
+    } else renderer.render(scene, camera)
     canvas.dataset.ready = 'yes'
     onReady(true)
   }
@@ -277,7 +295,8 @@ export function createProductViewer(canvas: HTMLCanvasElement, slug: string, onR
       canvas.removeEventListener('webglcontextrestored', contextRestored)
       document.removeEventListener('visibilitychange', request)
       delete canvas.dataset.ready
-      model.dispose(); environment.dispose(); pmrem.dispose(); renderer.dispose()
+      ao?.dispose(); composer?.dispose()
+      model.dispose(); environment.dispose(); renderer.dispose()
     },
   }
 }

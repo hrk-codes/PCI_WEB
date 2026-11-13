@@ -15,7 +15,11 @@ export function ConductorRenderStage() {
     let disposed = false, cleanup = () => {}
     ;(async () => {
       const T = await import('three')
-      const { RoomEnvironment } = await import('three/addons/environments/RoomEnvironment.js')
+      const { createStudioEnvironment } = await import('@/lib/studio')
+      const { EffectComposer } = await import('three/addons/postprocessing/EffectComposer.js')
+      const { RenderPass } = await import('three/addons/postprocessing/RenderPass.js')
+      const { GTAOPass } = await import('three/addons/postprocessing/GTAOPass.js')
+      const { OutputPass } = await import('three/addons/postprocessing/OutputPass.js')
       const { buildConductor, conductorMaterials } = await import('@/lib/conductor-models')
       if (disposed || !canvas.current) return
       const el = canvas.current, width = innerWidth, height = innerHeight
@@ -24,9 +28,8 @@ export function ConductorRenderStage() {
       renderer.setClearColor(0x000000, 0)
       renderer.toneMapping = T.NeutralToneMapping; renderer.toneMappingExposure = 1.2
       const scene = new T.Scene()
-      // Bright, even room for reflections; the direct lights below carve the highlights along each strand.
-      const pmrem = new T.PMREMGenerator(renderer), room = new RoomEnvironment()
-      const env = pmrem.fromScene(room, .015); room.dispose()
+      // Studio reflections (bright room plus strip softboxes); the direct lights below carve each strand.
+      const env = createStudioEnvironment(renderer)
       scene.environment = env.texture
       scene.environmentIntensity = .75
       // Soft studio: warm key from the upper left, cool rim from behind, low fill.
@@ -37,6 +40,15 @@ export function ConductorRenderStage() {
       const camera = new T.PerspectiveCamera(22, width / height, .1, 100)
       camera.position.set(0, .8, 10.6)
       camera.lookAt(0, 0, 0)
+      // Ambient occlusion adds the soft contact shadow where wires touch and where each layer steps back.
+      const composer = new EffectComposer(renderer)
+      composer.setPixelRatio(1); composer.setSize(width, height)
+      composer.addPass(new RenderPass(scene, camera))
+      const ao = new GTAOPass(scene, camera, width, height)
+      ao.updateGtaoMaterial({radius:.55, distanceExponent:1.4, thickness:2, scale:1.4, samples:32})
+      ao.blendIntensity = 1
+      composer.addPass(ao)
+      composer.addPass(new OutputPass())
       const materials = conductorMaterials()
       let current: {group:import('three').Group, dispose:() => void} | null = null
       function render(kind: ConductorKind) {
@@ -49,14 +61,14 @@ export function ConductorRenderStage() {
         holder.rotation.set(-.42, .72, .52)
         scene.add(holder)
         current = {group:holder, dispose:built.dispose}
-        renderer.render(scene, camera)
+        composer.render()
         return el.toDataURL('image/png')
       }
       window.__pciRenderConductor = render
       const kind = (new URLSearchParams(location.search).get('kind') || 'acsr') as ConductorKind
       render(kind)
       el.dataset.ready = 'yes'
-      cleanup = () => { current?.dispose(); Object.values(materials).forEach(m => m.dispose()); env.dispose(); pmrem.dispose(); renderer.dispose(); delete window.__pciRenderConductor }
+      cleanup = () => { current?.dispose(); Object.values(materials).forEach(m => m.dispose()); env.dispose(); ao.dispose(); composer.dispose(); renderer.dispose(); delete window.__pciRenderConductor }
     })()
     return () => { disposed = true; cleanup() }
   }, [])
