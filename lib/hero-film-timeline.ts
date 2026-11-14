@@ -1,7 +1,7 @@
 /** Timing for the homepage hero film. Shared by the 3D render scene and the hero captions (no three.js here). */
-export const HERO_FILM_SECONDS = 12
-/** The encoded video starts this far into the film, so its first frame (and the poster) is the dusk line. */
-export const HERO_FILM_OFFSET = 8.5
+export const HERO_FILM_SECONDS = 18
+/** The encoded video starts just after the loop-point dip, so its first frame (and the poster) is the golden-hour line. */
+export const HERO_FILM_OFFSET = .4
 
 export const heroChapters = [
   {key:'conductors', label:'Conductors', href:'/conductors/', start:0, end:4},

@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 165 107" role="img" aria-labelledby="pci-logo-title">
+  <title id="pci-logo-title">PCI Cables Industries Pvt. Ltd.</title>
+  <g transform="translate(.8 1)">
+  <!-- P: one cable, drawn as a stroke. The stem rises, the bowl loops round, and a cut cable end shows its strands. -->
+  <g fill="none" stroke="#fd8b01" stroke-linecap="round">
+    <path d="M8.75 91.4V34A27 27 0 1 1 37.16 60.96" stroke-width="12"/>
+    <path d="M33.25 34.25 39.75 27.75M36.75 34.75 41.25 30.25M39.6 35.4 43.6 31.4" stroke-width="1.45"/>
+    <path d="M35.2 35.6 38.6 39" stroke-width="1.3"/>
+  </g>
+  <path d="M8 56 30 34 37 41 8 70Z" fill="#fd8b01" stroke="#fd8b01" stroke-width=".6" stroke-linejoin="round"/>
+  <path d="M29.6 47 32.3 44.3" stroke="#fff" stroke-width="1.1" stroke-linecap="round"/>
+  <!-- C and I -->
+  <g fill="none" stroke="#2196f3" stroke-linecap="round">
+    <path d="M130.6 19.6A26 26 0 1 0 130.6 49.4" stroke-width="13.4"/>
+    <path d="M155.6 9.2V61" stroke-width="13.6"/>
+  </g>
+  <!-- CABLES -->
+  <g fill="none" stroke="#525152" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M37.2 75.9A10 10 0 1 0 37.2 88.7"/>
+    <path d="M45.8 92.6 56 72.3 66.2 92.6M49 87.3H63"/>
+    <path d="M72.3 92.3V72.3H84.2Q89.3 72.3 89.3 77.2 89.3 82.1 84.2 82.1H72.3M84.2 82.1Q90.4 82.1 90.4 87.2 90.4 92.3 84.6 92.3H72.3"/>
+    <path d="M97.9 72.2V92.3H114.8"/>
+    <path d="M137.3 72.3H120.4V92.3H137.3M120.4 82.1H132.4"/>
+    <path d="M160.6 75.4C158.8 73.2 155.8 72.3 152.3 72.3 147 72.3 143.4 74.2 143.4 77.3 143.4 80.8 147 81.8 152 82.4 158 83.1 161.8 84.4 161.8 87.6 161.8 90.8 157.8 92.3 152.3 92.3 148 92.3 144.3 91.2 142.4 88.6"/>
+  </g>
+  <text x="161.6" y="104.9" fill="#062355" font-family="Arial, Helvetica, sans-serif" font-size="7.7" font-weight="700" text-anchor="end" textLength="66.5" lengthAdjust="spacingAndGlyphs">Industries Pvt. Ltd.</text>
+  </g>
+</svg>

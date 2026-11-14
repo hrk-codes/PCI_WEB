@@ -9,6 +9,7 @@ import { ClientDirectory } from '@/components/client-directory'
 import { MilestoneStory } from '@/components/milestone-story'
 import { Turnover } from '@/components/turnover'
 import { ProductDetail } from '@/components/product-detail'
+import { AboutPage, aboutHeadline } from '@/components/about-page'
 import { address, articles, catalogue, cleanHtml, company, edited, families, publicDocs, siteUrl, structured } from '@/lib/content'
 
 export const dynamic = 'force-dynamic'
@@ -52,6 +53,19 @@ async function resolve(segments: string[]) {
   if (segments.length !== 1 || (!intros[first] && !pages.has(first))) notFound()
   const doc = pages.get(first)
   const revision = await edited(first)
+  if (first === 'about-us') {
+    // The designed page carries the story; CMS edits to the title, summary or body still take effect.
+    const title = revision?.title.trim()
+    const html = revision?.html.trim()
+    return {
+      slug: first,
+      title: title && !['about us', doc?.title.trim().toLowerCase()].includes(title.toLowerCase()) ? title : aboutHeadline,
+      summary: revision?.summary.trim() || doc!.summary,
+      html: html && html !== cleanHtml(doc?.html || '').trim() ? html : '',
+      product: undefined,
+      article: undefined,
+    }
+  }
   if (first === 'clients' || first === 'achievements') {
     const title = revision?.title.trim()
     const summary = revision?.summary.trim()
@@ -72,7 +86,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { segments } = await params
   const d = await resolve(segments)
   const url = '/'+segments.join('/')+'/'
-  const title = d.slug === 'achievements' && d.title === intros.achievements[0] ? 'Milestones' : d.title
+  const title = d.slug === 'achievements' && d.title === intros.achievements[0] ? 'Milestones' : d.slug === 'about-us' && d.title === aboutHeadline ? 'About us' : d.title
   const images = d.product ? [productImage(d.product)] : d.article ? ['/media/'+articleImages[d.article.slug]] : [d.slug === 'achievements' ? '/media/plant.webp' : '/media/hero-cables.webp']
   return { title, description:d.summary, alternates:{canonical:url}, openGraph:{ title, description:d.summary, url, images, type:d.article?'article':'website' } }
 }
@@ -99,12 +113,18 @@ export default async function PublicPage({ params, searchParams }: Props) {
   const breadcrumbs = { '@type':'BreadcrumbList', itemListElement:[
     {'@type':'ListItem',position:1,name:'Home',item:siteUrl+'/'},
     ...(d.product ? [{'@type':'ListItem',position:2,name:'Products',item:siteUrl+'/products/'}] : d.article ? [{'@type':'ListItem',position:2,name:'Blog',item:siteUrl+'/blog/'}] : []),
-    {'@type':'ListItem',position:d.product||d.article?3:2,name:d.slug === 'achievements' ? 'Milestones' : d.title,item:url},
+    {'@type':'ListItem',position:d.product||d.article?3:2,name:d.slug === 'achievements' ? 'Milestones' : d.slug === 'about-us' ? 'About us' : d.title,item:url},
   ] }
   if (d.slug === 'achievements') {
     return <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: structured(breadcrumbs) }} />
       <MilestoneStory title={d.title} intro={d.summary}>{d.html ? <Rich html={d.html} /> : null}</MilestoneStory>
+    </>
+  }
+  if (d.slug === 'about-us') {
+    return <>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: structured(breadcrumbs) }} />
+      <AboutPage title={d.title} intro={d.summary}>{d.html ? <Rich html={d.html} /> : null}</AboutPage>
     </>
   }
   const schema = d.product ? {'@type':'Product', name:d.title, description:d.summary, image:siteUrl+productImage(d.product), url, manufacturer:{'@type':'Organization',name:company}} : d.article ? {'@type':'Article',headline:d.title,description:d.summary,datePublished:d.article.date+'+05:30',image:siteUrl+'/media/'+articleImages[d.article.slug],mainEntityOfPage:url,author:{'@type':'Organization',name:company,url:siteUrl}} : null

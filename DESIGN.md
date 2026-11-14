@@ -12,17 +12,18 @@ The Quick info panel keeps the product catalogue, product range, quote request a
 
 Review the homepage, catalogue, product pages and forms at desktop and phone widths. Verify that the motion never hides text or controls, links keep their original meaning, and the site works with just a keyboard. Run the production checks against a separate database, then review the public copy and email delivery in protected staging before changing the domain.
 
-## Homepage hero: the "Current" film
+## Homepage hero: the transmission film
 
 The first screen is a full-height film behind an editorial introduction: the kicker "PCI Cables · Dankuni, India", the headline (editable through the CMS `home` entry), a supporting line, *Explore our products* and *Request a quote*, chapter chips, a facts strip and a pause/play button.
 
-The film is original: a 12-second seamless loop rendered offline from the site's own procedural cable models (`lib/hero-film-scene.ts`, sharing builders with the About scene through `lib/cable-models.ts`). It is illustrative, not a technical specification.
+The film is original: an 18-second seamless loop rendered offline in three.js (`lib/hero-film-scene.ts`, with the shared look in `lib/hero-film/look.ts` and the landscape in `lib/hero-film/countryside.ts`). It follows one double-circuit transmission line from sunset into the night. It is illustrative, not footage of a specific installation.
 
-1. **Conductors (0–4 s).** An ACSR conductor is stranded live: the galvanised steel core and two aluminium layers turn with opposite lay and run through a closing die. The layers step down like a cutaway so the structure is visible.
-2. **Cables (4–8 s).** The camera pulls back from a four-core armoured cable while its armour wires drop into place and the cores twist together, with a wound cable drum and companion conductors behind.
-3. **Earth wire (8–12 s).** A dusk transmission line with lattice towers, disc insulator strings, vibration dampers and the earth wire at the peaks. A drum pays conductor up to the first tower and an orange pulse travels along the line.
+1. **Golden hour (0–6 s).** A drone-style push along the line against a low sun: lattice towers in silhouette, glass insulator strings and twin-bundle conductors catching the light, long tree shadows over farmland. The camera rises past the first tower's crossarms.
+2. **Up close (6–10 s).** A slow glide past the second tower's crossarms, with insulator strings and conductors sharp against the sun and the landscape softly out of focus.
+3. **Stringing (10–14 s).** At eye level by a stringing site: a cable drum on its trailer turns as conductor climbs to a stringing pulley on the tower, beside a tensioner, with dust drifting in the backlight.
+4. **Blue hour (14–18 s).** The same line under a deep blue twilight sky with a warm horizon band: tower silhouettes, red aviation lights and a town glowing in the distance, dipping back into the opening.
 
-The encoded video starts 8.5 s into the film, so its first frame and the poster are the dusk line. Short dips to navy hide each cut and the loop point. The chapter chips (Conductors · Cables · Earth wire) follow the film's playback position and link to each product family.
+Realism comes from light and camera behaviour rather than detail: a physical sky (a separate twilight dome for blue hour), soft sun shadows, aerial haze, ambient occlusion, slight depth of field, drone-like drift, a filmic grade with fine grain, vignette, slight lens distortion and colour fringing. Each frame is rendered at 1.5× and scaled down, and averages three moments across a 180° shutter for real motion blur. The encoded video starts 0.4 s in, so its first frame and the poster are the golden-hour line; short dips to navy hide each cut and the loop point.
 
 The poster image is the LCP element; the video uses `preload="none"` and only downloads when it is allowed to play. It pauses off screen and in hidden tabs. Reduced motion and the saved Quick info pause show the poster without downloading the film; the play button still lets a visitor start it. Phones in portrait get a 1080 × 1350 cut. The text stays readable without JavaScript.
 
@@ -41,6 +42,16 @@ These models and the captured fallback frames are illustrative and are not techn
 On viewports wider than 820px and taller than 700px, the stage stays beneath the measured header through 240 viewport heights of natural scrolling. Every stage follows scroll position and reverses when scrolling upward. The energy pulse animates only while it is on screen, at about 30 frames per second, and rests after six seconds without scrolling. On smaller screens the finished composition sits in normal flow: the cable, a numbered layer legend, the copy, and the figures. Reduced motion, the saved Quick info motion preference, Skip animation and keyboard focus on any link in the section show the finished composition without the extended scroll area. The full story, including the layer list and figures, is server rendered and remains readable without JavaScript; decorative layers are hidden from assistive technology.
 
 Run `node scripts/test-about.mjs` against the local preview (or set `PCI_BROWSER_URL`) to verify the three beats, label placement at 1440 × 950 and 1055 × 772, the pulse lifecycle, the forward and reverse sequence, restored scroll position, keyboard access, motion preferences, the phone layout, resizing, context loss, the static fallback and automated accessibility checks. Review the generated `test-results/about-*.png` screenshots for the individual stages.
+
+## About us page: the PCI mark in 3D
+
+`/about-us/` is a designed page (`components/about-page.tsx`) rather than the imported WordPress text. The CMS title, summary and body still apply: an edited title replaces the default headline ("Built in Bengal. Strung across India and beyond."), the summary is the intro, and an edited body appears above the closing call to action.
+
+- **Header stage.** Navy, with the works photo faded behind an engineering grid and three power lines carrying a slow current. On the right, a lit showroom plate shows the PCI mark in 3D (`components/pci-logo-3d.tsx`, `lib/pci-logo-scene.ts`). A facts strip counts up underneath: founded 2013, 14 products, 17 client states, 7 export countries, conductors for lines up to 800 kV.
+- **The 3D mark.** `public/media/brand/pci-logo.svg` is a clean vector redraw of the original 165 × 107 logo, and `pci-logo-mark.svg` is the same mark without the "Industries Pvt. Ltd." line. Every stroke is a round cable tube built from the shared centrelines in `lib/pci-logo-geometry.ts`, so face-on it matches the flat logo. The orange cable draws the P, its cut end opens (sheath, cream insulation, seven copper strands that splay), the blue C sweeps round, the I rises and CABLES is strung letter by letter, while the mark turns to face the visitor. The animation does not include the "Industries Pvt. Ltd." line. The intro starts on the first frame the stage is on screen. The finished mark then rests for nine seconds (with one light glint), quickly un-draws and plays again for as long as the visitor stays; clicking the mark (or pressing it with the keyboard) replays it at any time. There is no pointer tilt, caption or Replay button. It renders only while moving and on screen, so returning to the page after a while starts a fresh play. Reduced motion and the Quick info pause show the finished mark. Without WebGL or JavaScript, the vector logo stays.
+- **Sections.** Who we are (works photos, Dankuni pin), What we make (three family cards with product links), Quality built in (three ISO certifications, eight BIS licences, the test lab), Beyond cables (EPC and the ₹45 crore APDCL substation, sister concern ADEEP Industries, the "one umbrella" aim), the journey as a conductor span with a node per milestone, and a call to action. Blocks rise into place once as they are reached (`components/about-motion.tsx`); their images start loading a screen ahead.
+
+Run `node scripts/test-about-page.mjs` (add `--frames` to save intro frames) to check content, links, the drawn 3D mark, play on arrival, click replay, automatic replay, entrances, accessibility, reduced motion and the 820 px and 390 px layouts.
 
 ## Featured products: the conductor span
 
