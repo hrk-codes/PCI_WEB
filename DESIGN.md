@@ -53,6 +53,12 @@ Run `node scripts/test-about.mjs` against the local preview (or set `PCI_BROWSER
 
 Run `node scripts/test-about-page.mjs` (add `--frames` to save intro frames) to check content, links, the drawn 3D mark, play on arrival, click replay, automatic replay, entrances, accessibility, reduced motion and the 820 px and 390 px layouts.
 
+## Turnover: the annual turnover panel
+
+`/turnover/` shows the published financial-year turnover (2015–16 to 2025–26, in ₹ lakh) as a navy panel (`components/turnover.tsx`). A readout gives the selected year in ₹ crore, its value in lakh, and its change on the year before (green for a rise, red for a fall). It starts on the latest year; pointing at, focusing or tapping a bar selects that year, and moving the pointer away returns to the latest. The plot has a ₹ crore scale and a dotted trend line through the bar tops. Three figures sit below it, all computed from the data (35× growth since 2015–16, 43% compound annual growth, and the highest year, FY 2024–25 at ₹277.1 crore), and the full table stays under "View turnover data".
+
+When the bars come into view, they rise year by year, the readout counts up, and the trend line draws across with a spark on its leading edge (about 2.4 s). The entrance plays again after the chart has been scrolled back below the screen. Reduced motion, the Quick info pause and a page without JavaScript show the finished chart. Run `node scripts/test-turnover.mjs` to check the entrance, readout, table, accessibility and the phone layout.
+
 ## Featured products: the conductor span
 
 Right after the About story, "Featured products." shows PCI's six overhead conductors (AAC, AAAC, ACSR, AACSR, ACAR, ECO Panther) and a copper control cable hanging from a drawn transmission span between two lattice towers (`components/conductor-line.tsx`). Each product clips onto the wire where it sags and links to its product page. Seven smaller illustrations fit the span, with a copper-coloured connector identifying control cable. The note distinguishes overhead networks from control-cable applications. The section replaces the earlier three photo cards, whose diagrams did not match the site's look.

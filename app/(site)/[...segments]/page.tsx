@@ -8,6 +8,7 @@ import { Inquiry } from '@/components/inquiry'
 import { ClientDirectory } from '@/components/client-directory'
 import { MilestoneStory } from '@/components/milestone-story'
 import { Turnover } from '@/components/turnover'
+import { turnoverFirstYear, turnoverLatestYear, withTurnoverYears } from '@/content/turnover'
 import { ProductDetail } from '@/components/product-detail'
 import { AboutPage, aboutHeadline } from '@/components/about-page'
 import { address, articles, catalogue, cleanHtml, company, edited, families, publicDocs, siteUrl, structured } from '@/lib/content'
@@ -26,7 +27,7 @@ const intros: Record<string, [string,string]> = {
   privacy: ['Privacy notice', 'How PCI uses details submitted through this website.'],
   blog: ['Stories and updates', 'Events, project news and manufacturing updates from PCI Cables.'],
   news: ['PCI Cables news', 'Company milestones, product developments and industry events.'],
-  turnover: ['Company turnover', 'PCI Cables’ published financial year turnover from 2015–16 through 2024–25.'],
+  turnover: ['Company turnover', `PCI Cables’ published financial year turnover from ${turnoverFirstYear} through ${turnoverLatestYear}.`],
   clients: ['Clients', 'Explore the organisations PCI Cables has supplied across utilities, rail and public sector, international markets, and renewable energy.'],
   achievements: ['Built connection by connection.', 'Follow PCI Cables from its first years in West Bengal through cable and conductor manufacturing, first exports and new product milestones.'],
 }
@@ -79,7 +80,8 @@ async function resolve(segments: string[]) {
       article: undefined,
     }
   }
-  return { slug:first, title:revision?.title || intros[first]?.[0] || doc!.title, summary:revision?.summary || intros[first]?.[1] || doc!.summary, html:revision?.html || doc?.html || '', product:undefined, article:undefined }
+  const summary = revision?.summary || intros[first]?.[1] || doc!.summary
+  return { slug:first, title:revision?.title || intros[first]?.[0] || doc!.title, summary:first === 'turnover' ? withTurnoverYears(summary) : summary, html:revision?.html || doc?.html || '', product:undefined, article:undefined }
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
@@ -149,7 +151,7 @@ export default async function PublicPage({ params, searchParams }: Props) {
   } else if (d.slug==='privacy') {
     body = <Privacy/>
   } else if (d.slug==='turnover') {
-    body = <div className="reading"><Turnover/></div>
+    body = <Turnover/>
   } else if (d.slug==='clients') {
     body = <ClientDirectory filters={filters}>{d.html ? <Rich html={d.html} /> : null}</ClientDirectory>
   } else if (d.slug==='blog' || d.slug==='news') {
