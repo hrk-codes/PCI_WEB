@@ -117,9 +117,9 @@ export function createLook(renderer: T.WebGLRenderer, scene: T.Scene, camera: T.
   const bloom = new UnrealBloomPass(new T.Vector2(width, height), .35, .6, 1.15)
   composer.addPass(bloom)
   const grade = new ShaderPass({
-    uniforms:{tDiffuse:{value:null}, time:{value:0}, fade:{value:0}, fadeColour:{value:new T.Color(0x05101b)}, aspect:{value:width / height}, warmth:{value:.5}, flarePos:{value:new T.Vector2(.7, .45)}, flare:{value:0}, flareColour:{value:new T.Color(0xffb36b)}},
+    uniforms:{tDiffuse:{value:null}, time:{value:0}, fade:{value:0}, fadeColour:{value:new T.Color(0x05101b)}, flash:{value:0}, flashColour:{value:new T.Color(0xfff1df)}, aspect:{value:width / height}, warmth:{value:.5}, flarePos:{value:new T.Vector2(.7, .45)}, flare:{value:0}, flareColour:{value:new T.Color(0xffb36b)}},
     vertexShader:'varying vec2 vUv;void main(){vUv=uv;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}',
-    fragmentShader:`uniform sampler2D tDiffuse;uniform float time;uniform float fade;uniform vec3 fadeColour;uniform float aspect;uniform float warmth;uniform vec2 flarePos;uniform float flare;uniform vec3 flareColour;varying vec2 vUv;
+    fragmentShader:`uniform sampler2D tDiffuse;uniform float time;uniform float fade;uniform vec3 fadeColour;uniform float flash;uniform vec3 flashColour;uniform float aspect;uniform float warmth;uniform vec2 flarePos;uniform float flare;uniform vec3 flareColour;varying vec2 vUv;
       float hash(vec2 p){p=fract(p*vec2(123.34,456.21));p+=dot(p,p+45.32);return fract(p.x*p.y);}
       void main(){
         vec2 c=vUv-.5; float r2=dot(c*vec2(aspect,1.),c*vec2(aspect,1.));
@@ -135,6 +135,7 @@ export function createLook(renderer: T.WebGLRenderer, scene: T.Scene, camera: T.
         float g=hash(vUv*vec2(1920.,1080.)+fract(time*7.31))-.5;
         col+=g*.018*(.35+l);                                          // fine film grain, gentle in the shadows
         col=mix(col,fadeColour,fade);
+        col=mix(col,flashColour,flash);                               // flash cut / lightning
         gl_FragColor=vec4(col,1.);
       }`,
   })
@@ -154,7 +155,9 @@ export function createLook(renderer: T.WebGLRenderer, scene: T.Scene, camera: T.
     setFlare(x: number, y: number, strength: number) { grade.uniforms.flarePos.value.set(x, y); grade.uniforms.flare.value = strength },
     setDepthOfField(focus: number, aperture: number, maxblur = .006) { bokehUniforms.focus.value = focus; bokehUniforms.aperture.value = aperture; bokehUniforms.maxblur.value = maxblur },
     setAo(radius: number, intensity: number) { ao.updateGtaoMaterial({radius}); ao.blendIntensity = intensity },
-    setGrade({time, fade = 0, warmth = .5}: {time:number, fade?:number, warmth?:number}) { grade.uniforms.time.value = time; grade.uniforms.fade.value = fade; grade.uniforms.warmth.value = warmth },
+    setGrade({time, fade = 0, warmth = .5, flash = 0, flashColour = 0xfff1df}: {time:number, fade?:number, warmth?:number, flash?:number, flashColour?:number}) { grade.uniforms.time.value = time; grade.uniforms.fade.value = fade; grade.uniforms.warmth.value = warmth; grade.uniforms.flash.value = flash; grade.uniforms.flashColour.value.set(flashColour) },
+    /** Recolours the twilight dome (blue hour by default; darker for the storm). Call before setTwilight. */
+    setTwilightColours({top, mid, band, ground}: {top:number, mid:number, band:number, ground:number}) { const u = twilightMaterial.uniforms; u.top.value.set(top); u.mid.value.set(mid); u.band.value.set(band); u.ground.value.set(ground) },
     render() { composer.render() },
     resize(w: number, h: number) { composer.setSize(w, h); ao.setSize(w, h); bloom.setSize(w, h); grade.uniforms.aspect.value = w / h },
     dispose() { envTarget?.dispose(); pmrem.dispose(); ao.dispose(); bokeh.dispose?.(); bloom.dispose(); composer.dispose(); sky.material.dispose(); envSky.material.dispose(); sky.geometry.dispose(); twilight.geometry.dispose(); twilightMaterial.dispose() },

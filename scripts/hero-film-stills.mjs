@@ -7,7 +7,7 @@ const url = (process.env.PCI_BROWSER_URL || 'http://127.0.0.1:3000').replace(/\/
 const sizeArg = process.argv.find(a => a.startsWith('--size='))?.split('=')[1] ?? '1280x720'
 const [width, height] = sizeArg.split('x').map(Number)
 const times = process.argv.slice(2).filter(a => !a.startsWith('--')).map(Number)
-const list = times.length ? times : [.8, 2.2, 3.6, 4.8, 6.2, 7.6, 8.8, 10.2, 11.6, 12.8, 14.2, 15.6, 16.8, 18.2, 19.6, 20.8, 22.2, 23.4]
+const list = times.length ? times : [1.5, 5.5, 9, 12.5, 16.5, 18.8, 20.8, 23, 25.7, 27.3, 31.4, 32.1]
 await mkdir('test-results', {recursive:true})
 const browser = await chromium.launch({executablePath:process.env.CHROME_PATH || 'C:/Program Files/Google/Chrome/Application/chrome.exe', args:['--enable-gpu', '--ignore-gpu-blocklist', '--use-angle=d3d11']})
 const page = await browser.newPage({viewport:{width, height}})

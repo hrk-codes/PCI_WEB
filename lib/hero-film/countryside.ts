@@ -21,7 +21,7 @@ function member(a: T.Vector3, b: T.Vector3, w: number) {
   return g
 }
 /** Half-width of the tower body at height y: wide splayed base, a waist, then a slender top. */
-const halfWidth = (y: number) => y < 26 ? 5.2 - (y / 26) * 3.6 : 1.6 - ((y - 26) / 22) * .9
+export const halfWidth = (y: number) => y < 26 ? 5.2 - (y / 26) * 3.6 : 1.6 - ((y - 26) / 22) * .9
 
 function towerGeometry() {
   const frame: T.BufferGeometry[] = [], lace: T.BufferGeometry[] = []
@@ -237,7 +237,7 @@ export function buildCountryside(scene: T.Scene) {
 
   scene.add(world)
   return {
-    world, towers, heightAt, conductorMaterial:conductor,
+    world, towers, heightAt, conductorMaterial:conductor, steelMaterial:galvanised, earthWireMaterial:earthWire, glassMaterial:glass,
     update(time: number) {
       drum.rotation.x = -time * .22
       const dp = dustGeo.attributes.position as T.BufferAttribute

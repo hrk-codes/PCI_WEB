@@ -14,27 +14,30 @@ Review the homepage, catalogue, product pages and forms at desktop and phone wid
 
 ## Homepage hero: "Dawn to current"
 
-The first screen is a full-height film behind an editorial introduction: the kicker "PCI Cables · Dankuni, India", the headline (editable through the CMS `home` entry), a supporting line, *Explore our products* and *Request a quote*, a facts strip and a pause/play button.
+The first screen keeps the editorial PCI introduction, product and quote links, facts, and pause/play control. The current v6 film is a 32.5-second loop at native 60 fps. It retains the original 3D work inspired by the user's A–D reference clips in `D:/Hrithik_pci/htdocs/front web view/`; those source videos are not embedded. The blue cable cutaway and the separate glass-insulator close-up have been removed.
 
-The film is an original 24-second loop rendered offline in three.js; nothing in it is footage or taken from other videos. `lib/hero-film-scene.ts` assembles six shots. The landscape (`lib/hero-film/countryside.ts`) and the close-up sets (`lib/hero-film/*-shot.ts`) share one finishing pipeline (`lib/hero-film/look.ts`). The models are PCI's own: the ACSR conductor builder, the product-page XLPE cable and the cable-drawn PCI mark (`lib/pci-mark.ts`, shared with the About page). It is illustrative, not footage of a specific installation.
+1. **Dawn (0–4 s).** Transmission lines across misty fields.
+2. **Tower scan (4–7.5 s).** A cyan survey effect travels up the steel lattice.
+3. **Stranding (7.5–11.5 s).** An illustrative turning cage feeds aluminium wires into a closing die.
+4. **Conductor (11.5–15 s).** The layers of an ACSR conductor open to its steel core.
+5. **Core (15–18 s).** Light travels across the exposed strand ends.
+6. **Bundle support (18–21.5 s).** Four bare aluminium subconductors sit in visibly lined clamps. A ribbed polymer suspension support connects the assembly to its upper support, with grading rings, metal end fittings and detailed fasteners. The cyan field effects and gentle camera move remain. This shot is still 3.5 seconds long.
+7. **Three-phase (21.5–25 s).** Current travels along the line at blue hour.
+8. **Storm (25–28.5 s).** An illustrative earth-wire surge and rain sequence.
+9. **PCI mark (28.5–32.5 s).** The cable-drawn PCI CABLES mark, then the loop.
 
-1. **Dawn (0–4 s).** A drone rises over mist lying in the fields as the sun clears the horizon behind a double-circuit line; towers and trees in silhouette.
-2. **The crossarm (4–8 s).** A slow crane down a string of toughened-glass cap-and-pin insulators with the dawn sun glowing through the glass, ending on the yoke plate and suspension clamps holding a twin bundle of ACSR.
-3. **Inside the conductor (8–12 s).** In a dark studio, the camera tracks beside an ACSR conductor while warm pulses of current race along the aluminium strands, then swings round as the layers telescope apart to the galvanised steel core.
-4. **The cable (12–16 s).** PCI's four-core armoured LT XLPE cable turns and opens layer by layer: sheath, steel wire armour, inner sheath, coloured cores, sector-shaped aluminium conductors.
-5. **Blue hour (16–20 s).** The same line under a twilight sky, aviation lights on, current flowing down the conductors toward a town on the horizon.
-6. **The mark (20–24 s).** A cable draws the PCI mark (PCI and CABLES, without the "Industries Pvt. Ltd." line) on the right of the frame, a glint runs across it, and the film dips back to dawn.
+Hardware styling references: [PLP CUSHION-GRIP spacer dampers](https://plp.com/energy/transmission/spacers-spacer-dampers/cushion-grip-spacer-damper) for lined clamps, and [Hubbell Quadri*Sil suspension insulators](https://www.hubbell.com/hubbellpowersystems/en/products/quadri-sil-suspension-insulator/p/1442284) for polymer support geometry. The assembly, light effects and relative dimensions are illustrative; no voltage rating or specific PCI hardware product is represented. The four subconductors are one bundle, with consistent field circulation.
 
-Every shot keeps the left of the frame calm and darker, where the headline sits. The current is shown as a subtle warm glow (`lib/hero-film/pulse.ts`, with selective bloom), not as lightning. The finish: a physical sky (a twilight dome for blue hour), soft shadows, haze and mist (`lib/hero-film/mist.ts`), ambient occlusion, depth of field, drone-like drift, an anamorphic streak from the sun, and a filmic grade with grain, vignette, slight lens distortion and colour fringing. Close-ups use neutral tone mapping so PCI's colours stay true. The web captures retain their native resolution; delivery files use scene-aware intermediate frame blending at 60 fps to soften motion without blending across detected cuts. Full master rendering can additionally average three moments across a 180° shutter. Short dips to navy hide each cut and the loop point.
+Delivery files are `pci-hero-film-landscape-v6.mp4/.webm/.webp` (1920 × 1080) and `pci-hero-film-portrait-v6.mp4/.webm/.webp` (720 × 1280). The phone logo is held above the copy and its pause control sits below the facts, clear of the logo and Quick info. MP4 is preferred, with WebM fallback. Playback pauses off screen and in hidden tabs; reduced motion and saved Quick info motion settings show the poster. New release filenames prevent stale video/poster combinations.
 
-Homepage delivery: `pci-hero-film-landscape-smooth.mp4/.webm` (1920 × 1080) and `pci-hero-film-portrait-smooth.mp4/.webm` (1080 × 1350), both 24 seconds at 60 fps. The un-suffixed MP4/WebM files retain the 30 fps captures. Matching `pci-hero-film-landscape-smooth.webp` and `pci-hero-film-portrait-smooth.webp` posters are taken from the first captured frame. The new delivery filenames ensure browser and Next image caches cannot reuse the superseded film. The homepage references completed web exports only; unfinished 4K masters are not requested. The poster image is the LCP element; the video uses `preload="none"` and only downloads when it is allowed to play. It pauses off screen and in hidden tabs. Reduced motion and the saved Quick info pause show the poster without downloading the film; the play button still lets a visitor start it. The text stays readable without JavaScript.
+The release reuses completed native-60-fps v5 frames, removes exactly the glass close-up, and inserts a freshly rendered 210-frame bundle-support shot. `scripts/finish-hero-v6.mjs` records the frame-exact edit (1950 frames = 32.5 seconds). The v5 masters remain for reproducibility.
 
-To re-render, run the site (`pnpm dev`), then in your own terminal:
-- `node scripts/render-hero-film.mjs --web` · native 1080p landscape and 1080 × 1350 portrait captures, one pass per frame; add `--layout=portrait` or `--layout=landscape` to render one format. `--preview` remains landscape only;
-- `node scripts/smooth-hero-film.mjs` · finish both captures as 60 fps MP4/WebM delivery files; add `landscape` or `portrait` to finish one format. Intermediate frames are blended with scene-cut detection. This is frame interpolation, not a native 60 fps scene capture;
-- `node scripts/render-hero-film.mjs` · the full set: 4K master plus 1080p from the same frames, and the phone film (several hours; add `--layout=landscape` or `--layout=portrait` to split it).
+With the local site running:
 
-`node scripts/hero-film-stills.mjs [seconds…]` saves review stills and a contact sheet to `test-results/`. Preview the film live, or freeze a frame, at `/hero-film/` (`?t=4.5`); the page is not indexed. Run `node scripts/test-hero.mjs` to check playback, the pause button, off-screen pausing, motion preferences, the phone film, the no-JavaScript poster and accessibility.
+- Render the changed shot: `node scripts/render-hero-film.mjs --web --phone-hd --start=17.6166666667 --duration=3.5 --label=field`.
+- Assemble the delivery films: `node scripts/finish-hero-v6.mjs`. Add `landscape` or `portrait` to assemble only one layout.
+- A future full native render can use `node scripts/render-hero-film.mjs --web --phone-hd`; the scene timeline also excludes the removed close-up. Full master mode is available without `--web`.
+- Review stills with `scripts/hero-film-stills.mjs` and verify playback, looping, codecs, motion preferences, no-JavaScript posters and accessibility with `scripts/test-hero.mjs`.
 
 ## About PCI: inside every connection
 

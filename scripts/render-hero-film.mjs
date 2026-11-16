@@ -1,7 +1,7 @@
 // Renders the homepage hero film from the /hero-film/ stage and encodes it.
 // Needs the site running (pnpm dev) at PCI_BROWSER_URL, default http://127.0.0.1:3000.
 // Landscape is mastered at 3840 × 2160 (4K) and the 1920 × 1080 web version is encoded from the same frames; the
-// phone version is 1080 × 1350. Each frame averages three moments across a 180° shutter (real motion blur); the
+// full phone master is 1080 × 1920 (9:16). Each frame averages three moments across a 180° shutter (real motion blur); the
 // phone frames are also drawn at 1.5× and scaled down for clean thin wires.
 // Usage: node scripts/render-hero-film.mjs [--layout=landscape|portrait] [--preview|--web]
 import { spawn } from 'node:child_process'
@@ -19,16 +19,26 @@ const url = (process.env.PCI_BROWSER_URL || 'http://127.0.0.1:3000').replace(/\/
 const preview = process.argv.includes('--preview')
 // Native web delivery without the expensive 4K master / temporal supersampling pass.
 const web = preview || process.argv.includes('--web')
+// A native 9:16 phone render fits the tall homepage stage without cropping the brand reveal.
+const phoneHD = process.argv.includes('--phone-hd')
 // Work files carry this run's process id, so two renders running at once (say a preview beside the full render)
 // never write into each other's files; each swaps its finished files in when done.
 const part = `.part-${process.pid}`
-const fps = 30, seconds = 24, offset = .4, frames = fps * seconds, subframes = web ? 1 : 3, shutter = .5
+// Rendered natively at 60 fps (smooth motion without interpolated frames). `seconds` matches FILM_SECONDS in
+// lib/hero-film-scene.ts; `version` names the files, so browsers and the image cache never show an older film.
+const fps = 60, seconds = 32.5, offset = .4, subframes = web ? 1 : 3, shutter = .5, version = 'v6'
+// Capture only a changed shot when an edit can reuse the other completed scenes.
+const start = Number(process.argv.find(arg => arg.startsWith('--start='))?.split('=')[1] ?? 0)
+const duration = Number(process.argv.find(arg => arg.startsWith('--duration='))?.split('=')[1] ?? seconds)
+const label = process.argv.find(arg => arg.startsWith('--label='))?.split('=')[1] ?? ''
+if (!Number.isFinite(start) || !Number.isFinite(duration) || start < 0 || duration <= 0 || start + duration > seconds || !/^[a-z0-9-]*$/.test(label)) throw Error('Invalid capture range or label')
+const frames = Math.round(fps * duration)
 const formats = [
   {name:'landscape', width:web ? 1920 : 3840, height:web ? 1080 : 2160, supersample:1, outputs:[
     ...(web ? [] : [{suffix:'-4k', width:3840, height:2160, crf264:23, crf9:34, poster:false}]),
     {suffix:'', width:1920, height:1080, crf264:23, crf9:33, poster:true},
   ]},
-  {name:'portrait', width:1080, height:1350, supersample:web ? 1 : 1.5, outputs:[{suffix:'', width:1080, height:1350, crf264:24, crf9:33, poster:true}]},
+  {name:'portrait', width:phoneHD ? 720 : 1080, height:phoneHD ? 1280 : 1920, supersample:web ? 1 : 1.5, outputs:[{suffix:'', width:phoneHD ? 720 : 1080, height:phoneHD ? 1280 : 1920, crf264:24, crf9:33, poster:true}]},
 ].filter(format => !preview || format.name === 'landscape')
 const layout = process.argv.find(arg => arg.startsWith('--layout='))?.split('=')[1]
 const selected = formats.filter(format => !layout || format.name === layout)
@@ -49,9 +59,23 @@ function encoder(base, output) {
 async function encode(page, format, base) {
   const encoders = format.outputs.map(output => encoder(base + output.suffix, output))
   for (let frame = 0; frame < frames; frame++) {
+    if (subframes === 1 && format.supersample === 1) {
+      // The web capture already has the delivery dimensions. Retain the rendered PNG directly instead of
+      // expanding millions of channels into JS arrays and encoding the same frame a second time.
+      const t = (offset + start + (frame - .5 * shutter) / fps + seconds) % seconds
+      await page.evaluate(async t => { window.__pciRenderFrame(t); await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r))) }, t)
+      const image = await page.screenshot({type:'png'})
+      for (const e of encoders) {
+        const sized = e.output.width === format.width && e.output.height === format.height ? image : await sharp(image).resize(e.output.width, e.output.height, {kernel:'lanczos3'}).png({compressionLevel:1}).toBuffer()
+        if (frame === 0 && e.output.poster) await sharp(sized).webp({quality:86, effort:5}).toFile(`${e.base}${part}.webp`)
+        if (!e.child.stdin.write(sized)) await new Promise(resolve => e.child.stdin.once('drain', resolve))
+      }
+      if ((frame + 1) % 60 === 0) console.log(`${format.name}: ${frame + 1}/${frames}`)
+      continue
+    }
     let sum = null
     for (let k = 0; k < subframes; k++) {
-      const t = (offset + (frame + (k / subframes - .5) * shutter) / fps + seconds) % seconds
+      const t = (offset + start + (frame + (k / subframes - .5) * shutter) / fps + seconds) % seconds
       await page.evaluate(async t => { window.__pciRenderFrame(t); await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r))) }, t)
       const {data} = await sharp(await page.screenshot({type:'png'})).resize(format.width, format.height, {kernel:'lanczos3'}).removeAlpha().raw().toBuffer({resolveWithObject:true})
       if (!sum) sum = new Uint16Array(data.length)
@@ -66,7 +90,7 @@ async function encode(page, format, base) {
       if (frame === 0 && e.output.poster) await sharp(image).webp({quality:86, effort:5}).toFile(`${e.base}${part}.webp`)
       if (!e.child.stdin.write(image)) await new Promise(resolve => e.child.stdin.once('drain', resolve))
     }
-    if ((frame + 1) % 30 === 0) console.log(`${format.name}: ${frame + 1}/${frames}`)
+    if ((frame + 1) % 60 === 0) console.log(`${format.name}: ${frame + 1}/${frames}`)
   }
   for (const e of encoders) e.child.stdin.end()
   await Promise.all(encoders.map(e => e.done))
@@ -82,7 +106,7 @@ try {
     const page = await browser.newPage({viewport:{width:Math.round(format.width * format.supersample), height:Math.round(format.height * format.supersample)}, deviceScaleFactor:1})
     await page.goto(`${url}/hero-film/?render=1`, {waitUntil:'networkidle'})
     await page.locator('canvas[data-ready=yes]').waitFor({timeout:60000})
-    const base = path.join(output, `pci-hero-film-${format.name}`)
+    const base = path.join(output, `pci-hero-film-${format.name}-${version}${label ? `-${label}` : ''}`)
     await encode(page, format, base)
     await page.close()
     for (const output of format.outputs) for (const ext of ['.webp', '.mp4', '.webm']) {

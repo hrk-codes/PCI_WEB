@@ -1,5 +1,5 @@
 /** Timing for the homepage hero film. Shared by the 3D render scene and the hero captions (no three.js here). */
-export const HERO_FILM_SECONDS = 24
+export const HERO_FILM_SECONDS = 32.5
 /** The encoded video starts just after the loop-point dip, so its first frame (and the poster) is the golden-hour line. */
 export const HERO_FILM_OFFSET = .4
 

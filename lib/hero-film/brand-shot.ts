@@ -33,7 +33,8 @@ export function createBrandShot(renderer: T.WebGLRenderer): Shot {
       // The mark settles toward the camera as it is drawn, then breathes very slightly.
       const settle = ease(span(t, 0, 2.6))
       mark.group.rotation.set(.16 * (1 - settle) + drift(t * .3, 61) * .01, -.42 * (1 - settle) + drift(t * .25, 62) * .015, 0)
-      mark.group.position.set(wide ? 64 : 0, wide ? 2 : 34, -16 * (1 - settle))
+      // Keep the complete mark above the phone's headline, in the tall film's clear upper area.
+      mark.group.position.set(wide ? 64 : 0, wide ? 2 : 125, -16 * (1 - settle))
       const half = T.MathUtils.degToRad(camera.fov / 2)
       // Frame so the mark takes about 40% of the width on wide screens and 80% on phones.
       const distance = wide ? (165 / .4 / 2) / (Math.tan(half) * camera.aspect) : (165 / .8 / 2) / (Math.tan(half) * camera.aspect)
@@ -42,7 +43,7 @@ export function createBrandShot(renderer: T.WebGLRenderer): Shot {
       camera.lookAt(0, 0, 0)
       const sweep = span(t, 2.7, 3.7)
       glint.intensity = Math.sin(Math.PI * sweep) * 1100
-      glint.position.set(mark.group.position.x - 95 + 190 * sweep, 30 - 35 * sweep, 24)
+      glint.position.set(mark.group.position.x - 95 + 190 * sweep, (wide ? 30 : mark.group.position.y + 30) - 35 * sweep, 24)
       look.setDepthOfField(distance, 0, .001)
       look.setAo(4, .5)
       look.setBloom(.3, 1.3, .5)

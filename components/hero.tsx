@@ -11,14 +11,17 @@ export const heroDefaults = {
 }
 
 type Copy = { title: string; summary: string } | null
+const LANDSCAPE_FILM = 'landscape-v6'
+const PORTRAIT_FILM = 'portrait-v6'
+const FILM_RELEASE = `${LANDSCAPE_FILM}:${PORTRAIT_FILM}`
 // New filenames keep Next's image cache from showing the previous film during the first frame.
 const filmAsset = (name: string) => `/media/pci-hero-film-${name}`
 
 /** Art-directed poster: landscape on wide screens, portrait on tall phones. It is the LCP image and the reduced-motion view. */
 function Poster() {
   const common = {alt:'', sizes:'100vw'}
-  const { props: { srcSet: wide } } = getImageProps({...common, width:1920, height:1080, src:filmAsset('landscape-smooth.webp')})
-  const { props: { srcSet: tall, ...rest } } = getImageProps({...common, width:1080, height:1350, src:filmAsset('portrait-smooth.webp')})
+  const { props: { srcSet: wide } } = getImageProps({...common, width:1920, height:1080, src:filmAsset(`${LANDSCAPE_FILM}.webp`)})
+  const { props: { srcSet: tall, ...rest } } = getImageProps({...common, width:720, height:1280, src:filmAsset(`${PORTRAIT_FILM}.webp`)})
   return <picture>
     <source media="(orientation: portrait) and (max-width: 820px)" srcSet={tall}/>
     <source srcSet={wide}/>
@@ -38,6 +41,8 @@ export function HeroFilm({ copy, productCount }: { copy: Copy; productCount: num
   useEffect(() => {
     const el = section.current!, film = video.current
     if (!film) return
+    el.dataset.film = 'poster'
+    setPlaying(false)
     const reduced = matchMedia('(prefers-reduced-motion: reduce)')
     let visible = true
     const motionOff = () => reduced.matches || document.documentElement.dataset.pciMotion === 'paused'
@@ -64,7 +69,7 @@ export function HeroFilm({ copy, productCount }: { copy: Copy; productCount: num
       reduced.removeEventListener('change', update); document.removeEventListener('visibilitychange', update)
       film.pause()
     }
-  }, [failed])
+  }, [failed, FILM_RELEASE])
 
   function toggle() {
     choice.current = playing ? 'pause' : 'play'
@@ -75,14 +80,14 @@ export function HeroFilm({ copy, productCount }: { copy: Copy; productCount: num
   return <section ref={section} className="hero-film" aria-label="PCI Cables introduction" data-film="poster">
     <div className="hero-film-media" aria-hidden="true">
       <Poster/>
-      {!failed && <video ref={video} className="hero-film-video" muted loop playsInline preload="none" disablePictureInPicture onError={event => {
+      {!failed && <video key={FILM_RELEASE} ref={video} className="hero-film-video" muted loop playsInline preload="none" disablePictureInPicture onError={event => {
         // A source's error bubbles through React. Let the browser try the next codec first.
         if (event.target === event.currentTarget) setFailed(true)
       }}>
-        <source src={filmAsset('portrait-smooth.webm')} type="video/webm" media="(orientation: portrait) and (max-width: 820px)"/>
-        <source src={filmAsset('portrait-smooth.mp4')} type="video/mp4" media="(orientation: portrait) and (max-width: 820px)"/>
-        <source src={filmAsset('landscape-smooth.webm')} type="video/webm"/>
-        <source src={filmAsset('landscape-smooth.mp4')} type="video/mp4"/>
+        <source src={filmAsset(`${PORTRAIT_FILM}.mp4`)} type="video/mp4" media="(orientation: portrait) and (max-width: 820px)"/>
+        <source src={filmAsset(`${PORTRAIT_FILM}.webm`)} type="video/webm" media="(orientation: portrait) and (max-width: 820px)"/>
+        <source src={filmAsset(`${LANDSCAPE_FILM}.mp4`)} type="video/mp4"/>
+        <source src={filmAsset(`${LANDSCAPE_FILM}.webm`)} type="video/webm"/>
       </video>}
     </div>
     <div className="hero-film-shade" aria-hidden="true"/>
