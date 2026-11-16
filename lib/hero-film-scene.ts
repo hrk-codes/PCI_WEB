@@ -1,14 +1,22 @@
 import * as T from 'three'
 import { createLook, drift, ease, easeInOut, lerp } from '@/lib/hero-film/look'
 import { buildCountryside } from '@/lib/hero-film/countryside'
+import { createMist } from '@/lib/hero-film/mist'
+import { addPulse } from '@/lib/hero-film/pulse'
+import { createInsulatorShot } from '@/lib/hero-film/insulator-shot'
+import { createConductorShot } from '@/lib/hero-film/conductor-shot'
+import { createCableShot } from '@/lib/hero-film/cable-shot'
+import { createBrandShot } from '@/lib/hero-film/brand-shot'
+import { screenUv, type Shot } from '@/lib/hero-film/studio-set'
 
 /**
- * The homepage opening film, rendered offline to video (scripts/render-hero-film.mjs). One transmission line:
- * 0–6 s golden-hour drone push past the towers · 6–10 s low tracking shot along insulators and conductors against
- * the sun · 10–14 s a stringing site paying conductor up to the tower · 14–18 s blue hour, looping to the start.
- * Deterministic: every frame depends only on the time passed to setTime(). Illustrative CG, not footage.
+ * The homepage opening film "Dawn to current", rendered offline to video (scripts/render-hero-film.mjs). Original 3D:
+ * 0–4 s dawn aerial over misty plains and a transmission line · 4–8 s glass insulator string and clamps at the
+ * crossarm · 8–12 s inside a PCI ACSR conductor, current racing along the strands, layers opening to the steel core ·
+ * 12–16 s PCI's armoured XLPE cable opening layer by layer · 16–20 s blue hour, current flowing down the line to the
+ * town · 20–24 s a cable draws the PCI mark, then the loop. Deterministic: every frame depends only on setTime(t).
  */
-export const FILM_SECONDS = 18
+export const FILM_SECONDS = 24
 
 export function createHeroFilm(canvas: HTMLCanvasElement, width: number, height: number) {
   const renderer = new T.WebGLRenderer({canvas, antialias:true, preserveDrawingBuffer:true, powerPreference:'high-performance'})
@@ -18,65 +26,63 @@ export function createHeroFilm(canvas: HTMLCanvasElement, width: number, height:
   const camera = new T.PerspectiveCamera(38, width / height, .1, 25000)
   const look = createLook(renderer, scene, camera, width, height)
   const land = buildCountryside(scene)
-  const target = new T.Vector3(), focus = new T.Vector3()
-  const fogs = {golden:new T.FogExp2(0xc9926c, .00085), blue:new T.FogExp2(0x2c3a58, .00055)}
+  const mist = createMist(scene)
+  const linePulse = addPulse(land.conductorMaterial, {axis:new T.Vector3(0, 0, -1), speed:140, spacing:330, width:7})
+  const target = new T.Vector3(), focus = new T.Vector3(), sunPoint = new T.Vector3()
+  const fogs = {dawn:new T.FogExp2(0x8a6450, .00055), blue:new T.FogExp2(0x2c3a58, .00055)}
   let mood = ''
-  function setMood(next: 'golden' | 'blue') {
+  function setMood(next: 'dawn' | 'blue') {
     if (mood === next) return
     mood = next
     land.setNight(next === 'blue')
-    if (next === 'golden') { look.setTwilight(false); look.setSun({elevation:2.4, azimuth:-14, turbidity:12, rayleigh:2.8, mie:.0032, mieG:.94, colour:0xffa066, intensity:3.2, exposure:.36}) }
+    if (next === 'dawn') { look.setTwilight(false); look.setSun({elevation:1.8, azimuth:-9, turbidity:6, rayleigh:2.2, mie:.0014, mieG:.975, colour:0xff9a5c, intensity:2.6, exposure:.27}) }
     else look.setTwilight(true, 1.05)
-    look.hemisphere.intensity = next === 'golden' ? .55 : .8
-    look.hemisphere.color.set(next === 'golden' ? 0x9fb8d6 : 0x7f97cc)
+    look.hemisphere.intensity = next === 'dawn' ? .5 : .8
+    look.hemisphere.color.set(next === 'dawn' ? 0xa7b4cc : 0x7f97cc)
     scene.fog = fogs[next]
   }
   const ground = (x: number, z: number) => land.heightAt(x, z) + .2
+  function landscape(near = .5, far = 25000) {
+    look.useScene(scene)
+    renderer.toneMapping = T.ACESFilmicToneMapping
+    camera.near = near; camera.far = far
+  }
+  /** The sun on screen, for the grade's anamorphic streak. */
+  function flareFromSun(strength: number) {
+    sunPoint.copy(camera.position).addScaledVector(look.sun.position.clone().sub(look.sun.target.position).normalize(), 5000)
+    const s = screenUv(camera, sunPoint)
+    look.setFlare(s.x, s.y, s.inFront ? strength : 0)
+  }
 
-  /** 0–6 s · a drone pushes along the line at golden hour and rises past the first tower's crossarms. */
-  function push(t: number) {
-    const u = t / 6
-    setMood('golden')
-    camera.position.set(lerp(34, 15, ease(u)) + drift(t * .35, 1) * .6, lerp(13, 61, easeInOut(u)) + drift(t * .4, 2) * .45, lerp(96, -74, u))
-    target.set(lerp(-8, -2, u) + drift(t * .25, 3) * .8, lerp(33, 27, u), camera.position.z - 340)
+  /** 0–4 s · dawn: a drone rises over mist lying in the fields as the sun clears the horizon behind the line. */
+  function dawn(t: number) {
+    const u = t / 4
+    landscape()
+    setMood('dawn')
+    mist.visible = true
+    mist.uniforms.opacity.value = .55
+    camera.fov = camera.aspect < 1 ? 52 : 38
+    camera.position.set(lerp(-40, -27, ease(u)) + drift(t * .35, 1) * .6, lerp(14, 40, easeInOut(u)) + drift(t * .4, 2) * .4, lerp(150, 10, u))
+    target.set(lerp(30, 20, u) + drift(t * .25, 3) * .6, lerp(30, 26, u), camera.position.z - 380)
     camera.up.set(drift(t * .2, 4) * .012, 1, 0).normalize()
     camera.lookAt(target)
-    focus.set(0, 20, Math.min(0, camera.position.z - 60))
-    look.aimShadows(focus, 220)
-    look.setDepthOfField(camera.position.distanceTo(new T.Vector3(0, 30, 0)), .000003, .0015)
-    look.setAo(2.5, .65)
+    focus.set(0, 20, camera.position.z - 120)
+    look.aimShadows(focus, 260)
+    look.setDepthOfField(200, .000002, .001)
+    look.setAo(2.5, .6)
+    look.setBloom(0) // the sky's sun is far too bright in HDR for bloom; the lens streak carries it
+    flareFromSun(.45)
+    mist.uniforms.sunDir.value.copy(look.sun.position).sub(look.sun.target.position).normalize()
+    linePulse.strength.value = 0
   }
-  /** 6–10 s · beside the second tower's crossarms: insulator strings and twin conductors in silhouette, sun beyond. */
-  function track(t: number) {
-    const u = easeInOut(t / 4), base = ground(0, -330)
-    setMood('golden')
-    camera.position.set(lerp(14.5, 12.4, u) + drift(t * .5, 5) * .08, base + lerp(32.5, 35.2, u) + drift(t * .45, 6) * .06, lerp(-292, -314, u))
-    target.set(lerp(2, -1, u), base + lerp(29, 27, u), -760)
-    camera.up.set(drift(t * .3, 7) * .01, 1, 0).normalize()
-    camera.lookAt(target)
-    focus.set(0, base + 20, -360)
-    look.aimShadows(focus, 120)
-    const insulator = new T.Vector3(9.2, base + 35, -330)
-    look.setDepthOfField(camera.position.distanceTo(insulator), .00011, .009)
-    look.setAo(1.2, .6)
-  }
-  /** 10–14 s · at ground level by the stringing site: the drum turns and conductor climbs to the tower's pulley. */
-  function stringing(t: number) {
-    const u = ease(t / 4), base = ground(10, 46)
-    setMood('golden')
-    camera.position.set(lerp(19.5, 15.5, u) + drift(t * .6, 8) * .05, base + lerp(1.6, 2.3, u) + drift(t * .5, 9) * .04, lerp(64, 57, u))
-    target.set(lerp(6, 4, u), base + lerp(7, 13, u), lerp(14, 4, u))
-    camera.up.set(drift(t * .3, 10) * .01, 1, 0).normalize()
-    camera.lookAt(target)
-    focus.set(8, base, 38)
-    look.aimShadows(focus, 45)
-    look.setDepthOfField(camera.position.distanceTo(new T.Vector3(9.5, base + 2, 46)), .00022, .01)
-    look.setAo(1, .7)
-  }
-  /** 14–18 s · blue hour over the same line: aviation lights on, a town glowing on the horizon. */
+  /** 16–20 s · blue hour over the same line: lights on, current flowing toward the town on the horizon. */
   function blueHour(t: number) {
     const u = t / 4
+    landscape()
     setMood('blue')
+    mist.visible = true
+    mist.uniforms.opacity.value = .18
+    camera.fov = camera.aspect < 1 ? 52 : 38
     camera.position.set(lerp(-62, -44, ease(u)) + drift(t * .3, 11) * .5, lerp(30, 40, easeInOut(u)), lerp(-60, -230, u))
     target.set(lerp(-12, -2, u), 26, camera.position.z - 460)
     camera.up.set(drift(t * .2, 12) * .01, 1, 0).normalize()
@@ -85,15 +91,37 @@ export function createHeroFilm(canvas: HTMLCanvasElement, width: number, height:
     look.aimShadows(focus, 220)
     look.setDepthOfField(300, .000002, .001)
     look.setAo(2.5, .5)
+    look.setBloom(.75, .9, .7)
+    look.setFlare(.5, .5, 0)
+    linePulse.time.value = t
+    linePulse.strength.value = 3.2 * ease(t / .8)
   }
 
-  const shots = [{start:0, end:6, run:push}, {start:6, end:10, run:track}, {start:10, end:14, run:stringing}, {start:14, end:FILM_SECONDS, run:blueHour}]
+  const closeUps = {insulator:createInsulatorShot(renderer), conductor:createConductorShot(renderer), cable:createCableShot(renderer), brand:createBrandShot(renderer)}
+  /** Close-ups have their own exposure; the studio shots use neutral tone mapping so PCI's colours stay true. */
+  function closeUp(shot: Shot, near: number, far: number, exposure: number, neutral: boolean) {
+    return (t: number) => {
+      look.useScene(shot.scene)
+      camera.near = near; camera.far = far
+      mood = ''
+      renderer.toneMapping = neutral ? T.NeutralToneMapping : T.ACESFilmicToneMapping
+      renderer.toneMappingExposure = exposure
+      shot.frame(t, camera, look)
+    }
+  }
+  const shots = [
+    {start:0, end:4, run:dawn, warmth:.8},
+    {start:4, end:8, run:closeUp(closeUps.insulator, .01, 1200, .95, false), warmth:.75},
+    {start:8, end:12, run:closeUp(closeUps.conductor, .05, 900, .9, true), warmth:.6},
+    {start:12, end:16, run:closeUp(closeUps.cable, .1, 900, 1, true), warmth:.5},
+    {start:16, end:20, run:blueHour, warmth:.25},
+    {start:20, end:FILM_SECONDS, run:closeUp(closeUps.brand, 5, 6000, 1, true), warmth:.45},
+  ]
   const cuts = [0, ...shots.map(s => s.end)]
 
   function resize(w: number, h: number) {
     renderer.setSize(w, h, false)
     camera.aspect = w / h
-    camera.fov = w / h < 1 ? 52 : 38
     camera.updateProjectionMatrix()
     look.resize(w, h)
   }
@@ -103,11 +131,13 @@ export function createHeroFilm(canvas: HTMLCanvasElement, width: number, height:
     const t = ((seconds % FILM_SECONDS) + FILM_SECONDS) % FILM_SECONDS
     const shot = shots.find(s => t >= s.start && t < s.end) ?? shots[0]
     shot.run(t - shot.start)
+    camera.updateProjectionMatrix()
     land.update(t)
+    mist.update(t)
     // A brief dip at each cut and at the loop point, so cuts feel like an edit rather than a jump.
     const dip = Math.max(...cuts.map(c => 1 - ease(Math.abs(t - c) / .28)))
-    look.setGrade({time:t, fade:dip * .92, warmth:mood === 'golden' ? .75 : .25})
+    look.setGrade({time:t, fade:dip * .92, warmth:shot.warmth})
     look.render()
   }
-  return {setTime, resize, duration:FILM_SECONDS, dispose() { land.dispose(); look.dispose(); renderer.dispose() }}
+  return {setTime, resize, duration:FILM_SECONDS, dispose() { Object.values(closeUps).forEach(s => s.dispose()); mist.dispose(); land.dispose(); look.dispose(); renderer.dispose() }}
 }

@@ -237,7 +237,7 @@ export function buildCountryside(scene: T.Scene) {
 
   scene.add(world)
   return {
-    world, towers, heightAt,
+    world, towers, heightAt, conductorMaterial:conductor,
     update(time: number) {
       drum.rotation.x = -time * .22
       const dp = dustGeo.attributes.position as T.BufferAttribute

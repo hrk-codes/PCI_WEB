@@ -14,6 +14,7 @@ export function createCableKit() {
   const bedding = new T.MeshStandardMaterial({color:0x252a2d,roughness:.7})
   const colours = [0xd7513d,0xd5ab30,0x236f9d,0x262e37].map(color=>new T.MeshPhysicalMaterial({color,roughness:.31,metalness:.08,clearcoat:.25}))
   const yellow = new T.MeshStandardMaterial({color:0xf1bf34,roughness:.4})
+  rubber.name='rubber'; aluminium.name='aluminium'; steel.name='steel'; bedding.name='bedding'
   const materials = {rubber,aluminium,steel,bedding,colours,yellow}
 
   function cylinder(parent:T.Object3D,r:number,length:number,y:number,material:T.Material,x=0,z=0) {

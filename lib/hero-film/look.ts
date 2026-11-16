@@ -6,6 +6,7 @@ import { GTAOPass } from 'three/addons/postprocessing/GTAOPass.js'
 import { BokehPass } from 'three/addons/postprocessing/BokehPass.js'
 import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js'
+import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 
 /** Smooth deterministic 1D noise in [-1, 1], used for handheld/drone camera drift. */
 export function drift(t: number, seed = 0) {
@@ -103,7 +104,8 @@ export function createLook(renderer: T.WebGLRenderer, scene: T.Scene, camera: T.
   const composer = new EffectComposer(renderer)
   composer.setPixelRatio(1)
   composer.setSize(width, height)
-  composer.addPass(new RenderPass(scene, camera))
+  const renderPass = new RenderPass(scene, camera)
+  composer.addPass(renderPass)
   const ao = new GTAOPass(scene, camera, width, height)
   ao.updateGtaoMaterial({radius:2.5, distanceExponent:1.5, thickness:4, scale:1.2, samples:16})
   ao.blendIntensity = .7
@@ -111,10 +113,13 @@ export function createLook(renderer: T.WebGLRenderer, scene: T.Scene, camera: T.
   const bokeh = new BokehPass(scene, camera, {focus:100, aperture:.00002, maxblur:.006})
   composer.addPass(bokeh)
   const bokehUniforms = (bokeh as unknown as {uniforms:Record<string, {value:number}>}).uniforms
+  // Selective bloom: only HDR highlights (the sun, lamps, the current glow) are bright enough to bleed.
+  const bloom = new UnrealBloomPass(new T.Vector2(width, height), .35, .6, 1.15)
+  composer.addPass(bloom)
   const grade = new ShaderPass({
-    uniforms:{tDiffuse:{value:null}, time:{value:0}, fade:{value:0}, fadeColour:{value:new T.Color(0x05101b)}, aspect:{value:width / height}, warmth:{value:.5}},
+    uniforms:{tDiffuse:{value:null}, time:{value:0}, fade:{value:0}, fadeColour:{value:new T.Color(0x05101b)}, aspect:{value:width / height}, warmth:{value:.5}, flarePos:{value:new T.Vector2(.7, .45)}, flare:{value:0}, flareColour:{value:new T.Color(0xffb36b)}},
     vertexShader:'varying vec2 vUv;void main(){vUv=uv;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}',
-    fragmentShader:`uniform sampler2D tDiffuse;uniform float time;uniform float fade;uniform vec3 fadeColour;uniform float aspect;uniform float warmth;varying vec2 vUv;
+    fragmentShader:`uniform sampler2D tDiffuse;uniform float time;uniform float fade;uniform vec3 fadeColour;uniform float aspect;uniform float warmth;uniform vec2 flarePos;uniform float flare;uniform vec3 flareColour;varying vec2 vUv;
       float hash(vec2 p){p=fract(p*vec2(123.34,456.21));p+=dot(p,p+45.32);return fract(p.x*p.y);}
       void main(){
         vec2 c=vUv-.5; float r2=dot(c*vec2(aspect,1.),c*vec2(aspect,1.));
@@ -124,6 +129,8 @@ export function createLook(renderer: T.WebGLRenderer, scene: T.Scene, camera: T.
         float l=dot(col,vec3(.2126,.7152,.0722));
         col=mix(col*vec3(.92,1.,1.06),col,smoothstep(.0,.35,l));      // cool shadows
         col=mix(col,col*vec3(1.+.06*warmth,1.,1.-.06*warmth),smoothstep(.35,1.,l)); // warm highlights
+        vec2 fd=(vUv-flarePos)*vec2(aspect,1.);
+        col+=flareColour*flare*(.5*exp(-abs(fd.y)*140.)*exp(-abs(fd.x)*1.8)+.06*exp(-dot(fd,fd)*30.)); // anamorphic streak + a little glow
         col*=mix(1.,.62,smoothstep(.25,1.05,r2));                     // vignette
         float g=hash(vUv*vec2(1920.,1080.)+fract(time*7.31))-.5;
         col+=g*.018*(.35+l);                                          // fine film grain, gentle in the shadows
@@ -136,12 +143,21 @@ export function createLook(renderer: T.WebGLRenderer, scene: T.Scene, camera: T.
 
   return {
     sky, sun, hemisphere, setSun, setTwilight, aimShadows,
+    /** Renders another scene (the close-up studio shots) through the same camera and finishing passes. */
+    useScene(next: T.Scene) {
+      renderPass.scene = next
+      ;(ao as unknown as {scene:T.Scene}).scene = next
+      ;(bokeh as unknown as {scene:T.Scene}).scene = next
+    },
+    /** strength 0 switches bloom off; threshold is in linear HDR before tone mapping. */
+    setBloom(strength: number, threshold = 1.15, radius = .6) { bloom.enabled = strength > 0; bloom.strength = strength; bloom.threshold = threshold; bloom.radius = radius },
+    setFlare(x: number, y: number, strength: number) { grade.uniforms.flarePos.value.set(x, y); grade.uniforms.flare.value = strength },
     setDepthOfField(focus: number, aperture: number, maxblur = .006) { bokehUniforms.focus.value = focus; bokehUniforms.aperture.value = aperture; bokehUniforms.maxblur.value = maxblur },
     setAo(radius: number, intensity: number) { ao.updateGtaoMaterial({radius}); ao.blendIntensity = intensity },
     setGrade({time, fade = 0, warmth = .5}: {time:number, fade?:number, warmth?:number}) { grade.uniforms.time.value = time; grade.uniforms.fade.value = fade; grade.uniforms.warmth.value = warmth },
     render() { composer.render() },
-    resize(w: number, h: number) { composer.setSize(w, h); ao.setSize(w, h); grade.uniforms.aspect.value = w / h },
-    dispose() { envTarget?.dispose(); pmrem.dispose(); ao.dispose(); bokeh.dispose?.(); composer.dispose(); sky.material.dispose(); envSky.material.dispose(); sky.geometry.dispose(); twilight.geometry.dispose(); twilightMaterial.dispose() },
+    resize(w: number, h: number) { composer.setSize(w, h); ao.setSize(w, h); bloom.setSize(w, h); grade.uniforms.aspect.value = w / h },
+    dispose() { envTarget?.dispose(); pmrem.dispose(); ao.dispose(); bokeh.dispose?.(); bloom.dispose(); composer.dispose(); sky.material.dispose(); envSky.material.dispose(); sky.geometry.dispose(); twilight.geometry.dispose(); twilightMaterial.dispose() },
   }
 }
 export type Look = ReturnType<typeof createLook>

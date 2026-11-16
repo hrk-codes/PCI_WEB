@@ -11,12 +11,14 @@ export const heroDefaults = {
 }
 
 type Copy = { title: string; summary: string } | null
+// New filenames keep Next's image cache from showing the previous film during the first frame.
+const filmAsset = (name: string) => `/media/pci-hero-film-${name}`
 
 /** Art-directed poster: landscape on wide screens, portrait on tall phones. It is the LCP image and the reduced-motion view. */
 function Poster() {
   const common = {alt:'', sizes:'100vw'}
-  const { props: { srcSet: wide } } = getImageProps({...common, width:1920, height:1080, src:'/media/pci-hero-film-landscape.webp'})
-  const { props: { srcSet: tall, ...rest } } = getImageProps({...common, width:1080, height:1350, src:'/media/pci-hero-film-portrait.webp'})
+  const { props: { srcSet: wide } } = getImageProps({...common, width:1920, height:1080, src:filmAsset('landscape-smooth.webp')})
+  const { props: { srcSet: tall, ...rest } } = getImageProps({...common, width:1080, height:1350, src:filmAsset('portrait-smooth.webp')})
   return <picture>
     <source media="(orientation: portrait) and (max-width: 820px)" srcSet={tall}/>
     <source srcSet={wide}/>
@@ -73,11 +75,14 @@ export function HeroFilm({ copy, productCount }: { copy: Copy; productCount: num
   return <section ref={section} className="hero-film" aria-label="PCI Cables introduction" data-film="poster">
     <div className="hero-film-media" aria-hidden="true">
       <Poster/>
-      {!failed && <video ref={video} className="hero-film-video" muted loop playsInline preload="none" disablePictureInPicture onError={() => setFailed(true)}>
-        <source src="/media/pci-hero-film-portrait.webm" type="video/webm" media="(orientation: portrait) and (max-width: 820px)"/>
-        <source src="/media/pci-hero-film-portrait.mp4" type="video/mp4" media="(orientation: portrait) and (max-width: 820px)"/>
-        <source src="/media/pci-hero-film-landscape.webm" type="video/webm"/>
-        <source src="/media/pci-hero-film-landscape.mp4" type="video/mp4"/>
+      {!failed && <video ref={video} className="hero-film-video" muted loop playsInline preload="none" disablePictureInPicture onError={event => {
+        // A source's error bubbles through React. Let the browser try the next codec first.
+        if (event.target === event.currentTarget) setFailed(true)
+      }}>
+        <source src={filmAsset('portrait-smooth.webm')} type="video/webm" media="(orientation: portrait) and (max-width: 820px)"/>
+        <source src={filmAsset('portrait-smooth.mp4')} type="video/mp4" media="(orientation: portrait) and (max-width: 820px)"/>
+        <source src={filmAsset('landscape-smooth.webm')} type="video/webm"/>
+        <source src={filmAsset('landscape-smooth.mp4')} type="video/mp4"/>
       </video>}
     </div>
     <div className="hero-film-shade" aria-hidden="true"/>

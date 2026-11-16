@@ -5,6 +5,7 @@ import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js'
  * Procedural overhead conductors, modelled on PCI's own display samples: concentric layers of wires laid in
  * alternating directions, stepped back at the end so every layer shows. Illustrative, not a specification.
  */
+export type ConductorLayer = {count:number, metal:'aluminium' | 'alloy' | 'steel', shape:'round' | 'trapezoid'}
 export type ConductorKind = 'aac' | 'aaac' | 'acsr' | 'aacsr' | 'acar' | 'eco-panther'
 type Metal = 'aluminium' | 'alloy' | 'steel'
 type Layer = {count:number, metal:Metal, shape:'round' | 'trapezoid'}
@@ -77,7 +78,7 @@ function twist(geo: T.BufferGeometry, turnsPerUnit: number) {
  * Builds a conductor along +z, its stepped end at z = 0 and its body running back to z = -length.
  * `wire` is the round wire diameter; trapezoidal layers keep the same layer thickness.
  */
-export function buildConductor(kind: ConductorKind, materials = conductorMaterials(), {length = 14, wire = .2, step = .55, layers: selectedLayers = constructions[kind]}: {length?:number; wire?:number; step?:number; layers?:Layer[]} = {}) {
+export function buildConductor(kind: ConductorKind, materials = conductorMaterials(), {length = 14, wire = .2, step = .55, layers: selectedLayers = constructions[kind], segmentsPerUnit = 10}: {length?:number; wire?:number; step?:number; layers?:Layer[]; segmentsPerUnit?:number} = {}) {
   const group = new T.Group()
   const layers = selectedLayers
   const geometries: T.BufferGeometry[] = []
@@ -96,7 +97,7 @@ export function buildConductor(kind: ConductorKind, materials = conductorMateria
       let g: T.BufferGeometry
       if (layer.shape === 'round' || index === 0) {
         const r = index === 0 ? wire / 2 : Math.min(wire / 2, Math.sin(Math.PI / layer.count) * centre) * .985
-        g = new T.CylinderGeometry(r, r, len, 18, Math.max(2, Math.round(len * 10)), false)
+        g = new T.CylinderGeometry(r, r, len, 18, Math.max(2, Math.round(len * segmentsPerUnit)), false)
         g.rotateX(Math.PI / 2)
         g.translate(Math.cos(angle) * centre, Math.sin(angle) * centre, end - len / 2)
       } else {
@@ -107,7 +108,7 @@ export function buildConductor(kind: ConductorKind, materials = conductorMateria
         shape.moveTo(Math.cos(a0) * ri, Math.sin(a0) * ri)
         for (let s = 0; s <= steps; s++) { const a = a0 + (a1 - a0) * s / steps; shape.lineTo(Math.cos(a) * ro, Math.sin(a) * ro) }
         for (let s = steps; s >= 0; s--) { const a = a0 + (a1 - a0) * s / steps; shape.lineTo(Math.cos(a) * ri, Math.sin(a) * ri) }
-        g = new T.ExtrudeGeometry(shape, {depth:len, steps:Math.max(2, Math.round(len * 10)), bevelEnabled:true, bevelThickness:.012, bevelSize:.01, bevelSegments:3, curveSegments:4})
+        g = new T.ExtrudeGeometry(shape, {depth:len, steps:Math.max(2, Math.round(len * segmentsPerUnit)), bevelEnabled:true, bevelThickness:.012, bevelSize:.01, bevelSegments:3, curveSegments:4})
         g.translate(0, 0, end - len)
       }
       if (turns) twist(g, turns)

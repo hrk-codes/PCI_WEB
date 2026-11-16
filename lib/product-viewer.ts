@@ -17,8 +17,8 @@ function visibleBounds(object: T.Object3D) {
   return bounds
 }
 
-/** Catalogue-family cutaways informed by the filmed PCI samples. The directory supplies order dimensions. */
-function productModel(slug: string) {
+/** Catalogue-family cutaways informed by the filmed PCI samples. The directory supplies order dimensions. Also used by the hero film. */
+export function productModel(slug: string) {
   const root = new T.Group()
   const parts: T.Object3D[] = []
   const movements = new Map<T.Object3D, T.Vector3>()
