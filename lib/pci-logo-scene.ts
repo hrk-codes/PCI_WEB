@@ -40,15 +40,21 @@ export function createPciLogoScene(host: HTMLElement, {still = false}: {still?: 
   scene.add(key)
   const fill = new T.HemisphereLight(0xffffff, 0xd9dfe2, .7)
   scene.add(fill)
+  // The stage sits on the navy hero: a cool rim from behind separates the cables from the dark background.
+  const rim = new T.DirectionalLight(0x9cc9ff, 1.4)
+  rim.position.set(90, 50, -70)
+  scene.add(rim)
   const glint = new T.PointLight(0xfff4e8, 0, 90, 1.4)
   scene.add(glint)
 
   // The mark stands a little proud of a backdrop that only shows its soft shadow; the stage colour is CSS.
-  const backdrop = new T.Mesh(new T.PlaneGeometry(600, 400), new T.ShadowMaterial({opacity:.16}))
+  const backdrop = new T.Mesh(new T.PlaneGeometry(600, 400), new T.ShadowMaterial({opacity:.6}))
   backdrop.position.z = -11
   backdrop.receiveShadow = true
   scene.add(backdrop)
   const mark = buildPciMark()
+  // On navy, the logo's dark grey CABLES would disappear: light satin steel keeps it legible.
+  mark.materials.grey.color.set(0xc3cad0); mark.materials.grey.metalness = .55; mark.materials.grey.roughness = .3
   const logo = mark.group
   scene.add(logo)
   const pose = mark.pose

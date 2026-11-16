@@ -34,7 +34,7 @@ export function PciLogo3D() {
   }, [])
   return <div className={styles.logoStage}>
     <div className={styles.logoFrame} aria-hidden="true"><span/><span/><span/><span/></div>
-    <img className={styles.logoFallback} src="/media/brand/pci-logo-mark.svg" width={165} height={100} alt="PCI Cables logo" data-hidden={live ? 'yes' : undefined}/>
+    <img className={styles.logoFallback} src="/media/brand/pci-logo-mark-dark.svg" width={165} height={100} alt="PCI Cables logo" data-hidden={live ? 'yes' : undefined}/>
     <div ref={host} className={styles.logoCanvas}/>
     {live && playable && <button type="button" className={styles.logoPlay} onClick={() => scene.current?.replay()} aria-label="Play the PCI logo animation"/>}
   </div>

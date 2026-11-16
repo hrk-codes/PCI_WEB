@@ -28,10 +28,12 @@
 .ghost:hover { background: #ffffff14; border-color: #fff; }
 
 /* The logo stage: a lit showroom plate floating on the navy, with drawing-sheet details. */
-.logoStage { position: relative; aspect-ratio: 5 / 4; border-radius: 6px; background: radial-gradient(ellipse 85% 70% at 50% 28%, #ffffff 0%, #f1f3ef 48%, #dfe5e3 100%); box-shadow: 0 40px 90px -30px #000a, 0 0 0 1px #ffffff2e, inset 0 1px 0 #fff; overflow: hidden; }
-.logoStage::before { content: ''; position: absolute; inset: -30%; z-index: -1; background: radial-gradient(circle at 30% 40%, #fd8b0155, transparent 45%), radial-gradient(circle at 75% 60%, #2196f355, transparent 45%); filter: blur(40px); }
-.logoStage::after { content: ''; position: absolute; inset: 0; pointer-events: none; background-image: linear-gradient(#0b22380a 1px, transparent 1px), linear-gradient(90deg, #0b22380a 1px, transparent 1px); background-size: 28px 28px; mask-image: radial-gradient(ellipse 75% 70% at 50% 45%, transparent 35%, #000 90%); }
-.logoFrame span { position: absolute; width: 18px; height: 18px; border: 0 solid var(--about-orange); z-index: 2; }
+/* No card: the logo floats on the navy hero. A deep navy pool behind it quiets the works photo, so the cables and
+   their shadow stand out; four corner marks frame the space. */
+.logoStage { position: relative; isolation: isolate; aspect-ratio: 5 / 4; background: radial-gradient(ellipse 62% 56% at 50% 47%, #061827f2 0%, #08203599 48%, transparent 78%); }
+.logoStage::before { content: ''; position: absolute; inset: -12%; z-index: -1; background: radial-gradient(circle at 34% 42%, #fd8b012e, transparent 42%), radial-gradient(circle at 70% 52%, #2196f338, transparent 44%); filter: blur(46px); pointer-events: none; }
+.logoStage::after { content: ''; position: absolute; left: 14%; right: 14%; bottom: 13%; height: 12%; z-index: -1; pointer-events: none; background: radial-gradient(ellipse 50% 50% at 50% 50%, #7fc0ff33, transparent 70%); filter: blur(6px); }
+.logoFrame span { position: absolute; width: 22px; height: 22px; border: 0 solid var(--about-orange); opacity: .75; z-index: 2; }
 .logoFrame span:nth-child(1) { top: 16px; left: 16px; border-top-width: 2px; border-left-width: 2px; }
 .logoFrame span:nth-child(2) { top: 16px; right: 16px; border-top-width: 2px; border-right-width: 2px; }
 .logoFrame span:nth-child(3) { bottom: 16px; left: 16px; border-bottom-width: 2px; border-left-width: 2px; }
