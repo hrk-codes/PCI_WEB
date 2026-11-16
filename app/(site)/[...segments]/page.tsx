@@ -11,7 +11,7 @@ import { Turnover } from '@/components/turnover'
 import { turnoverFirstYear, turnoverLatestYear, withTurnoverYears } from '@/content/turnover'
 import { ProductDetail } from '@/components/product-detail'
 import { AboutPage, aboutHeadline } from '@/components/about-page'
-import { address, articles, catalogue, cleanHtml, company, edited, families, publicDocs, siteUrl, structured } from '@/lib/content'
+import { address, articles, catalogue, cleanHtml, company, edited, families, metaDescription, publicDocs, shareImage, siteUrl, structured } from '@/lib/content'
 
 export const dynamic = 'force-dynamic'
 type Props = { params: Promise<{ segments: string[] }>; searchParams: Promise<Record<string, string | string[] | undefined>> }
@@ -31,6 +31,25 @@ const intros: Record<string, [string,string]> = {
   clients: ['Clients', 'Explore the organisations PCI Cables has supplied across utilities, rail and public sector, international markets, and renewable energy.'],
   achievements: ['Built connection by connection.', 'Follow PCI Cables from its first years in West Bengal through cable and conductor manufacturing, first exports and new product milestones.'],
 }
+/** Search-result descriptions (120–160 characters) where the page's visible intro is too long or too short for a
+ *  snippet. They only change the meta description; the page text and its CMS copy stay as written. */
+const searchDescriptions: Record<string, string> = {
+  'about-us': 'PCI Cables Industries, Dankuni, West Bengal: makers of power and control cables, aerial bunched cables, covered conductors, overhead conductors and earth wire.',
+  products: 'Explore PCI Cables’ range: power, control, service and aerial bunched cables, covered conductors, overhead conductors up to 800 kV and galvanised earth wire.',
+  'earth-wire': 'Galvanised steel earth wire and stay wire from PCI Cables in Dankuni, West Bengal, for shielding and anchoring overhead transmission and distribution lines.',
+  gallery: 'Photographs of PCI Cables’ works in Dankuni, West Bengal: production lines, the testing laboratory, our people and exhibitions such as ELECRAMA.',
+  news: 'PCI Cables news: company milestones, new conductor and cable orders, product developments and industry events from our works in Dankuni, West Bengal.',
+  blog: 'Stories from PCI Cables: exhibitions, project orders and manufacturing updates from our cable and conductor works in Dankuni, West Bengal.',
+  privacy: 'How PCI Cables Industries uses the details you send through this website’s inquiry, career and vendor forms, and how to contact us about them.',
+  career: 'Careers at PCI Cables Industries in Dankuni, West Bengal: tell us about your skills and the role you would like in cable and conductor manufacturing.',
+  'product:aac': 'All Aluminium Conductor (AAC) from PCI Cables: circular stranded aluminium conductor for overhead power distribution lines, made in Dankuni, West Bengal.',
+  // Blog posts: the imported WordPress summaries are cut off mid-sentence.
+  'article:pci-have-participated-at-elecrama-2025': 'PCI Cables Industries at ELECRAMA 2025, the electrical and allied-equipment exhibition at India Expo Mart, showcasing our cables, conductors and earth wire.',
+  'article:received-order-from-rvnl': 'PCI Cables receives an order from Rail Vikas Nigam Ltd for ACSR (OPC/BEC) 93.3 sq mm conductor for the Mumbai Metro project.',
+  'article:first-order-of-eco-panther-conductor': 'PCI Cables wins its first order for ECO Panther conductor, with trapezoidal AL-59 alloy strands, for a renewable energy project in Madhya Pradesh.',
+}
+/** The key used for a page's search description: products and blog posts by their own slug. */
+const descriptionKey = (d: { slug: string, product?: { slug: string }, article?: { slug: string } }) => d.product ? 'product:' + d.product.slug : d.article ? 'article:' + d.article.slug : d.slug
 const pages = new Map(publicDocs.map(d=>[d.slug,d]))
 const pagePhotos: Record<string,string> = {
   'about-us':'factory.webp', products:'hero-range.webp', cables:'hero-cables.webp', conductors:'2025-12-conductors-2.webp',
@@ -89,8 +108,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const d = await resolve(segments)
   const url = '/'+segments.join('/')+'/'
   const title = d.slug === 'achievements' && d.title === intros.achievements[0] ? 'Milestones' : d.slug === 'about-us' && d.title === aboutHeadline ? 'About us' : d.title
-  const images = d.product ? [productImage(d.product)] : d.article ? ['/media/'+articleImages[d.article.slug]] : [d.slug === 'achievements' ? '/media/plant.webp' : '/media/hero-cables.webp']
-  return { title, description:d.summary, alternates:{canonical:url}, openGraph:{ title, description:d.summary, url, images, type:d.article?'article':'website' } }
+  const images = d.product ? [productImage(d.product)] : d.article ? ['/media/'+articleImages[d.article.slug]] : d.slug === 'achievements' ? ['/media/plant.webp'] : [shareImage]
+  const description = metaDescription(searchDescriptions[descriptionKey(d)] ?? d.summary)
+  return { title, description, alternates:{canonical:url}, openGraph:{ title, description, url, images, type:d.article?'article':'website' }, twitter:{ card:'summary_large_image', title, description, images } }
 }
 
 function Rich({ html }: { html: string }) { return <div className="rich" dangerouslySetInnerHTML={{ __html: html }}/> }

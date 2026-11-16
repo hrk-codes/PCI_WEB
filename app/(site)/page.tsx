@@ -9,15 +9,15 @@ import { Ambient } from '@/components/ambient'
 import { AboutCable } from '@/components/about-cable'
 import { Reach } from '@/components/reach'
 import { ProductFilm } from '@/components/product-film'
-import { address, catalogue, company, edited, siteUrl, structured } from '@/lib/content'
+import { address, catalogue, company, edited, shareImage, siteUrl, structured } from '@/lib/content'
 
 export const dynamic = 'force-dynamic'
-export const metadata: Metadata = { alternates: { canonical: '/' }, openGraph: { url: '/' } }
+export const metadata: Metadata = { alternates: { canonical: '/' }, openGraph: { url: '/', siteName: company, locale: 'en_IN', type: 'website', images: [shareImage] } }
 
 export default async function Home() {
   const homeCopy = await edited('home')
   return <>
-    <script type="application/ld+json" dangerouslySetInnerHTML={{ __html:structured({ '@type':'Organization', name:company, url:siteUrl, logo:siteUrl+'/media/logo.webp', email:'info@pcicablesindustries.com', telephone:'+91-9062207003', address:{'@type':'PostalAddress', streetAddress:address.split(', Hooghly')[0], addressLocality:'Hooghly', addressRegion:'West Bengal', postalCode:'712311', addressCountry:'IN'} }) }}/>
+    <script type="application/ld+json" dangerouslySetInnerHTML={{ __html:structured({ '@type':'Organization', name:company, url:siteUrl, logo:siteUrl+'/media/brand/pci-logo-512.png', image:siteUrl+shareImage.url, foundingDate:'2013', email:'info@pcicablesindustries.com', telephone:'+91-9062207003', contactPoint:{'@type':'ContactPoint', contactType:'sales', telephone:'+91-9062207003', email:'info@pcicablesindustries.com', areaServed:'IN'}, address:{'@type':'PostalAddress', streetAddress:address.split(', Hooghly')[0], addressLocality:'Hooghly', addressRegion:'West Bengal', postalCode:'712311', addressCountry:'IN'} }) }}/>
     <HeroFilm copy={homeCopy} productCount={catalogue.length}/>
     <AboutCable/>
     <section className="section soft ambient-host"><Ambient/><div className="wrap"><div className="section-top"><div><Kicker>Product spotlight</Kicker><h2>Featured products.</h2></div><TextLink href="/products/">Full catalogue</TextLink></div><ConductorLine/></div></section>

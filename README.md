@@ -39,12 +39,28 @@ The Reach globe uses locally hosted geographic data and the existing Three.js de
 
 Run `node scripts/test-client-showcase.mjs` with the local site running to check the homepage's rotating client logos, motion controls, mobile layout, no-JavaScript rendering, and the logo category tabs on `/clients/`.
 
+Run `pnpm test:seo` (optionally followed by a site address) to check search readiness on every sitemap page. It checks:
+- titles, meta descriptions (70–160 characters), canonical links, link-preview images, the Twitter card, one heading per page, language, alt text and structured data;
+- the Organization logo size, robots.txt and the dated sitemap;
+- that internal pages stay `noindex`, the 404 page and the old WordPress redirects.
+
+Locally it notes that search engines are blocked, which is expected while `SITE_INDEXABLE=false`. Add `--production` to require an indexable site with HTTPS sitemap URLs on its own domain.
+
 ## Publish to staging, then production
 
 1. Push the Git history to a **private PCI repository**. Configure a Vercel project with the pinned Node and pnpm versions. Enable access protection for previews. Create separate staging and production PostgreSQL databases; keep staging free of real submission data. Choose a backed-up production database and place server and database in the same region when possible.
 2. Set PAYLOAD_SECRET, DATABASE_URL, and NEXT_PUBLIC_SITE_URL per environment. Keep SITE_INDEXABLE=false in staging. Run `pnpm migrate` and `pnpm seed` against the intended database before first deployment. Set temporary process variables PCI_STAFF_EMAIL and PCI_STAFF_PASSWORD, run `pnpm staff:create`, then clear those variables. Vercel blocks browser registration of the first admin.
 3. Verify a Resend sending domain and set RESEND_API_KEY, MAIL_FROM, SALES_EMAIL, HR_EMAIL, and PROCUREMENT_EMAIL. Test delivery in staging. Set GOOGLE_SITE_VERIFICATION and optional NEXT_PUBLIC_GA_ID. Analytics loads after the visitor enables it. Verify the production property in Search Console.
 4. Back up the old WordPress site and its DNS records. Confirm staging, service costs, redirects, and backup restore. Set NEXT_PUBLIC_SITE_URL=https://pcicablesindustries.com and SITE_INDEXABLE=true on the reviewed production deployment. Point the website records at Vercel while preserving mail DNS records. Verify HTTPS and host redirects, submit the sitemap, and monitor the inbox and Search Console.
+
+   Search launch checklist:
+   - `pnpm test:seo -- https://pcicablesindustries.com --production` reports every check passed. robots.txt shows `Allow: /` and the sitemap lists the public pages on https://pcicablesindustries.com.
+   - In [Google Search Console](https://search.google.com/search-console), verify the domain, submit `https://pcicablesindustries.com/sitemap.xml` (status Success), and use URL Inspection → Request indexing on the homepage.
+   - The [Rich Results Test](https://search.google.com/test/rich-results) detects Organization and Breadcrumb data on the homepage and a product page without errors. [PageSpeed Insights](https://pagespeed.web.dev) scores SEO 100.
+   - Shared links show the PCI preview image in WhatsApp and LinkedIn.
+   - Within days to a few weeks, `site:pcicablesindustries.com` in Google lists the pages.
+
+   The production values are compiled into the build, so always let the host build with its own environment; never deploy a local `.next` folder.
 5. If cutover fails, restore the previous website DNS target or roll back the deployment. Keep the new inbox data available and export it privately before changing the database.
 
 ### Historical submissions

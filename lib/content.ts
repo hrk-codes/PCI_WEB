@@ -10,6 +10,17 @@ export const company = 'PCI Cables Industries Pvt. Ltd.'
 export const address = 'Om Complex, Monber Sastitala, Benaras Road, P.O. Mrigola, Dankuni, Hooghly 712311, West Bengal, India'
 export const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL || 'https://pcicablesindustries.com').replace(/\/$/, '')
 export const indexable = process.env.SITE_INDEXABLE === 'true' && process.env.VERCEL_ENV !== 'preview'
+/** Default link-preview image (1200 × 630, the size WhatsApp, LinkedIn, Facebook and X expect). */
+export const shareImage = { url: '/media/og/pci-cables-og.jpg', width: 1200, height: 630, alt: 'PCI Cables: cables, conductors and earth wire made in Dankuni, West Bengal' }
+/** Search-result snippets are cut at about 160 characters: keep a description whole, ending on a sentence or word. */
+export function metaDescription(text: string, limit = 160) {
+  const clean = text.replace(/\s+/g, ' ').trim()
+  if (clean.length <= limit) return clean
+  const cut = clean.slice(0, limit)
+  const sentence = cut.lastIndexOf('. ')
+  if (sentence > limit * .55) return cut.slice(0, sentence + 1)
+  return cut.slice(0, cut.lastIndexOf(' ')).replace(/[,;:]$/, '') + '…'
+}
 export const families: Record<string, string> = { cables: 'Cables', conductors: 'Conductors', 'earth-wire': 'Earth Wire' }
 export const articles = snapshot.filter((doc) => doc.kind === 'article').sort((a, b) => b.date.localeCompare(a.date))
 export const publicDocs = snapshot.filter((doc) => doc.kind === 'page')
