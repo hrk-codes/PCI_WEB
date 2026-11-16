@@ -67,6 +67,9 @@ try {
   assert.deepEqual(await names(desktop), siteFrozen, 'Site pause preference freezes the display')
   await desktop.evaluate(() => { document.documentElement.dataset.pciMotion = '' })
   await desktop.evaluate(() => window.scrollTo({ top: 0, behavior: 'instant' }))
+  // The browser reports the section leaving the viewport on a real rendering frame (the clock is faked), so give it
+  // real time to arrive before taking the snapshot.
+  await desktop.waitForTimeout(400)
   await advance(desktop, 100)
   const offscreen = await names(desktop)
   await advance(desktop, 6500)
