@@ -28,12 +28,13 @@ try {
       // Capture the existing manual model against transparency, without changing its product-page poster.
       await page.addStyleTag({ content: 'html,body{background:transparent!important}body *{visibility:hidden!important}[data-product-viewer] canvas{visibility:visible!important}' })
       const cutout = await canvas.screenshot({ omitBackground: true })
-      await sharp(cutout).trim().resize({ width: 2400 }).webp({ quality: 90, alphaQuality: 95 }).toFile(`public/media/conductors/${product.slug}.webp`)
+      const featuredName = product.slug === 'aerial-bunched-cable' ? 'aerial-bunched-cable-gentle-twist' : product.slug
+      await sharp(cutout).trim().resize({ width: 2400 }).webp({ quality: 90, alphaQuality: 95 }).toFile(`public/media/conductors/${featuredName}.webp`)
       console.log(`Captured transparent ${product.slug} for the featured span`)
       continue
     }
     const image = await canvas.screenshot({ omitBackground: true })
-    const imageName = product.slug === 'control-cable' ? 'control-cable-copper' : ['pvc-power-cable', 'lt-xlpe-cable'].includes(product.slug) ? `${product.slug}-sector` : product.slug
+    const imageName = product.slug === 'aerial-bunched-cable' ? 'aerial-bunched-cable-gentle-twist' : product.slug === 'control-cable' ? 'control-cable-copper' : ['pvc-power-cable', 'lt-xlpe-cable'].includes(product.slug) ? `${product.slug}-sector` : product.slug
     await sharp(image).webp({ quality: 90, effort: 5 }).toFile(`public/media/products/${imageName}.webp`)
     console.log(`Captured ${product.slug} at 1800 × 1350`)
     if (product.slug === 'control-cable') {

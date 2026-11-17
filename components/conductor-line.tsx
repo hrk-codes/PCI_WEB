@@ -138,7 +138,7 @@ export function ConductorLine() {
         {placed.map((item, i) => <li key={item.slug} style={{'--i':i, '--x':`${item.x}%`, '--y':`${item.y}%`, '--t':item.t.toFixed(3)} as CSSProperties}>
           <Link href={`/products/${item.slug}/`}>
             <span className="conductor-clamp" aria-hidden="true"/>
-            <Image src={`/media/conductors/${item.slug === 'control-cable' ? 'control-cable-copper' : item.slug}.webp`} width={2400} height={1344} alt="" sizes="(max-width: 820px) 42vw, 13vw"/>
+            <Image src={`/media/conductors/${item.slug === 'aerial-bunched-cable' ? 'aerial-bunched-cable-gentle-twist' : item.slug === 'control-cable' ? 'control-cable-copper' : item.slug}.webp`} width={2400} height={1344} alt="" sizes="(max-width: 820px) 42vw, 13vw"/>
             <b>{item.name}</b>
             <small>{item.note}</small>
           </Link>

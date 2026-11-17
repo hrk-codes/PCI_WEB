@@ -7,6 +7,7 @@ import { createStudioEnvironment } from './studio'
 import { buildConductor, conductorMaterials, constructions, type ConductorKind } from './conductor-models'
 import { createCableKit } from './cable-models'
 import { createPowerCoreGeometry, powerCoreStrands } from './power-cable-cores'
+import { buildAerialBunch } from './aerial-bunched-model'
 
 export type ProductViewerApi = ReturnType<typeof createProductViewer>
 
@@ -24,6 +25,7 @@ export function productModel(slug: string) {
   const movements = new Map<T.Object3D, T.Vector3>()
   const buriedSections: T.Object3D[] = []
   const disposers: (() => void)[] = []
+  let customSeparate: ((value: number) => void) | undefined
   const metals = conductorMaterials()
   disposers.push(() => Object.values(metals).forEach(material => material.dispose()))
 
@@ -104,16 +106,10 @@ export function productModel(slug: string) {
         buriedSections.push(buriedInsulation, buriedCopper)
       }
     } else if (slug === 'aerial-bunched-cable') {
-      const cores = layer()
-      for (let index = 0; index < 3; index++) {
-        const angle = index * Math.PI * 2 / 3
-        core(cores, .3, Math.cos(angle) * .48, Math.sin(angle) * .48, rubber, 2.8 - index * .15)
-      }
-      const messenger = layer()
-      core(messenger, .27, 0, 0, rubber, 3.25, steel)
-      const lighting = layer()
-      core(lighting, .14, -.68, -.24, rubber, 2.45)
-      kit.cylinder(lighting, .012, 5.2, -.2, colours[1], -.8, -.24)
+      const bunch = buildAerialBunch()
+      root.add(bunch.group)
+      customSeparate = bunch.separate
+      disposers.push(bunch.dispose)
     } else if (slug === 'covered-conductor') {
       sleeve(layer(), .7, .58, -2.8, .25, rubber)
       sleeve(layer(), .58, .42, -2.8, .95, pale)
@@ -205,6 +201,7 @@ export function productModel(slug: string) {
   return {
     group: pose,
     separate(value: number) {
+      customSeparate?.(value)
       // Exploded views retain the exposed cutaway sections, rather than pulling hidden full-length fills through them.
       buriedSections.forEach(section => { section.visible = value === 0 })
       parts.forEach((part, index) => {
@@ -231,6 +228,7 @@ export function createProductViewer(canvas: HTMLCanvasElement, slug: string, onR
   const camera = new T.PerspectiveCamera(30, 1, .1, 100)
   const endCamera = new T.OrthographicCamera(-1, 1, 1, -1, .1, 100)
   const packedPowerCable = slug === 'pvc-power-cable' || slug === 'lt-xlpe-cable'
+  const aerialBunch = slug === 'aerial-bunched-cable'
   let orthographicEnd = false
   const environment = createStudioEnvironment(renderer)
   scene.environment = environment.texture
@@ -249,16 +247,18 @@ export function createProductViewer(canvas: HTMLCanvasElement, slug: string, onR
   let { yaw, pitch, roll } = initial
   let zoom = 1
   let visible = true, frame = 0, lost = false, disposed = false
+  let pendingSeparation: number | null = null
   let drag: { id: number; x: number; y: number; yaw: number; pitch: number } | null = null
   function paint() {
     frame = 0
     if (disposed || lost || !visible || document.hidden) return
     const width = canvas.clientWidth, height = canvas.clientHeight
     if (!width || !height) return
+    if (pendingSeparation !== null) { model.separate(pendingSeparation); pendingSeparation = null }
     renderer.setSize(width, height, false)
     camera.aspect = width / height
     model.group.rotation.set(pitch, yaw, roll)
-    if (slug === 'control-cable' || packedPowerCable) {
+    if (slug === 'control-cable' || packedPowerCable || aerialBunch) {
       const bounds = visibleBounds(model.group)
       const size = bounds.getSize(new T.Vector3()), centre = bounds.getCenter(new T.Vector3())
       const distance = Math.max(size.y, size.x / camera.aspect) / (2 * Math.tan(T.MathUtils.degToRad(camera.fov / 2))) * 1.14 / zoom + size.z / 2
@@ -271,6 +271,8 @@ export function createProductViewer(canvas: HTMLCanvasElement, slug: string, onR
         endCamera.top = halfHeight; endCamera.bottom = -halfHeight
         endCamera.position.set(centre.x, centre.y, centre.z + 15)
         endCamera.lookAt(centre)
+        // Isolate ABC's terminations: the helical length behind them must not read as a common outer jacket.
+        endCamera.far = aerialBunch ? endCamera.position.z - bounds.max.z + 1.15 : 100
         endCamera.updateProjectionMatrix()
       }
     } else {
@@ -333,9 +335,9 @@ export function createProductViewer(canvas: HTMLCanvasElement, slug: string, onR
   return {
     rotate,
     zoom(value: number) { zoom = value; request() },
-    separate(value: number) { model.separate(value); request() },
-    reset() { orthographicEnd = false; yaw = initial.yaw; pitch = initial.pitch; roll = initial.roll; zoom = 1; model.separate(0); request() },
-    endView() { orthographicEnd = packedPowerCable; yaw = 0; pitch = 0; roll = 0; zoom = slug === 'control-cable' || packedPowerCable ? 1 : 2; request(); return zoom },
+    separate(value: number) { if (aerialBunch) pendingSeparation = value; else model.separate(value); request() },
+    reset() { pendingSeparation = null; orthographicEnd = false; yaw = initial.yaw; pitch = initial.pitch; roll = initial.roll; zoom = 1; model.separate(0); request() },
+    endView() { orthographicEnd = packedPowerCable || aerialBunch; yaw = 0; pitch = 0; roll = 0; zoom = slug === 'control-cable' || packedPowerCable || aerialBunch ? 1 : 2; request(); return zoom },
     dispose() {
       disposed = true
       cancelAnimationFrame(frame)

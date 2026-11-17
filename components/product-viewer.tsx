@@ -15,6 +15,15 @@ export function ProductViewer({ slug, name, poster, layers = [] }: { slug: strin
   const id = useId()
   const sample = productSamples[slug]
   const reference = sample?.reference || (sample ? { image: sample.poster, label: sample.label } : undefined)
+  const aerial = slug === 'aerial-bunched-cable'
+  const bunchStages = [
+    { label: 'Bunched', value: 0, detail: 'Four equal black-insulated members twist together, with a thinner bare aluminium messenger on the outside.' },
+    { label: 'Open bunch', value: .4, detail: 'The helical members open out while their common lay remains visible.' },
+    { label: 'Peel insulation', value: .75, detail: 'The split black insulation curls back, revealing its thickness and the aluminium underneath.' },
+    { label: 'See strands', value: 1, detail: 'Individual aluminium strands spread at the tips. Move back to reassemble the cable.' },
+  ]
+  const bunchStage = separation < .2 ? 0 : separation < .55 ? 1 : separation < .88 ? 2 : 3
+  function separate(value: number) { setSeparation(value); api.current?.separate(value) }
   useEffect(() => {
     let disposed = false
     const element = canvas.current!
@@ -51,7 +60,11 @@ export function ProductViewer({ slug, name, poster, layers = [] }: { slug: strin
         <button type="button" disabled={!ready} onClick={reset}>Reset</button>
       </div>
       <label htmlFor={`${id}-zoom`}>Zoom<input id={`${id}-zoom`} type="range" min=".8" max="2.2" step=".05" value={zoom} disabled={!ready} onChange={event => { const value = Number(event.target.value); setZoom(value); api.current?.zoom(value) }} /></label>
-      <label htmlFor={`${id}-layers`}>Separate layers<input id={`${id}-layers`} type="range" min="0" max="1" step=".05" value={separation} disabled={!ready} onChange={event => { const value = Number(event.target.value); setSeparation(value); api.current?.separate(value) }} /></label>
+      <label htmlFor={`${id}-layers`}>Separate layers<input id={`${id}-layers`} type="range" min="0" max="1" step=".05" value={separation} disabled={!ready} aria-valuetext={aerial ? bunchStages[bunchStage].label : undefined} aria-describedby={aerial ? `${id}-bunch-description` : undefined} onChange={event => separate(Number(event.target.value))} /></label>
+      {aerial && <div className={styles.bunchExploration}>
+        <div role="group" aria-label="Cable construction stages">{bunchStages.map((stage, index) => <button type="button" key={stage.label} disabled={!ready} aria-pressed={bunchStage === index} onClick={() => separate(stage.value)}>{stage.label}</button>)}</div>
+        <p id={`${id}-bunch-description`}>{bunchStages[bunchStage].detail}</p>
+      </div>}
     </div>
     {layers.length > 0 && <div className={styles.viewerLayers}><span>Outside → inside</span><ol>{layers.map(layer => <li key={layer}>{layer}</li>)}</ol></div>}
     <p className={styles.viewerNote}>Illustrative construction. Use the size directory for the dimensions of your selected specification.</p>

@@ -23,6 +23,12 @@
 .viewerButtons button:disabled { color: #657c86; background: #e2eae5; cursor: default; }
 .viewerControls label { display: grid; gap: 8px; color: #345464; font-size: .71rem; font-weight: 700; }
 .viewerControls input { width: 100%; min-width: 0; margin: 0; height: 26px; accent-color: #244b62; cursor: pointer; }
+.bunchExploration { grid-column: 1 / -1; border-top: 1px solid #c2d1d1; padding-top: 12px; }
+.bunchExploration > div { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
+.bunchExploration button { min-height: 40px; padding: 7px 8px; border: 1px solid #a0b6bd; background: #fafff9; color: #244b62; font-size: .68rem; font-weight: 700; }
+.bunchExploration button[aria-pressed="true"] { background: #19394d; border-color: #19394d; color: #fff; }
+.bunchExploration button:disabled { opacity: .6; cursor: default; }
+.bunchExploration p { margin: 10px 0 0; min-height: 3em; font-size: .71rem; line-height: 1.5; color: #345464; }
 .viewerNote { padding: 0 16px 16px; font-size: .69rem; color: #4e6672; }
 .viewerLayers { padding: 0 16px 16px; color: #345464; font-size: .68rem; }
 .viewerLayers > span { font-weight: 700; }
@@ -149,6 +155,7 @@
   .reset { justify-self: start; min-height: 36px; }
 }
 @media (max-width: 600px) {
+  .bunchExploration > div { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .heroFacts { gap: 12px; margin-top: 28px; }
   .heroFacts div { padding-left: 10px; }
   .heroFacts dt { font-size: .64rem; line-height: 1.4; }
