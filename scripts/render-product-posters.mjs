@@ -5,9 +5,11 @@ import { chromium } from 'playwright-core'
 import sharp from 'sharp'
 
 const products = JSON.parse(await readFile(new URL('../content/catalogue.json', import.meta.url), 'utf8'))
-const only = process.argv.slice(2)
+const only = process.argv.slice(2).filter(arg => !arg.startsWith('--'))
+const featured = process.argv.includes('--featured')
 const base = (process.env.PCI_BROWSER_URL || 'http://127.0.0.1:3000').replace(/\/$/, '')
 await mkdir('public/media/products', { recursive: true })
+if (featured) await mkdir('public/media/conductors', { recursive: true })
 const browser = await chromium.launch({ executablePath: process.env.CHROME_PATH || 'C:/Program Files/Google/Chrome/Application/chrome.exe' })
 try {
   const page = await browser.newPage({ viewport: { width: 1280, height: 1000 }, deviceScaleFactor: 1.5, reducedMotion: 'reduce' })
@@ -22,6 +24,14 @@ try {
       element.parentElement.style.cssText += ';position:fixed;top:0;left:0;width:1200px;height:900px;z-index:99;'
     })
     await page.waitForFunction(() => document.querySelector('[data-product-viewer] canvas').width === 1800)
+    if (featured) {
+      // Capture the existing manual model against transparency, without changing its product-page poster.
+      await page.addStyleTag({ content: 'html,body{background:transparent!important}body *{visibility:hidden!important}[data-product-viewer] canvas{visibility:visible!important}' })
+      const cutout = await canvas.screenshot({ omitBackground: true })
+      await sharp(cutout).trim().resize({ width: 2400 }).webp({ quality: 90, alphaQuality: 95 }).toFile(`public/media/conductors/${product.slug}.webp`)
+      console.log(`Captured transparent ${product.slug} for the featured span`)
+      continue
+    }
     const image = await canvas.screenshot({ omitBackground: true })
     const imageName = product.slug === 'control-cable' ? 'control-cable-copper' : ['pvc-power-cable', 'lt-xlpe-cable'].includes(product.slug) ? `${product.slug}-sector` : product.slug
     await sharp(image).webp({ quality: 90, effort: 5 }).toFile(`public/media/products/${imageName}.webp`)

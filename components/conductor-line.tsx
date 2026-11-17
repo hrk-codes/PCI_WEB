@@ -5,13 +5,13 @@ import Link from 'next/link'
 import Image from 'next/image'
 import './conductor-line.css'
 
-/** Featured conductor and control-cable range. */
+/** Homepage-only selection from the conductor and cable range. */
 const conductors = [
   {slug:'aac', name:'AAC', note:'All aluminium'},
   {slug:'aaac', name:'AAAC', note:'Alloy strength'},
   {slug:'acsr', name:'ACSR', note:'Steel-cored'},
   {slug:'aacsr', name:'AACSR', note:'Alloy, steel-cored'},
-  {slug:'acar', name:'ACAR', note:'Alloy-reinforced'},
+  {slug:'aerial-bunched-cable', name:'Aerial Bunched Cable', note:'Insulated aluminium'},
   {slug:'eco-panther', name:'ECO Panther', note:'Trapezoidal strands'},
   {slug:'control-cable', name:'Control cable', note:'Copper cores'},
 ]
@@ -134,8 +134,8 @@ export function ConductorLine() {
       </svg>
       <Tower side="start"/>
       <Tower side="end"/>
-      <ul className="conductor-list" aria-label="Featured conductors and control cable">
-        {placed.map((item, i) => <li key={item.slug} className={item.slug === 'control-cable' ? 'featured-control-cable' : undefined} style={{'--i':i, '--x':`${item.x}%`, '--y':`${item.y}%`, '--t':item.t.toFixed(3)} as CSSProperties}>
+      <ul className="conductor-list" aria-label="Featured conductors and cables">
+        {placed.map((item, i) => <li key={item.slug} style={{'--i':i, '--x':`${item.x}%`, '--y':`${item.y}%`, '--t':item.t.toFixed(3)} as CSSProperties}>
           <Link href={`/products/${item.slug}/`}>
             <span className="conductor-clamp" aria-hidden="true"/>
             <Image src={`/media/conductors/${item.slug === 'control-cable' ? 'control-cable-copper' : item.slug}.webp`} width={2400} height={1344} alt="" sizes="(max-width: 820px) 42vw, 13vw"/>

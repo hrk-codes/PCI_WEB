@@ -9,7 +9,7 @@ const browser = await chromium.launch({executablePath:process.env.CHROME_PATH ||
 const url = process.env.PCI_BROWSER_URL || 'http://127.0.0.1:3000/'
 await mkdir('test-results', {recursive:true})
 const errors = []
-const products = ['aac', 'aaac', 'acsr', 'aacsr', 'acar', 'eco-panther', 'control-cable']
+const products = ['aac', 'aaac', 'acsr', 'aacsr', 'aerial-bunched-cable', 'eco-panther', 'control-cable']
 async function open(options = {}) {
   const page = await browser.newPage({viewport:{width:1440, height:950}, ...options})
   page.on('pageerror', e => errors.push(e.message))
@@ -48,6 +48,12 @@ try {
     return {opaque, overlap, inside:items.every(r => r.bottom <= span.bottom + 2 && r.left >= span.left - 2 && r.right <= span.right + 2), sagging:items[2].top > items[0].top && items[2].top > items[5].top}
   })
   assert.deepEqual(layout, {opaque:true, overlap:false, inside:true, sagging:true}, 'Conductors hang along the span without overlapping')
+  assert.ok(await line(page).locator('a[href="/products/aerial-bunched-cable/"] img').evaluate(async img => { await img.decode(); return img.naturalWidth > 0 }), 'Aerial Bunched Cable artwork loads')
+  assert.ok(await line(page).evaluate(el => {
+    const first = el.querySelector('.conductor-clamp')
+    const control = el.querySelector('a[href="/products/control-cable/"] .conductor-clamp')
+    return getComputedStyle(first).backgroundColor === getComputedStyle(control).backgroundColor && getComputedStyle(first, '::after').backgroundColor === getComputedStyle(control, '::after').backgroundColor
+  }), 'Control cable has the same settled grey connector and stem as the other products')
   await line(page).screenshot({path:'test-results/featured-desktop.png'})
   assert.deepEqual(await axe(page), [], 'Accessibility')
   await page.evaluate(() => scrollTo({top:0, behavior:'instant'}))
