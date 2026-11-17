@@ -7,9 +7,11 @@ import ts from 'typescript'
 import { chromium } from 'playwright-core'
 
 const require = createRequire(import.meta.url)
-const source = (await readFile(new URL('../lib/aerial-bunched-model.ts', import.meta.url), 'utf8')).replace("from 'three'", `from '${import.meta.resolve('three')}'`)
-const compiled = ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.ES2022, target: ts.ScriptTarget.ES2022 } }).outputText
-const { buildAerialBunch } = await import(`data:text/javascript;base64,${Buffer.from(compiled).toString('base64')}`)
+const compile = source => `data:text/javascript;base64,${Buffer.from(ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.ES2022, target: ts.ScriptTarget.ES2022 } }).outputText).toString('base64')}`
+const threeImport = source => source.replace("from 'three'", `from '${import.meta.resolve('three')}'`)
+const insulation = compile(threeImport(await readFile(new URL('../lib/peelable-insulation.ts', import.meta.url), 'utf8')))
+const source = threeImport(await readFile(new URL('../lib/aerial-bunched-model.ts', import.meta.url), 'utf8')).replace("from './peelable-insulation'", `from '${insulation}'`)
+const { buildAerialBunch } = await import(compile(source))
 const model = buildAerialBunch()
 assert.equal(model.group.children.length, 5)
 const members = model.group.children
@@ -30,13 +32,11 @@ for (let member = 1; member < 4; member++) members[member].children.forEach((mes
 })
 
 // Check adjacent helical centre lines at different axial positions, not just the end view.
-const centres = members.slice(0, 4).map(member => Array.from({ length: 81 }, (_, row) => {
+const centres = members.slice(0, 4).map(member => Array.from({ length: 101 }, (_, row) => {
   const centre = new T.Vector3()
-  for (let half = 0; half < 2; half++) {
-    const points = member.children[half].geometry.attributes.position
-    for (let col = half ? 1 : 0; col <= (half ? 31 : 32); col++) centre.add(new T.Vector3().fromBufferAttribute(points, row * 66 + col))
-  }
-  return centre.divideScalar(64)
+  const points = member.children.find(mesh => mesh.userData.strandCount).geometry.attributes.position
+  for (let col = 0; col < 12; col++) centre.add(new T.Vector3().fromBufferAttribute(points, row * 12 + col))
+  return centre.divideScalar(12)
 }))
 let clearance = Infinity
 const layAngles = centres[0].map(point => Math.atan2(point.z, point.x))
@@ -59,7 +59,7 @@ function closed(geometry) {
   const edges = new Map()
   const key = index => [points.getX(index), points.getY(index), points.getZ(index)].map(value => Math.round(value * 100000)).join(',')
   for (const array of [points.array, normals.array]) for (const value of array) assert.ok(Number.isFinite(value), 'No invalid positions or lighting normals')
-  for (let index = 0; index < geometry.index.count; index += 3) {
+  for (let index = geometry.drawRange.start; index < Math.min(geometry.index.count, geometry.drawRange.start + geometry.drawRange.count); index += 3) {
     const triangle = [0, 1, 2].map(offset => key(geometry.index.getX(index + offset)))
     assert.equal(new Set(triangle).size, 3, 'No collapsed triangle')
     for (let edge = 0; edge < 3; edge++) {
@@ -69,7 +69,23 @@ function closed(geometry) {
   }
   assert.ok([...edges.values()].every(count => count === 2), 'Strand tips, insulation thickness and split rims form closed solids')
 }
+function smoothJacket(mesh) {
+  if (!mesh.userData.continuousInsulation) return
+  const geometry = mesh.geometry, points = geometry.attributes.position, normals = geometry.attributes.normal
+  const outer = geometry.groups.find(group => group.materialIndex === 0)
+  const seen = new Map()
+  for (let i = outer.start; i < outer.start + outer.count; i++) {
+    const vertex = geometry.index.getX(i)
+    const point = new T.Vector3().fromBufferAttribute(points, vertex)
+    const key = point.toArray().map(value => Math.round(value * 100000)).join(',')
+    const normal = new T.Vector3().fromBufferAttribute(normals, vertex)
+    const existing = seen.get(key)
+    if (existing) assert.ok(normal.distanceTo(existing) < .00001, 'Joined outer surfaces have identical normals: no longitudinal seam or lighting crease')
+    else seen.set(key, normal)
+  }
+}
 meshes.forEach(mesh => closed(mesh.geometry))
+meshes.forEach(smoothJacket)
 const started = performance.now()
 for (const value of [.4, .75, 1, .75, .4, 0]) {
   model.separate(value)
@@ -78,6 +94,7 @@ for (const value of [.4, .75, 1, .75, .4, 0]) {
 meshes.forEach((mesh, index) => assert.deepEqual(mesh.geometry.attributes.position.array, original[index], 'Reverse separation reassembles every vertex without drift'))
 model.separate(1)
 meshes.forEach(mesh => closed(mesh.geometry))
+meshes.forEach(smoothJacket)
 // The jacket must bend; a translation of an unchanged cylinder is insufficient.
 const originalShell = original[0], openedShell = meshes[0].geometry.attributes.position.array
 const displacements = []
@@ -111,6 +128,8 @@ async function screenshot(page, name) {
 try {
   const page = await open()
   await canvas(page).waitFor({ timeout: 30000 })
+  await page.evaluate(() => document.fonts.ready)
+  await page.waitForTimeout(250)
   const start = await screenshot(page, 'bunched-desktop')
   await page.waitForTimeout(200)
   assert.ok(start.equals(await canvas(page).screenshot()), 'Reduced motion has no automatic spin')
@@ -154,7 +173,7 @@ try {
 
   const staticPage = await open({ javaScriptEnabled: false })
   const poster = staticPage.locator('[data-product-viewer] img').first()
-  assert.ok(await poster.evaluate(async img => { await img.decode(); return img.naturalWidth > 0 && img.src.includes('aerial-bunched-cable-gentle-twist') }))
+  assert.ok(await poster.evaluate(async img => { await img.decode(); return img.naturalWidth > 0 && img.src.includes('aerial-bunched-cable-seamless') }))
   assert.equal(await staticPage.locator('[data-spec-entry]').count(), 6, 'All ABC source rows remain available without JavaScript')
   await staticPage.close()
 

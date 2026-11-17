@@ -1,4 +1,5 @@
 import * as T from 'three'
+import { createPeelableInsulation } from './peelable-insulation'
 
 /** Illustrative five-member ABC, not a dimensioned catalogue construction. Local cable axis: Y. */
 export function buildAerialBunch() {
@@ -102,20 +103,6 @@ export function buildAerialBunch() {
   }
 
   const circle = (radius: number) => Array.from({ length: 12 }, (_, i) => new T.Vector2(Math.cos(i * tau / 12) * radius, Math.sin(i * tau / 12) * radius))
-  // A half-annulus is solid insulation, not a transparent surface or an empty black disc.
-  function shellContour(half: number) {
-    const points: T.Vector2[] = []
-    for (let i = 0; i <= 32; i++) {
-      const angle = half * Math.PI - Math.PI / 2 + i * Math.PI / 32
-      points.push(new T.Vector2(Math.cos(angle) * .293, Math.sin(angle) * .293))
-    }
-    for (let i = 32; i >= 0; i--) {
-      const angle = half * Math.PI - Math.PI / 2 + i * Math.PI / 32
-      points.push(new T.Vector2(Math.cos(angle) * .224, Math.sin(angle) * .224))
-    }
-    return points
-  }
-
   for (let index = 0; index < 5; index++) {
     const bare = index === 4, phase = bare ? Math.PI * 3 / 4 : index * tau / 4
     const assembly = new T.Group()
@@ -129,17 +116,19 @@ export function buildAerialBunch() {
     }
     function attach(mesh: T.Mesh) { group.remove(mesh); assembly.add(mesh) }
 
-    if (!bare) for (let half = 0; half < 2; half++) {
-      const direction = half ? -1 : 1
-      const path = (t: number, value: number) => {
-        const along = t * .9
-        const f = frame(along, value)
-        const peel = stage(value, .3, .82) * smooth((along - .5) / .4)
-        // Split insulation curls away from the aluminium towards two opposite sides.
-        return f.centre.addScaledVector(f.u, direction * peel * .72).add(new T.Vector3(0, -peel * .28, 0))
-      }
-      const mesh = sweeps([{ contour: shellContour(half), at: path, hint: (t, value) => frame(t * .9, value).u, steps: 80, outerSides: 32 }], [jacket, lining], `Black insulation · member ${index + 1} · half ${half + 1}`)
-      attach(mesh)
+    if (!bare) {
+      const insulation = createPeelableInsulation({
+        at(t, value, half) {
+          const f = frame(t, value)
+          if (half === undefined) return f.centre
+          const peel = stage(value, .3, .82) * smooth((t - .5) / .4)
+          return f.centre.addScaledVector(f.u, (half ? -1 : 1) * peel * .72).add(new T.Vector3(0, -peel * .28, 0))
+        },
+        hint: (t, value) => frame(t, value).u,
+      }, [jacket, lining])
+      insulation.mesh.name = `Continuous black insulation · member ${index + 1}`
+      assembly.add(insulation.mesh)
+      updates.push(insulation.update); geometries.push(insulation.mesh.geometry)
     }
 
     const strandRadius = bare ? .039 : .042

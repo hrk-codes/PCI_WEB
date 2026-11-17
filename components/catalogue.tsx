@@ -3,7 +3,7 @@ import { Arrow, Picture, TextLink } from '@/components/site'
 import { catalogue, families, editedMany, articles } from '@/lib/content'
 type Item = typeof catalogue[number]
 export function productImage(product: Item) {
-  const imageName = product.slug === 'aerial-bunched-cable' ? 'aerial-bunched-cable-gentle-twist' : product.slug === 'control-cable' ? 'control-cable-copper' : ['pvc-power-cable', 'lt-xlpe-cable'].includes(product.slug) ? `${product.slug}-sector` : product.slug
+  const imageName = product.slug === 'aerial-bunched-cable' ? 'aerial-bunched-cable-seamless' : product.slug === 'control-cable' ? 'control-cable-copper' : ['pvc-power-cable', 'lt-xlpe-cable'].includes(product.slug) ? `${product.slug}-sector` : product.slug
   return `/media/products/${imageName}.webp`
 }
 
