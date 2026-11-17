@@ -1,7 +1,8 @@
 import * as T from 'three'
-import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js'
 import { aboutTimeline, clamp } from '@/lib/about-timeline'
 import { createCableKit } from '@/lib/cable-models'
+import { createStudioEnvironment } from '@/lib/studio'
+import { addCurrent, buildCopperCable, currentHalo, drawnMarks, legendShell, motes, pvcGrain, sparks, zincSpangle } from '@/lib/cable-scene-fx'
 
 type Anchor = {name:string,object:T.Object3D,path?:SVGPathElement|null,dot?:SVGCircleElement|null,label?:HTMLElement|null,ax:number,ay:number,left:boolean,last:string}
 
@@ -17,26 +18,46 @@ export function createCableScene(host: HTMLElement, section: HTMLElement) {
   const renderer = new T.WebGLRenderer({canvas, context, alpha:true, antialias:true})
   renderer.setPixelRatio(Math.min(devicePixelRatio,1.6))
   renderer.setClearColor(0x000000,0)
-  renderer.toneMapping = T.ACESFilmicToneMapping
-  renderer.toneMappingExposure = .95
+  renderer.toneMapping = T.NeutralToneMapping
+  renderer.toneMappingExposure = 1
+  renderer.shadowMap.enabled = true
+  renderer.shadowMap.type = T.PCFSoftShadowMap
   const scene = new T.Scene()
   const camera = new T.PerspectiveCamera(32,1,.1,50)
   const cameraHome = new T.Vector3(4,4.7,10)
   const lookAt = new T.Vector3(0,.05,0)
   let cameraScale = 1
-  const pmrem = new T.PMREMGenerator(renderer)
-  const room = new RoomEnvironment()
-  const environment = pmrem.fromScene(room,.04)
+  // Product-photography reflections (strip softboxes), so metal and PVC catch real highlights.
+  const environment = createStudioEnvironment(renderer)
   scene.environment = environment.texture
-  room.dispose()
-  const key = new T.DirectionalLight(0xfff5e7,2.6)
+  scene.environmentIntensity = .9
+  const key = new T.DirectionalLight(0xfff5e7,2.4)
   key.position.set(-4,6,6)
+  // Soft shadows between the cables ground them as real objects.
+  key.castShadow = true
+  key.shadow.mapSize.set(1536,1536)
+  key.shadow.radius = 6
+  key.shadow.bias = -.0008
+  key.shadow.normalBias = .02
+  Object.assign(key.shadow.camera,{left:-4.5,right:4.5,top:4.5,bottom:-4.5,near:1,far:20})
   const rim = new T.DirectionalLight(0xd4e9ff,1.8)
   rim.position.set(5,3,-2)
   scene.add(key,rim,new T.HemisphereLight(0xffffff,0x39454c,.8))
   const kit = createCableKit()
   const {rubber,aluminium,steel,bedding,colours,yellow} = kit.materials
   const {cylinder,bundle,collar,strandedWire,track} = kit
+  // Surface realism: PVC grain, drawn-wire marks on the strands, zinc spangle on galvanised steel.
+  const grain = pvcGrain(), marks = drawnMarks(true), tubeMarks = drawnMarks(false), spangle = zincSpangle()
+  const tuned = (m: T.MeshStandardMaterial, bump: T.Texture, scale: number, rough: number, metal?: number) => { m.bumpMap = bump; m.bumpScale = scale; m.roughness = rough; if (metal !== undefined) m.metalness = metal; m.needsUpdate = true }
+  tuned(rubber, grain, .5, .52); rubber.color.set(0x15181b)
+  tuned(bedding, grain, .35, .62)
+  tuned(aluminium, marks, .9, .26, 1); aluminium.color.set(0xc9d0d6)
+  tuned(steel, spangle, .4, .36, .9); steel.color.set(0x9aa3a8)
+  colours.forEach(c => tuned(c, grain, .18, .36))
+  // Bare conductors and the copper cable get materials of their own, so current lights only them.
+  const bareAluminium = aluminium.clone(); bareAluminium.bumpMap = tubeMarks
+  const earthSteel = steel.clone(); earthSteel.bumpMap = tubeMarks
+  const copper = new T.MeshPhysicalMaterial({color:0xc97a4a, metalness:1, roughness:.27, bumpMap:marks, bumpScale:.9, clearcoat:.15})
 
   // Energy pulse: a soft orange band scrolling along additive shells. No post-processing.
   const band = new Uint8Array(128*4)
@@ -96,8 +117,6 @@ export function createCableScene(host: HTMLElement, section: HTMLElement) {
     const group=new T.Group(), strands=new T.Group()
     group.position.set(x,0,z)
     cylinder(group,.215,.82+lift,1.26+lift/2,colours[i])
-    shell(group,.228,.82+lift,1.26+lift/2,i%2?pulseB:pulseA)
-    shell(group,.27,.82+lift,1.26+lift/2,glow)
     bundle(strands,.19,1.5+lift,2.03+lift+(i%2)*.1)
     group.add(strands); insulG.add(group)
     cores.push({group,strands,x,z})
@@ -110,11 +129,15 @@ export function createCableScene(host: HTMLElement, section: HTMLElement) {
     {name:'insulation',object:anchor(cores[0].group,.215,1.18)},
     {name:'conductor',object:anchor(cores[0].strands,.08,1.98)},
   ].map(a=>({...a,ax:0,ay:0,left:true,last:''}))
+  // Printed legend along the sheath, as on PCI's cables.
+  const powerLegend = legendShell(.58,2.65,'PCI CABLES  ·  1.1 kV  ·  4C × 95 mm²  ·  A2XWY  ·  IS 7098')
+  powerLegend.mesh.position.y=-.9; sheathG.add(powerLegend.mesh)
   root.add(power)
 
   // A separate single-core covered conductor, with its own metallic end face.
   const single = new T.Group()
   cylinder(single,.31,2.6,-.85,rubber)
+  shell(single,.325,2.6,-.85,pulseA)
   collar(single,.295,.45,rubber)
   bundle(single,.265,.35,1.4)
   single.rotation.z=.12;single.position.set(-1.05,-.32,-.15);root.add(single)
@@ -132,12 +155,29 @@ export function createCableScene(host: HTMLElement, section: HTMLElement) {
   stripe.scale.x=.7
   aerial.scale.setScalar(.77);aerial.rotation.z=-.27;aerial.position.set(1.1,-.8,.4);root.add(aerial)
   // Additional bare aluminium conductor and galvanised earth wire frame the main cutaways.
-  const bare=strandedWire(.245,3.05,aluminium)
-  shell(bare,.262,3.05,0,pulseB)
+  const bare=strandedWire(.245,3.05,bareAluminium)
+  // Current travels inside the bare strands, with a halo riding each band.
+  // Electric blue-white current: the live conductor of the set.
+  const bareCurrent=addCurrent(bareAluminium,{colour:0x3fc4ff,speed:1.15,spacing:2.2,width:.24})
+  const bareHalo=currentHalo(.36,3.05,bareCurrent,0x5fd4ff); bare.add(bareHalo.mesh)
   bare.position.set(-1.9,-.5,.2);bare.rotation.z=.28;root.add(bare)
-  const earth=strandedWire(.16,2.65,steel)
+  const earth=strandedWire(.16,2.65,earthSteel)
+  // The earth wire carries a cooler, fainter flicker: the protective path, not a live conductor.
+  const earthCurrent=addCurrent(earthSteel,{colour:0x8fc8ff,speed:1.9,spacing:1.4,width:.12})
+  const earthHalo=currentHalo(.25,2.65,earthCurrent,0x9fd0ff); earth.add(earthHalo.mesh)
   earth.position.set(1.95,-.18,-.1);earth.rotation.z=-.24;root.add(earth)
-  const companions = [single,aerial,bare,earth].map(group=>({group,home:group.position.clone(),scale:group.scale.x}))
+  // PCI's four-core armoured copper control cable joins the range at the back right, entering last.
+  const copperCable=buildCopperCable(kit,{rubber,bedding,steel,copper})
+  const copperCurrent=addCurrent(copper,{speed:.55,spacing:.9,width:.1})
+  const copperLegend = legendShell(.36,2.2,'PCI CABLES  ·  1.1 kV  ·  4C × 2.5 mm² CU  ·  YWY  ·  IS 1554')
+  copperLegend.mesh.position.y=-.8; copperCable.group.add(copperLegend.mesh)
+  copperCable.group.scale.setScalar(.86);copperCable.group.rotation.set(.05,.3,-.12);copperCable.group.position.set(1.36,.3,-.7);root.add(copperCable.group)
+  const companions = [single,aerial,bare,earth,copperCable.group].map(group=>({group,home:group.position.clone(),scale:group.scale.x}))
+  // Sparks at the live tips (bare aluminium end, copper strand ends) and motes drifting through the light.
+  const bareSparks=sparks(bare,[new T.Vector3(0,1.53,0)],46,0xbfe6ff)
+  const copperSparks=sparks(copperCable.group,copperCable.tips,30)
+  const dust=motes(root)
+  root.traverse(o=>{ const mesh=o as T.Mesh; if(mesh.isMesh && !(mesh.material as T.Material).transparent){ mesh.castShadow=true; mesh.receiveShadow=true } })
 
   // DOM targets for the anatomy leader lines (all optional; the scene works without them).
   const art = section.querySelector<HTMLElement>('.about-art')
@@ -213,13 +253,22 @@ export function createCableScene(host: HTMLElement, section: HTMLElement) {
       c.strands.position.y=.6*e
     }
     companions.forEach((c,i)=>{
-      const t=ease((tl.companions-i*.12)/.64)
+      const t=ease((tl.companions-i*.08)/.66)
       c.group.visible=t>.001
       c.group.position.set(c.home.x*lerp(.6,1,t),c.home.y-(1-t)*.5,c.home.z-(1-t)*2.6)
       c.group.scale.setScalar(c.scale*lerp(.7,1,t))
     })
     const pulseOn=tl.pulse>.001
     shells.forEach(s=>{s.visible=pulseOn})
+    const seconds=now/1000, live=tl.pulse
+    bareCurrent.curTime.value=copperCurrent.curTime.value=seconds
+    // The earth wire flickers irregularly rather than streaming.
+    earthCurrent.curTime.value=seconds
+    bareCurrent.curStrength.value=1.45*live
+    copperCurrent.curStrength.value=1.1*live
+    earthCurrent.curStrength.value=.6*live*(.55+.45*Math.abs(Math.sin(seconds*7.3)*Math.sin(seconds*2.1)))
+    bareHalo.mesh.visible=earthHalo.mesh.visible=pulseOn
+    bareSparks.update(seconds,live);copperSparks.update(seconds,live*.8);dust.update(seconds,Math.max(live,tl.companions*.6))
     if (pulseOn) {
       const travel=now*.00042+progress*1.5
       bandTexture.offset.y=-(travel%1);bandTextureB.offset.y=-((travel+.47)%1)
@@ -276,9 +325,12 @@ export function createCableScene(host: HTMLElement, section: HTMLElement) {
     canvas.removeEventListener('webglcontextlost',lost);canvas.removeEventListener('webglcontextrestored',restored)
     document.removeEventListener('visibilitychange',onVisibility)
     kit.dispose()
+    ;[grain,marks,tubeMarks,spangle].forEach(t=>t.dispose())
+    ;[bareAluminium,earthSteel,copper].forEach(m=>m.dispose())
+    ;[powerLegend,copperLegend,bareHalo,earthHalo,bareSparks,copperSparks,dust,copperCable].forEach(x=>x.dispose())
     ;[pulseA,pulseB,glow].forEach(m=>m.dispose())
     bandTexture.dispose();bandTextureB.dispose()
-    environment.dispose();pmrem.dispose();renderer.dispose();canvas.remove();delete host.dataset.ready
+    environment.dispose();renderer.dispose();canvas.remove();delete host.dataset.ready
     if(art)delete art.dataset.anchors
   }
 }

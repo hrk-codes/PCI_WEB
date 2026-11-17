@@ -4,6 +4,7 @@ import { address, company } from '@/lib/content'
 import { AnalyticsPreference } from '@/components/analytics'
 import { Ambient } from '@/components/ambient'
 import { DesktopMenu } from '@/components/desktop-menu'
+import { HeaderLogo } from '@/components/header-logo'
 
 export const menus = [
   { title: 'Company', items: [['About PCI','/about-us/'], ['Management','/management/'], ['Clients','/clients/'], ['Milestones','/achievements/'], ['Turnover','/turnover/']] },
@@ -14,13 +15,13 @@ export const menus = [
 export function Arrow({ diagonal = false }: { diagonal?: boolean }) {
   return <svg width="17" height="17" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d={diagonal ? 'M6 18 18 6M7 6h11v11' : 'M3 12h17m-7-7 7 7-7 7'} stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"/></svg>
 }
-export function Brand() {
-  return <Link className="brand" href="/"><span className="brand-mark"><Image src="/media/logo.webp" width={62} height={48} alt="" /></span><span><strong>PCI Cables</strong><small>INDUSTRIES PVT. LTD.</small></span></Link>
+export function Brand({ live = false }: { live?: boolean }) {
+  return <Link className="brand" href="/">{live ? <HeaderLogo/> : <span className="brand-mark"><Image src="/media/logo.webp" width={62} height={48} alt="" /></span>}<span><strong>PCI Cables</strong><small>INDUSTRIES PVT. LTD.</small></span></Link>
 }
 export function Header() {
   return <header className="site-head" id="top">
     <div className="head-meta"><div className="wrap meta-inner"><a className="meta-location" href="https://www.google.com/maps/search/?api=1&query=PCI+Cables+Industries+Pvt+Ltd+Om+Complex+Monber+Sastitala+Beneras+Road+Mrigola+Dankuni+Hooghly+712311" target="_blank" rel="noopener noreferrer">Manufactured in West Bengal, India</a><div><a href="https://mail.google.com/mail/?view=cm&fs=1&to=info%40pcicablesindustries.com" target="_blank" rel="noopener noreferrer">info@pcicablesindustries.com</a><a href="tel:+919062207003">+91 90622 07003</a></div></div></div>
-    <div className="wrap navbar"><Brand/>
+    <div className="wrap navbar"><Brand live/>
       <nav className="main-nav" aria-label="Main navigation"><Link href="/">Home</Link>{menus.map(m=><DesktopMenu key={m.title} {...m}/>)}<Link href="/contact-us/">Contact</Link></nav>
       <Link className="button nav-cta" href="/request-quote/">Request a quote <Arrow diagonal/></Link>
       <details className="mobile-nav"><summary>Menu <span aria-hidden="true">☰</span></summary><nav aria-label="Mobile navigation"><Link href="/">Home</Link>{menus.map(m=><details name="mobile-menu" key={m.title}><summary>{m.title}<span className="menu-chevron" aria-hidden="true"/></summary>{m.items.map(([label,url])=><Link key={url} href={url}>{label}</Link>)}</details>)}<Link href="/contact-us/">Contact</Link><Link href="/request-quote/">Request a quote</Link></nav></details>
