@@ -55,14 +55,25 @@ export function AboutCable() {
       if (el.dataset.cablePose !== pose) el.dataset.cablePose = pose
       el.dispatchEvent(new CustomEvent('pci-cable-progress', {detail:p}))
     }
-    function drawFromScroll() {
+    function scrollTarget() {
       const rect = el.getBoundingClientRect()
       const travel = el.offsetHeight - (innerHeight - headerHeight)
-      draw(Math.max(0, Math.min(1, (headerHeight - rect.top) / Math.max(1, travel))))
+      return Math.max(0, Math.min(1, (headerHeight - rect.top) / Math.max(1, travel)))
     }
-    function update() {
+    // The story eases toward the scroll position instead of jumping with each wheel step, so the cables glide.
+    // Large jumps (scrollbar drags, links, reloads) land at once.
+    let shown = -1, lastTick = 0
+    function drawFromScroll() { shown = scrollTarget(); lastTick = 0; draw(shown) }
+    function update(now: number) {
       frame = 0
-      if (near && mode === 'cinematic') drawFromScroll()
+      if (!near || mode !== 'cinematic') return
+      const target = scrollTarget()
+      const dt = lastTick ? Math.min(.05, (now - lastTick) / 1000) : 1 / 60
+      if (shown < 0 || Math.abs(target - shown) > .2) shown = target
+      else shown += (target - shown) * (1 - Math.exp(-dt / .085))
+      if (Math.abs(target - shown) < .0004) shown = target
+      draw(shown)
+      if (shown !== target) { lastTick = now; frame = requestAnimationFrame(update) } else lastTick = 0
     }
     function schedule() { if (!frame && near) frame = requestAnimationFrame(update) }
     function configure() {

@@ -2,7 +2,7 @@ import * as T from 'three'
 import { aboutTimeline, clamp } from '@/lib/about-timeline'
 import { createCableKit } from '@/lib/cable-models'
 import { createStudioEnvironment } from '@/lib/studio'
-import { addCurrent, buildCopperCable, currentHalo, drawnMarks, legendShell, motes, pvcGrain, sparks, zincSpangle } from '@/lib/cable-scene-fx'
+import { addCurrent, buildCopperCable, currentHalo, drawnMarks, helicalWire, legendShell, motes, pvcGrain, sparks, strandTip, zincSpangle } from '@/lib/cable-scene-fx'
 
 type Anchor = {name:string,object:T.Object3D,path?:SVGPathElement|null,dot?:SVGCircleElement|null,label?:HTMLElement|null,ax:number,ay:number,left:boolean,last:string}
 
@@ -13,15 +13,22 @@ type Anchor = {name:string,object:T.Object3D,path?:SVGPathElement|null,dot?:SVGC
  */
 export function createCableScene(host: HTMLElement, section: HTMLElement) {
   const canvas = document.createElement('canvas')
-  const context = canvas.getContext('webgl2', {alpha:true, antialias:true, powerPreference:'low-power'})
+  const context = canvas.getContext('webgl2', {alpha:true, antialias:true, powerPreference:'high-performance'})
   if (!context) return () => {}
   const renderer = new T.WebGLRenderer({canvas, context, alpha:true, antialias:true})
-  renderer.setPixelRatio(Math.min(devicePixelRatio,1.6))
   renderer.setClearColor(0x000000,0)
   renderer.toneMapping = T.NeutralToneMapping
   renderer.toneMappingExposure = 1
   renderer.shadowMap.enabled = true
-  renderer.shadowMap.type = T.PCFSoftShadowMap
+  // PCF is three's soft-filtered shadow type now (PCFSoftShadowMap is swapped for it after the first shadow pass,
+  // which recompiled every shader mid-scroll).
+  renderer.shadowMap.type = T.PCFShadowMap
+  // Shadows are redrawn only when the composition moves, not on frames where only the current animates.
+  renderer.shadowMap.autoUpdate = false
+  // Sharp on every screen: at least 1.5x (supersampled on standard displays), up to 2x, within a pixel budget.
+  // If the device cannot hold a smooth frame rate, `quality` steps down (see render).
+  let quality = Math.min(2,Math.max(devicePixelRatio,1.25))
+  const pixelBudget = 2.6e6
   const scene = new T.Scene()
   const camera = new T.PerspectiveCamera(32,1,.1,50)
   const cameraHome = new T.Vector3(4,4.7,10)
@@ -35,8 +42,8 @@ export function createCableScene(host: HTMLElement, section: HTMLElement) {
   key.position.set(-4,6,6)
   // Soft shadows between the cables ground them as real objects.
   key.castShadow = true
-  key.shadow.mapSize.set(1536,1536)
-  key.shadow.radius = 6
+  key.shadow.mapSize.set(1024,1024)
+  key.shadow.radius = 5
   key.shadow.bias = -.0008
   key.shadow.normalBias = .02
   Object.assign(key.shadow.camera,{left:-4.5,right:4.5,top:4.5,bottom:-4.5,near:1,far:20})
@@ -45,19 +52,21 @@ export function createCableScene(host: HTMLElement, section: HTMLElement) {
   scene.add(key,rim,new T.HemisphereLight(0xffffff,0x39454c,.8))
   const kit = createCableKit()
   const {rubber,aluminium,steel,bedding,colours,yellow} = kit.materials
-  const {cylinder,bundle,collar,strandedWire,track} = kit
+  const {cylinder,collar,track} = kit
+  // Every exposed conductor uses the high-detail twisted strands with cut, chamfered ends.
+  const bundle = (parent:T.Object3D,r:number,bottom:number,top:number,x=0,z=0) => strandTip(kit,parent,aluminium,r,bottom,top,x,z)
   // Surface realism: PVC grain, drawn-wire marks on the strands, zinc spangle on galvanised steel.
-  const grain = pvcGrain(), marks = drawnMarks(true), tubeMarks = drawnMarks(false), spangle = zincSpangle()
+  const grain = pvcGrain(), tubeMarks = drawnMarks(false), spangle = zincSpangle()
   const tuned = (m: T.MeshStandardMaterial, bump: T.Texture, scale: number, rough: number, metal?: number) => { m.bumpMap = bump; m.bumpScale = scale; m.roughness = rough; if (metal !== undefined) m.metalness = metal; m.needsUpdate = true }
   tuned(rubber, grain, .5, .52); rubber.color.set(0x15181b)
   tuned(bedding, grain, .35, .62)
-  tuned(aluminium, marks, .9, .26, 1); aluminium.color.set(0xc9d0d6)
+  tuned(aluminium, tubeMarks, .9, .26, 1); aluminium.color.set(0xc9d0d6)
   tuned(steel, spangle, .4, .36, .9); steel.color.set(0x9aa3a8)
   colours.forEach(c => tuned(c, grain, .18, .36))
   // Bare conductors and the copper cable get materials of their own, so current lights only them.
   const bareAluminium = aluminium.clone(); bareAluminium.bumpMap = tubeMarks
   const earthSteel = steel.clone(); earthSteel.bumpMap = tubeMarks
-  const copper = new T.MeshPhysicalMaterial({color:0xc97a4a, metalness:1, roughness:.27, bumpMap:marks, bumpScale:.9, clearcoat:.15})
+  const copper = new T.MeshPhysicalMaterial({color:0xc97a4a, metalness:1, roughness:.27, bumpMap:tubeMarks, bumpScale:.9, clearcoat:.15})
 
   // Energy pulse: a soft orange band scrolling along additive shells. No post-processing.
   const band = new Uint8Array(128*4)
@@ -72,7 +81,7 @@ export function createCableScene(host: HTMLElement, section: HTMLElement) {
   bandTexture.needsUpdate = true
   const bandTextureB = bandTexture.clone()
   bandTextureB.needsUpdate = true
-  const pulseMaterial = (map:T.Texture,opacity:number) => new T.MeshBasicMaterial({color:0xff7444,alphaMap:map,transparent:true,opacity,blending:T.AdditiveBlending,depthWrite:false,toneMapped:false,side:T.DoubleSide})
+  const pulseMaterial = (map:T.Texture,opacity:number) => new T.MeshBasicMaterial({color:0xff7444,alphaMap:map,transparent:true,premultipliedAlpha:true,opacity,blending:T.AdditiveBlending,depthWrite:false,toneMapped:false,side:T.DoubleSide})
   const pulseA = pulseMaterial(bandTexture,1), pulseB = pulseMaterial(bandTextureB,1), glow = pulseMaterial(bandTexture,.35)
   const shells: T.Mesh[] = []
 
@@ -100,7 +109,7 @@ export function createCableScene(host: HTMLElement, section: HTMLElement) {
   collar(sheathG,.565,.425,rubber)
   cylinder(beddingG,.535,.65,.7,bedding)
   collar(beddingG,.53,1.04,bedding)
-  const armourGeo = track(new T.CylinderGeometry(.024,.024,.62,10,1))
+  const armourGeo = track(new T.CylinderGeometry(.024,.024,.62,16,1))
   const armourMesh = new T.InstancedMesh(armourGeo,steel,54)
   const mat = new T.Matrix4()
   for(let i=0;i<54;i++) {
@@ -155,16 +164,16 @@ export function createCableScene(host: HTMLElement, section: HTMLElement) {
   stripe.scale.x=.7
   aerial.scale.setScalar(.77);aerial.rotation.z=-.27;aerial.position.set(1.1,-.8,.4);root.add(aerial)
   // Additional bare aluminium conductor and galvanised earth wire frame the main cutaways.
-  const bare=strandedWire(.245,3.05,bareAluminium)
+  const bare=helicalWire(kit,.245,3.05,bareAluminium)
   // Current travels inside the bare strands, with a halo riding each band.
   // Electric blue-white current: the live conductor of the set.
   const bareCurrent=addCurrent(bareAluminium,{colour:0x3fc4ff,speed:1.15,spacing:2.2,width:.24})
-  const bareHalo=currentHalo(.36,3.05,bareCurrent,0x5fd4ff); bare.add(bareHalo.mesh)
+  const bareHalo=currentHalo(.31,3.05,bareCurrent,0x5fd4ff); bare.add(bareHalo.mesh)
   bare.position.set(-1.9,-.5,.2);bare.rotation.z=.28;root.add(bare)
-  const earth=strandedWire(.16,2.65,earthSteel)
+  const earth=helicalWire(kit,.16,2.65,earthSteel,{radial:10})
   // The earth wire carries a cooler, fainter flicker: the protective path, not a live conductor.
   const earthCurrent=addCurrent(earthSteel,{colour:0x8fc8ff,speed:1.9,spacing:1.4,width:.12})
-  const earthHalo=currentHalo(.25,2.65,earthCurrent,0x9fd0ff); earth.add(earthHalo.mesh)
+  const earthHalo=currentHalo(.205,2.65,earthCurrent,0x9fd0ff); earth.add(earthHalo.mesh)
   earth.position.set(1.95,-.18,-.1);earth.rotation.z=-.24;root.add(earth)
   // PCI's four-core armoured copper control cable joins the range at the back right, entering last.
   const copperCable=buildCopperCable(kit,{rubber,bedding,steel,copper})
@@ -177,7 +186,8 @@ export function createCableScene(host: HTMLElement, section: HTMLElement) {
   const bareSparks=sparks(bare,[new T.Vector3(0,1.53,0)],46,0xbfe6ff)
   const copperSparks=sparks(copperCable.group,copperCable.tips,30)
   const dust=motes(root)
-  root.traverse(o=>{ const mesh=o as T.Mesh; if(mesh.isMesh && !(mesh.material as T.Material).transparent){ mesh.castShadow=true; mesh.receiveShadow=true } })
+  // Sheaths and insulation receive the soft shadows; bare metal shows its own reflections instead (cheaper too).
+  root.traverse(o=>{ const mesh=o as T.Mesh, m=mesh.material as T.MeshStandardMaterial; if(mesh.isMesh && !m.transparent){ mesh.castShadow=true; mesh.receiveShadow=!(m.metalness>.5) } })
 
   // DOM targets for the anatomy leader lines (all optional; the scene works without them).
   const art = section.querySelector<HTMLElement>('.about-art')
@@ -203,7 +213,8 @@ export function createCableScene(host: HTMLElement, section: HTMLElement) {
     }
   }
 
-  let visible=true,frame=0,disposed=false,contextLost=false,sized=false,pending=true,lastDraw=0,lastProgressAt=performance.now()
+  let visible=true,frame=0,disposed=false,contextLost=false,sized=false,pending=true,warmed=false,lastProgressAt=performance.now()
+  let lastFrameAt=0,frameSum=0,frameCount=0
   let progress=Number(getComputedStyle(section).getPropertyValue('--story-progress')) || 0
   let px=0,py=0,cx=0,cy=0
   const lerp=(a:number,b:number,p:number)=>a+(b-a)*p
@@ -228,12 +239,25 @@ export function createCableScene(host: HTMLElement, section: HTMLElement) {
   function render(now:number) {
     frame=0
     if(disposed || !visible || contextLost || !sized) return
-    // Pulse-only frames run at ~30fps; scroll and pointer frames are never throttled.
-    if(!pending && now-lastDraw<30){schedule();return}
-    pending=false;lastDraw=now
+    // Every frame runs at the display rate. If a device keeps missing frames, render fewer pixels instead of
+    // dropping frames: a slightly softer image reads as smooth, a stutter never does.
+    // Average over 45 back-to-back frames; when below ~55fps, scale the pixel count to the measured headroom
+    // (never below 0.8x). Only ever steps down, so it settles after one or two adjustments.
+    if(lastFrameAt && now-lastFrameAt<120){
+      frameSum+=now-lastFrameAt;frameCount++
+      if(frameCount>=45){
+        const fps=1000/(frameSum/frameCount);frameSum=frameCount=0
+        if(fps<55 && quality>.8){quality=Math.max(.8,quality*Math.sqrt(fps/60)*.97);resize()}
+      }
+    }
+    lastFrameAt=now
+    if(!warmed) warmUp()
     const staticMode=section.dataset.mode!=='cinematic'
     const tl=aboutTimeline(progress)
     if(staticMode || tl.anatomy>.05){px=0;py=0}
+    // Shadows follow the composition only when it actually moved since the last frame.
+    renderer.shadowMap.needsUpdate=(pending || Math.abs(px-cx)+Math.abs(py-cy)>.0005)
+    pending=false
     cx=lerp(cx,px,.14);cy=lerp(cy,py,.14)
     const e=tl.anatomy, settle=tl.settle
     // Pose: diagonal hero for the anatomy beat, upright composition once settled.
@@ -285,13 +309,26 @@ export function createCableScene(host: HTMLElement, section: HTMLElement) {
     canvas.dataset.pulse=looping?'running':'idle'
     if(looping || Math.abs(px-cx)+Math.abs(py-cy)>.001) schedule()
   }
+  /**
+   * Compiles every shader and uploads every texture before the first visible frame. Without this, each part that
+   * appears later in the scroll (companion cables, current, sparks) compiled on first sight and stalled the scroll.
+   */
+  function warmUp(){
+    warmed=true
+    const hidden:T.Object3D[]=[]
+    scene.traverse(o=>{if(!o.visible){hidden.push(o);o.visible=true}})
+    renderer.compile(scene,camera)
+    renderer.shadowMap.needsUpdate=true
+    renderer.render(scene,camera)
+    hidden.forEach(o=>{o.visible=false})
+  }
   function schedule(){if(!frame)frame=requestAnimationFrame(render)}
   function request(){pending=true;schedule()}
   function resize(){
     width=host.clientWidth;height=host.clientHeight
     sized = width > 0 && height > 0
     if (!sized) return
-    renderer.setPixelRatio(Math.min(devicePixelRatio,width>900?1.35:1.6))
+    renderer.setPixelRatio(Math.min(quality,Math.max(1,Math.sqrt(pixelBudget/(width*height)))))
     renderer.setSize(width,height,false)
     camera.aspect=width/height
     cameraScale=.82*Math.max(1,1.06/camera.aspect)
@@ -305,7 +342,7 @@ export function createCableScene(host: HTMLElement, section: HTMLElement) {
   }
   function leave(){px=0;py=0;request()}
   function lost(event:Event){event.preventDefault();contextLost=true;delete host.dataset.ready;if(art)delete art.dataset.anchors}
-  function restored(){contextLost=false;request()}
+  function restored(){contextLost=false;warmed=false;request()}
   function onVisibility(){if(!document.hidden)request()}
   const resizeObserver=new ResizeObserver(resize)
   const intersection=new IntersectionObserver(entries=>{visible=entries[0].isIntersecting;if(visible)request()},{rootMargin:'100px'})
@@ -325,7 +362,7 @@ export function createCableScene(host: HTMLElement, section: HTMLElement) {
     canvas.removeEventListener('webglcontextlost',lost);canvas.removeEventListener('webglcontextrestored',restored)
     document.removeEventListener('visibilitychange',onVisibility)
     kit.dispose()
-    ;[grain,marks,tubeMarks,spangle].forEach(t=>t.dispose())
+    ;[grain,tubeMarks,spangle].forEach(t=>t.dispose())
     ;[bareAluminium,earthSteel,copper].forEach(m=>m.dispose())
     ;[powerLegend,copperLegend,bareHalo,earthHalo,bareSparks,copperSparks,dust,copperCable].forEach(x=>x.dispose())
     ;[pulseA,pulseB,glow].forEach(m=>m.dispose())

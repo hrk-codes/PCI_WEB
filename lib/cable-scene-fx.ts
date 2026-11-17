@@ -1,4 +1,5 @@
 import * as T from 'three'
+import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js'
 import type { CableKit } from '@/lib/cable-models'
 
 /**
@@ -23,7 +24,7 @@ const random = () => (seed = (seed * 16807) % 2147483647) / 2147483647
 
 /** Fine mottled grain for extruded PVC: catches the light like a real sheath instead of flat plastic. */
 export function pvcGrain() {
-  return canvasTexture(256, (g, s) => {
+  return canvasTexture(512, (g, s) => {
     const image = g.createImageData(s, s)
     for (let i = 0; i < s * s; i++) { const v = 118 + random() * 26 + (random() < .012 ? 60 : 0); image.data.set([v, v, v, 255], i * 4) }
     g.putImageData(image, 0, 0)
@@ -31,9 +32,9 @@ export function pvcGrain() {
 }
 /** Drawing-die marks along a wire. `alongV` for cylinders (length runs along V), otherwise along U (tubes). */
 export function drawnMarks(alongV: boolean) {
-  return canvasTexture(256, (g, s) => {
+  return canvasTexture(512, (g, s) => {
     for (let x = 0; x < s; x++) {
-      const v = 120 + Math.sin(x * .9) * 10 + random() * 40
+      const v = 120 + Math.sin(x * .45) * 10 + random() * 40
       g.fillStyle = `rgb(${v},${v},${v})`
       if (alongV) g.fillRect(x, 0, 1, s); else g.fillRect(0, x, s, 1)
     }
@@ -41,10 +42,10 @@ export function drawnMarks(alongV: boolean) {
 }
 /** Galvanised zinc: soft spangle patches. */
 export function zincSpangle() {
-  return canvasTexture(256, (g, s) => {
+  return canvasTexture(512, (g, s) => {
     g.fillStyle = '#808080'; g.fillRect(0, 0, s, s)
-    for (let i = 0; i < 260; i++) {
-      const x = random() * s, y = random() * s, r = 4 + random() * 16, v = 100 + random() * 70
+    for (let i = 0; i < 520; i++) {
+      const x = random() * s, y = random() * s, r = 8 + random() * 32, v = 100 + random() * 70
       g.fillStyle = `rgba(${v},${v},${v},.55)`; g.beginPath(); g.ellipse(x, y, r, r * (.5 + random()), random() * 3, 0, Math.PI * 2); g.fill()
     }
   }, [2, 2])
@@ -53,11 +54,12 @@ export function zincSpangle() {
 /** Printed legend running along a sheath, as on PCI's real cables. Returns a thin shell to wrap the sheath. */
 export function legendShell(radius: number, length: number, text: string) {
   const canvas = document.createElement('canvas')
-  canvas.width = 64; canvas.height = 1024
+  // Drawn at 2x so the print stays crisp on high-density screens.
+  canvas.width = 128; canvas.height = 2048
   const g = canvas.getContext('2d')!
-  g.translate(32, 0); g.rotate(Math.PI / 2)
-  g.fillStyle = 'rgba(214,218,214,.82)'; g.font = '700 15px Arial, Helvetica, sans-serif'; g.textBaseline = 'middle'
-  g.fillText(text, 20, 0)
+  g.translate(64, 0); g.rotate(Math.PI / 2)
+  g.fillStyle = 'rgba(214,218,214,.82)'; g.font = '700 30px Arial, Helvetica, sans-serif'; g.textBaseline = 'middle'
+  g.fillText(text, 40, 0)
   const texture = new T.CanvasTexture(canvas)
   texture.wrapS = T.ClampToEdgeWrapping; texture.wrapT = T.RepeatWrapping
   texture.repeat.set(1, length / 1.15)
@@ -104,23 +106,30 @@ export function addCurrent(material: T.MeshStandardMaterial, {colour = 0xff8a3d,
 }
 export type Current = ReturnType<typeof addCurrent>
 
-/** The halo that rides with the current: brightest at the silhouette, so it reads as light around the metal. */
+/**
+ * The halo that rides with the current, as light around the metal. Premultiplied additive output only ever adds
+ * light: it never dims the page behind the transparent canvas (straight-alpha additive blending did, which drew
+ * dark lines along both sides of the wire).
+ */
 export function currentHalo(radius: number, length: number, current: Current, colour = 0xff9a52) {
   const material = new T.ShaderMaterial({
-    uniforms:{...current, haloColour:{value:new T.Color(colour)}},
-    transparent:true, depthWrite:false, blending:T.AdditiveBlending, side:T.FrontSide, toneMapped:false,
+    uniforms:{...current, haloColour:{value:new T.Color(colour)}, haloHalf:{value:length / 2}},
+    transparent:true, premultipliedAlpha:true, depthWrite:false, blending:T.AdditiveBlending, side:T.FrontSide, toneMapped:false,
     vertexShader:`varying float vAlong; varying float vRim;
       void main(){ vAlong = position.y; vec4 mv = modelViewMatrix * vec4(position, 1.);
         vec3 n = normalize(normalMatrix * normal); vRim = 1. - abs(dot(n, normalize(-mv.xyz)));
         gl_Position = projectionMatrix * mv; }`,
-    fragmentShader:`uniform float curTime, curStrength, curSpeed, curSpacing, curWidth, curOffset; uniform vec3 haloColour;
+    fragmentShader:`uniform float curTime, curStrength, curSpeed, curSpacing, curWidth, curOffset, haloHalf; uniform vec3 haloColour;
       varying float vAlong; varying float vRim;
       void main(){ float s = vAlong - curTime * curSpeed + curOffset; float d = (fract(s / curSpacing) - .5) * curSpacing;
         float band = exp(-d * d / (curWidth * curWidth * 2.2));
-        float a = band * pow(vRim, 1.6) * curStrength * .55;
-        gl_FragColor = vec4(haloColour * a, a); }`,
+        // Fades out before the silhouette and at both ends, so the glow has no visible edge.
+        float rim = smoothstep(.04, .55, vRim) * (1. - smoothstep(.8, 1., vRim));
+        float ends = 1. - smoothstep(haloHalf - .3, haloHalf, abs(vAlong));
+        float a = band * rim * ends * curStrength * .5;
+        gl_FragColor = vec4(haloColour * a, a * .18); }`,
   })
-  const mesh = new T.Mesh(new T.CylinderGeometry(radius, radius, length, 48, 1, true), material)
+  const mesh = new T.Mesh(new T.CylinderGeometry(radius, radius, length, 64, 1, true), material)
   mesh.renderOrder = 3
   return {mesh, dispose() { material.dispose(); mesh.geometry.dispose() }}
 }
@@ -131,7 +140,7 @@ export function sparks(parent: T.Object3D, tips: T.Vector3[], count = 46, colour
   const geometry = new T.BufferGeometry()
   geometry.setAttribute('position', new T.BufferAttribute(new Float32Array(count * 3), 3))
   const dot = canvasTexture(32, (g, s) => { const r = g.createRadialGradient(s / 2, s / 2, 0, s / 2, s / 2, s / 2); r.addColorStop(0, '#fff'); r.addColorStop(.3, 'rgba(255,200,140,.85)'); r.addColorStop(1, 'rgba(255,140,60,0)'); g.fillStyle = r; g.fillRect(0, 0, s, s) })
-  const material = new T.PointsMaterial({size:.06, map:dot, color:new T.Color(colour).multiplyScalar(2.2), transparent:true, depthWrite:false, blending:T.AdditiveBlending, toneMapped:false})
+  const material = new T.PointsMaterial({size:.06, map:dot, color:new T.Color(colour).multiplyScalar(2.2), transparent:true, premultipliedAlpha:true, depthWrite:false, blending:T.AdditiveBlending, toneMapped:false})
   const points = new T.Points(geometry, material)
   points.frustumCulled = false
   parent.add(points)
@@ -165,7 +174,7 @@ export function motes(parent: T.Object3D, count = 140) {
   geometry.setAttribute('position', new T.BufferAttribute(base.slice(), 3))
   geometry.setAttribute('color', new T.BufferAttribute(colours, 3))
   const dot = canvasTexture(32, (g, s) => { const r = g.createRadialGradient(s / 2, s / 2, 0, s / 2, s / 2, s / 2); r.addColorStop(0, 'rgba(255,255,255,1)'); r.addColorStop(1, 'rgba(255,255,255,0)'); g.fillStyle = r; g.fillRect(0, 0, s, s) })
-  const material = new T.PointsMaterial({size:.035, map:dot, vertexColors:true, transparent:true, opacity:.6, depthWrite:false, blending:T.AdditiveBlending, toneMapped:false})
+  const material = new T.PointsMaterial({size:.035, map:dot, vertexColors:true, transparent:true, premultipliedAlpha:true, opacity:.6, depthWrite:false, blending:T.AdditiveBlending, toneMapped:false})
   const points = new T.Points(geometry, material)
   points.frustumCulled = false
   parent.add(points)
@@ -190,7 +199,7 @@ export function buildCopperCable(kit: CableKit, {rubber, bedding, steel, copper}
   const materials = [0xc4231c, 0xe6bd16, 0x1f49ad, 0x1b1d20].map(color => new T.MeshPhysicalMaterial({color, roughness:.34, metalness:.04, clearcoat:.45, clearcoatRoughness:.3}))
   kit.cylinder(group, .36, 2.2, -.8, rubber)              // outer sheath, top at y = .3
   kit.collar(group, .345, .3, rubber)
-  const armour = kit.track(new T.CylinderGeometry(.021, .021, .3, 8, 1))
+  const armour = kit.track(new T.CylinderGeometry(.021, .021, .3, 14, 1))
   const ring = new T.InstancedMesh(armour, steel, 44), m = new T.Matrix4()
   for (let i = 0; i < 44; i++) { const a = i / 44 * Math.PI * 2; m.makeTranslation(Math.cos(a) * .325, .44, Math.sin(a) * .325); ring.setMatrixAt(i, m) }
   group.add(ring)
@@ -200,8 +209,79 @@ export function buildCopperCable(kit: CableKit, {rubber, bedding, steel, copper}
     const a = i * Math.PI / 2 + Math.PI / 4, x = Math.cos(a) * .135, z = Math.sin(a) * .135
     const top = 1.18 + [0, .09, .04, .13][i]
     kit.cylinder(group, .118, top - .8, (top + .8) / 2, material, x, z)
-    kit.bundle(group, .098, top - .02, top + .3, x, z, copper)
+    strandTip(kit, group, copper, .098, top - .02, top + .3, x, z)
     tips.push(new T.Vector3(x, top + .3, z))
   })
   return {group, tips, dispose() { materials.forEach(m => m.dispose()) }}
+}
+
+const up = new T.Vector3(0, 1, 0)
+/** A chamfered cut face for one strand, so each wire end catches a bright ring of light like real sawn metal. */
+function strandCap(r: number, radial: number, end: T.Vector3, direction: T.Vector3) {
+  const h = r * .2
+  const cap = new T.LatheGeometry([new T.Vector2(r, 0), new T.Vector2(r * .95, h * .6), new T.Vector2(r * .78, h), new T.Vector2(0, h)], radial)
+  cap.applyQuaternion(new T.Quaternion().setFromUnitVectors(up, direction))
+  cap.translate(end.x, end.y, end.z)
+  return cap
+}
+/** One round strand following `points`, with a chamfered cut face at the chosen ends. */
+function strand(points: T.Vector3[], r: number, radial: number, caps: {start?: boolean, end?: boolean}) {
+  const parts: T.BufferGeometry[] = [new T.TubeGeometry(new T.CatmullRomCurve3(points), points.length - 1, r, radial, false)]
+  const n = points.length - 1
+  if (caps.end) parts.push(strandCap(r, radial, points[n], points[n].clone().sub(points[n - 1]).normalize()))
+  if (caps.start) parts.push(strandCap(r, radial, points[0], points[0].clone().sub(points[1]).normalize()))
+  return parts
+}
+const smooth = (a: number, b: number, v: number) => { const t = Math.max(0, Math.min(1, (v - a) / (b - a))); return t * t * (3 - 2 * t) }
+
+/**
+ * The exposed conductor at a stripped cable end, in high detail: 19 round strands laid in a gentle helix (each
+ * layer in the opposite direction, as stranded conductors are made), fanning very slightly where the insulation
+ * was cut back, with individually cut, chamfered ends. Same footprint as the kit's straight bundle (radius `r`,
+ * from `bottom` to `top`), merged into one mesh. Lengths run along local Y.
+ */
+export function strandTip(kit: CableKit, parent: T.Object3D, material: T.Material, r: number, bottom: number, top: number, x = 0, z = 0) {
+  const s = r / 5.15, lay = r * 22, radial = 10
+  const positions: [number, number, number][] = [[0, 0, 0]]
+  for (let ring = 1; ring <= 2; ring++) for (let i = 0; i < ring * 6; i++) positions.push([s * 2.03 * ring, i * Math.PI * 2 / (ring * 6), ring])
+  const segments = Math.max(8, Math.ceil((top - bottom) * 16))
+  const parts: T.BufferGeometry[] = []
+  for (const [distance, start, ring] of positions) {
+    const end = top - (ring ? random() * r * .1 : 0)
+    const twist = (ring === 1 ? -1 : 1) * Math.PI * 2 / lay
+    const points = Array.from({length:segments + 1}, (_, i) => {
+      const y = bottom + (end - bottom) * i / segments, a = start + (y - top) * twist
+      const d = distance * (1 + .045 * smooth(top - .22, top, y))
+      return new T.Vector3(x + Math.cos(a) * d, y, z + Math.sin(a) * d)
+    })
+    parts.push(...strand(points, s * .985, radial, {end:true}))
+  }
+  const geometry = kit.track(mergeGeometries(parts))
+  parts.forEach(p => p.dispose())
+  const mesh = new T.Mesh(geometry, material)
+  parent.add(mesh)
+  return mesh
+}
+
+/**
+ * A bare helically stranded wire (overhead conductor or earth wire) in high detail: smooth round strands with
+ * chamfered cut ends at both ends. Same layout and lay as the kit's strandedWire. Built along local Y.
+ */
+export function helicalWire(kit: CableKit, radius: number, length: number, material: T.Material, {rings = 2, turns = .9, segments = 120, radial = 12} = {}) {
+  const group = new T.Group()
+  const s = radius / (1.03 + rings * 2.06)
+  const positions: [number, number][] = [[0, 0]]
+  for (let ring = 1; ring <= rings; ring++) for (let i = 0; i < ring * 6; i++) positions.push([ring * s * 2.03, i * Math.PI * 2 / (ring * 6)])
+  const parts: T.BufferGeometry[] = []
+  for (const [distance, start] of positions) {
+    const points = Array.from({length:segments + 1}, (_, i) => {
+      const t = i / segments, angle = start + t * Math.PI * 2 * turns
+      return new T.Vector3(Math.cos(angle) * distance, t * length - length / 2, Math.sin(angle) * distance)
+    })
+    parts.push(...strand(points, s, radial, {start:true, end:true}))
+  }
+  const geometry = kit.track(mergeGeometries(parts))
+  parts.forEach(p => p.dispose())
+  group.add(new T.Mesh(geometry, material))
+  return group
 }
