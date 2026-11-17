@@ -31,11 +31,11 @@ export function powerCoreStrands(count: 2 | 4, radius: number, inset: number, st
   return points
 }
 
-export function createPowerCoreGeometry(count: 2 | 4, radius: number, bottom: number, top: number) {
+export function createPowerCoreGeometry(count: 2 | 4, radius: number, bottom: number, top: number, steps = 1) {
   const outer = powerCoreProfile(count, radius)
   const inner = powerCoreProfile(count, radius - .052, .064)
   outer.holes.push(new T.Path(inner.getPoints(64).reverse()))
-  const geometry = new T.ExtrudeGeometry(outer, { depth: top - bottom, bevelEnabled: false, steps: 1, curveSegments: 48 })
+  const geometry = new T.ExtrudeGeometry(outer, { depth: top - bottom, bevelEnabled: false, steps, curveSegments: 48 })
   // Profile coordinates are X/Z. Extrusion and strands both run along local Y.
   geometry.rotateX(Math.PI / 2)
   geometry.translate(0, top, 0)

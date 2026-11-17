@@ -5,10 +5,12 @@ type Path = {
   hint: (t: number, value: number) => T.Vector3
 }
 
-/** One continuous annular sleeve, branching into two peelable lips only at its front. */
-export function createPeelableInsulation(path: Path, materials: T.Material[]) {
-  const sides = 64, rearSteps = 48, lipSteps = 40
-  const cutStart = .5, end = .9, outer = .293, inner = .224
+/**
+ * One continuous annular sleeve, branching into two peelable lips only at its front. The defaults are the aerial
+ * bunched cable's insulation; the control cable's sheaths pass their own radii and cut position.
+ */
+export function createPeelableInsulation(path: Path, materials: T.Material[], {outer = .293, inner = .224, cutStart = .5, end = .9, sides = 64} = {}) {
+  const rearSteps = 48, lipSteps = 40
   const positions: number[] = [], normals: number[] = []
   const outside: number[] = [], inside: number[] = [], rims: number[] = [], cuts: number[] = []
   type Ring = { offset: number; count: number; t: number; half?: number; start: number; radius: number; normal: 'outer' | 'inner' | 'front' | 'back' | 'start' | 'finish' }

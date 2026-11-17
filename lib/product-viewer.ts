@@ -8,6 +8,9 @@ import { buildConductor, conductorMaterials, constructions, type ConductorKind }
 import { createCableKit } from './cable-models'
 import { createPowerCoreGeometry, powerCoreStrands } from './power-cable-cores'
 import { buildAerialBunch } from './aerial-bunched-model'
+import { buildControlCable } from './control-cable-model'
+import { buildCoveredConductor, buildPowerCable, buildServiceCable } from './cable-separation'
+import { separableConductor } from './layer-separation'
 
 export type ProductViewerApi = ReturnType<typeof createProductViewer>
 
@@ -38,7 +41,8 @@ export function productModel(slug: string) {
     if (slug === 'eco-panther') layers = layers.map(layer => ({ ...layer, metal: 'alloy' }))
     const built = buildConductor(kind, metals, { length: 6, wire: .2, step: .55, layers })
     root.add(built.group)
-    parts.push(...built.group.children)
+    // Layers flare open in place (lib/layer-separation.ts) instead of sliding apart.
+    customSeparate = separableConductor(built.group)
     disposers.push(built.dispose)
   } else {
     const kit = createCableKit()
@@ -48,135 +52,28 @@ export function productModel(slug: string) {
     const blue = rubber.clone(); blue.color.set(0x12629a)
     disposers.push(kit.dispose, () => { pale.dispose(); copper.dispose(); blue.dispose() })
 
-    function layer(movement?: T.Vector3) {
-      const group = new T.Group()
-      root.add(group)
-      parts.push(group)
-      if (movement) movements.set(group, movement)
-      return group
-    }
-    function sleeve(parent: T.Group, radius: number, inner: number, bottom: number, top: number, material: T.Material, x = 0, z = 0) {
-      const outline = new T.Shape()
-      outline.absarc(0, 0, radius, 0, Math.PI * 2, false)
-      const hole = new T.Path()
-      hole.absarc(0, 0, inner, 0, Math.PI * 2, true)
-      outline.holes.push(hole)
-      const geometry = kit.track(new T.ExtrudeGeometry(outline, { depth: top - bottom, bevelEnabled: false, steps: 1, curveSegments: 48 }))
-      geometry.rotateX(-Math.PI / 2)
-      const mesh = new T.Mesh(geometry, material)
-      mesh.position.set(x, bottom, z)
-      parent.add(mesh)
-    }
-    function core(parent: T.Group, radius: number, x: number, z: number, insulation: T.Material, top: number, metal = aluminium) {
-      sleeve(parent, radius, radius * .71, -2.8, top - .55, insulation, x, z)
-      kit.bundle(parent, radius * .7, -2.8, top, x, z, metal)
-    }
-
     if (slug === 'control-cable') {
-      // Keep the nested radii clear of one another and retain the conductor-to-insulation alignment.
-      sleeve(layer(new T.Vector3(0, -.6, 0)), .72, .65, -3.15, -.2, rubber)
-      const armour = layer(new T.Vector3(0, .4, 0))
-      const buriedArmour = new T.Group()
-      armour.add(buriedArmour)
-      buriedSections.push(buriedArmour)
-      for (let index = 0; index < 52; index++) {
-        const angle = index * Math.PI * 2 / 52
-        const x = Math.cos(angle) * .61, z = Math.sin(angle) * .61
-        kit.cylinder(armour, .031, .92, .26, steel, x, z)
-        kit.cylinder(buriedArmour, .031, 2.9, -1.65, steel, x, z)
-      }
-      const innerSheath = layer(new T.Vector3(0, 1.7, 0))
-      sleeve(innerSheath, .57, .52, -.2, 1.35, bedding)
-      const buriedSheath = new T.Group()
-      innerSheath.add(buriedSheath)
-      sleeve(buriedSheath, .57, .52, -3.1, -.2, bedding)
-      buriedSections.push(buriedSheath)
-      const ends = [2.98, 2.87, 3.06, 2.92]
-      for (let index = 0; index < 4; index++) {
-        const x = index % 2 ? .21 : -.21
-        const z = index < 2 ? .21 : -.21
-        const insulation = layer(new T.Vector3(0, 2.45, 0))
-        const conductor = layer(new T.Vector3(0, 4.35, 0))
-        sleeve(insulation, .20, .145, 1.35, ends[index], colours[index], x, z)
-        kit.bundle(conductor, .14, 1.35, ends[index] + .56, x, z, copper)
-        const buriedInsulation = new T.Group(), buriedCopper = new T.Group()
-        insulation.add(buriedInsulation); conductor.add(buriedCopper)
-        sleeve(buriedInsulation, .20, .145, -3.1, 1.35, colours[index], x, z)
-        kit.bundle(buriedCopper, .14, -3.1, 1.35, x, z, copper)
-        buriedSections.push(buriedInsulation, buriedCopper)
-      }
+      // Continuous layers that peel, flare and fan in place, in the manner of the aerial bunched cable.
+      const cable = buildControlCable({ rubber, steel, bedding, colours, copper })
+      root.add(cable.group)
+      customSeparate = cable.separate
+      disposers.push(cable.dispose)
     } else if (slug === 'aerial-bunched-cable') {
       const bunch = buildAerialBunch()
       root.add(bunch.group)
       customSeparate = bunch.separate
       disposers.push(bunch.dispose)
-    } else if (slug === 'covered-conductor') {
-      sleeve(layer(), .7, .58, -2.8, .25, rubber)
-      sleeve(layer(), .58, .42, -2.8, .95, pale)
-      sleeve(layer(), .42, .38, -2.8, 1.55, bedding)
-      const conductor = layer()
-      const built = buildConductor('aaac', metals, { length: 5.7, wire: .105, step: .16, layers: constructions.aaac.slice(0, 3) })
-      built.group.rotation.x = -Math.PI / 2
-      built.group.position.y = 2.9
-      conductor.add(built.group)
-      disposers.push(built.dispose)
-    } else if (slug === 'pvc-power-cable' || slug === 'lt-xlpe-cable') {
-      const xlpe = slug === 'lt-xlpe-cable'
-      const count = xlpe ? 4 : 2
-      const coreRadius = xlpe ? .587 : .565
-      const coreBase = xlpe ? 1.75 : .3
-      sleeve(layer(new T.Vector3(0, -.55, 0)), xlpe ? .8 : .64, xlpe ? .72 : .568, -2.8, .3, xlpe ? blue : rubber)
-      if (xlpe) {
-        const armour = layer(new T.Vector3(0, .5, 0))
-        const buriedArmour = new T.Group()
-        armour.add(buriedArmour)
-        buriedSections.push(buriedArmour)
-        for (let index = 0; index < 68; index++) {
-          const angle = index * Math.PI * 2 / 68
-          const x = Math.cos(angle) * .684, z = Math.sin(angle) * .684
-          kit.cylinder(armour, .03, 1, .8, steel, x, z)
-          kit.cylinder(buriedArmour, .03, 3.1, -1.25, steel, x, z)
-        }
-        const innerSheath = layer(new T.Vector3(0, 1.15, 0))
-        sleeve(innerSheath, .65, .59, .3, coreBase, bedding)
-        const buriedSheath = new T.Group()
-        innerSheath.add(buriedSheath)
-        sleeve(buriedSheath, .65, .59, -2.8, .3, bedding)
-        buriedSections.push(buriedSheath)
-      }
-      const strandRadius = .026
-      const positions = powerCoreStrands(count, coreRadius - .052, .064, strandRadius)
-      for (let index = 0; index < count; index++) {
-        const angle = index * Math.PI * 2 / count + (count === 2 ? Math.PI / 2 : 0)
-        // Rotate each complete sector about the cable axis, rather than offsetting round cores.
-        const direction = angle + (count === 4 ? Math.PI / 4 : 0)
-        const insulation = layer(new T.Vector3(Math.cos(direction) * .35, 1.8, Math.sin(direction) * .35))
-        const conductor = layer(new T.Vector3(Math.cos(direction) * .35, 2.45, Math.sin(direction) * .35))
-        insulation.rotation.y = conductor.rotation.y = -angle
-        const material = count === 2 && index === 1 ? colours[3] : colours[index]
-        const top = 3.05 + (index % 2) * .08
-        function section(parent: T.Group, bottom: number, insulationTop: number, metalTop: number, hidden = false) {
-          const shell = new T.Mesh(kit.track(createPowerCoreGeometry(count, coreRadius, bottom, insulationTop)), material)
-          const strandGeometry = kit.track(new T.CylinderGeometry(strandRadius, strandRadius, metalTop - bottom, 12, 1))
-          const strands = new T.InstancedMesh(strandGeometry, aluminium, positions.length)
-          const matrix = new T.Matrix4()
-          positions.forEach(([x, z], strand) => {
-            matrix.makeTranslation(x, (bottom + metalTop) / 2, z)
-            strands.setMatrixAt(strand, matrix)
-          })
-          if (hidden) {
-            const shellFill = new T.Group(), metalFill = new T.Group()
-            shellFill.add(shell); metalFill.add(strands)
-            insulation.add(shellFill); conductor.add(metalFill)
-            buriedSections.push(shellFill, metalFill)
-          } else { parent.add(shell); conductor.add(strands) }
-        }
-        section(insulation, coreBase, top - .55, top)
-        section(insulation, -2.8, coreBase, coreBase, true)
-      }
     } else {
-      sleeve(layer(), .44, .34, -2.8, .3, rubber)
-      core(layer(), .29, 0, 0, colours[0], 3.05)
+      // Sheaths peel, armour flares, cores fan and strands spread in place (lib/cable-separation.ts).
+      const cutFace = new T.MeshStandardMaterial({ color: 0x2c3236, roughness: .7 })
+      disposers.push(() => cutFace.dispose())
+      const materials = { rubber, steel, bedding, aluminium, colours, blue, pale, cutFace }
+      const cable = slug === 'covered-conductor' ? buildCoveredConductor(materials)
+        : slug === 'pvc-power-cable' || slug === 'lt-xlpe-cable' ? buildPowerCable(slug === 'lt-xlpe-cable', materials)
+        : buildServiceCable(materials)
+      root.add(cable.group)
+      customSeparate = cable.separate
+      disposers.push(cable.dispose)
     }
     // Kit cylinders are built along Y; conductor models use Z. Keep one viewing convention.
     root.rotation.x = Math.PI / 2
@@ -335,7 +232,8 @@ export function createProductViewer(canvas: HTMLCanvasElement, slug: string, onR
   return {
     rotate,
     zoom(value: number) { zoom = value; request() },
-    separate(value: number) { if (aerialBunch) pendingSeparation = value; else model.separate(value); request() },
+    // Bending models rebuild vertex positions, so slider input is coalesced into the next frame.
+    separate(value: number) { pendingSeparation = value; request() },
     reset() { pendingSeparation = null; orthographicEnd = false; yaw = initial.yaw; pitch = initial.pitch; roll = initial.roll; zoom = 1; model.separate(0); request() },
     endView() { orthographicEnd = packedPowerCable || aerialBunch; yaw = 0; pitch = 0; roll = 0; zoom = slug === 'control-cable' || packedPowerCable || aerialBunch ? 1 : 2; request(); return zoom },
     dispose() {

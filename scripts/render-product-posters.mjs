@@ -21,7 +21,7 @@ try {
     // Keep the viewer's badge and controls out of the artwork.
     await page.addStyleTag({ content: '[data-product-viewer] span{visibility:hidden!important}' })
     await canvas.evaluate(element => {
-      element.parentElement.style.cssText += ';position:fixed;top:0;left:0;width:1200px;height:900px;z-index:99;'
+      element.parentElement.style.cssText += ';position:fixed;top:0;left:0;width:1200px;height:900px;max-height:none;z-index:99;'
     })
     await page.waitForFunction(() => document.querySelector('[data-product-viewer] canvas').width === 1800)
     if (featured) {

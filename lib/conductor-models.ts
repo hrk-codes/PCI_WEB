@@ -122,6 +122,8 @@ export function buildConductor(kind: ConductorKind, materials = conductorMateria
     geometries.push(merged, mergedEnds)
     // One group per layer, so callers that move layers (the product viewer's separation) keep each wire whole.
     const layerGroup = new T.Group()
+    // Read by the product viewer's layer separation (lib/layer-separation.ts).
+    layerGroup.userData = {index, count:layer.count, turns, end, trapezoid:layer.shape === 'trapezoid' && index > 0, centre}
     layerGroup.add(new T.Mesh(merged, materials[layer.metal]), new T.Mesh(mergedEnds, materials[`${layer.metal}Cut` as const]))
     group.add(layerGroup)
     inner = outer
