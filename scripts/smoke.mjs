@@ -6,11 +6,14 @@ import { load } from 'cheerio'
 const base = (process.env.PCI_SMOKE_URL || 'http://127.0.0.1:3000').replace(/\/$/, '')
 const read = async name => JSON.parse(await readFile('content/'+name+'.json','utf8'))
 const [docs, products, redirects] = await Promise.all(['wordpress','catalogue','redirects'].map(read))
-const pageRoutes = ['/', '/privacy/', '/request-quote/', ...docs.map(d=>d.kind==='article'?'/blog/'+d.slug+'/':'/'+d.slug+'/'), ...products.map(p=>'/products/'+p.slug+'/')]
+// Original pages retired from the site (kept in step with retiredPages in lib/content.ts): they must 404.
+const retired = ['epc']
+const pageRoutes = ['/', '/privacy/', '/request-quote/', ...docs.filter(d=>!retired.includes(d.slug)).map(d=>d.kind==='article'?'/blog/'+d.slug+'/':'/'+d.slug+'/'), ...products.map(p=>'/products/'+p.slug+'/')]
 const unique = new Set(pageRoutes)
 const assets = new Set()
 const fetchPath = (path, options) => fetch(base+path, { signal:AbortSignal.timeout(35000), ...options })
 
+for (const slug of retired) assert.equal((await fetch(base+'/'+slug+'/', { signal:AbortSignal.timeout(35000) })).status, 404, '/'+slug+'/ is retired')
 for (const route of unique) {
   const res = await fetchPath(route)
   assert.equal(res.status,200,route)

@@ -176,7 +176,6 @@ export function AboutPage({ title, intro, children }: { title: string; intro: st
               <p className={styles.tag}>EPC and turnkey contracting</p>
               <h3>Building substations, not just supplying them.</h3>
               <p>PCI now takes on EPC and turnkey work for power transmission and distribution, including a <strong>₹45 crore</strong> project from Assam Power Distribution Company Ltd to build a new substation.</p>
-              <Link className="text-link" href="/epc/">EPC and turnkey projects <Arrow diagonal/></Link>
             </div>
           </article>
           <article className={styles.adeep} data-reveal style={d(1)}>

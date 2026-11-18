@@ -38,7 +38,7 @@ async function revealAll(page) {
   for (const heading of ['A cable and conductor works built for the grid.', 'One works. Three families. Every span of the network.', 'Certified systems. Licensed products. Tested in-house.', 'From the drum to the finished line.', 'Since 2013, span by span.'])
     assert.equal(await page.getByRole('heading', {name:heading}).count(), 1, `heading: ${heading}`)
   assert.equal(await page.locator('[data-about] dl dd').count(), 5, 'five facts')
-  for (const href of ['/cables/', '/conductors/', '/earth-wire/', '/certificates/', '/testing/', '/epc/', '/achievements/', '/request-quote/'])
+  for (const href of ['/cables/', '/conductors/', '/earth-wire/', '/certificates/', '/testing/', '/achievements/', '/request-quote/'])
     assert.ok(await page.locator(`[data-about] a[href="${href}"]`).count(), `links to ${href}`)
   assert.equal(await page.getByText('Industries Pvt. Ltd.', {exact:true}).count(), 0, 'no company suffix line in the logo stage')
   const phase = () => page.locator('[data-about] canvas').evaluate(c => c.parentElement.dataset.phase)
