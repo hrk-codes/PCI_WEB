@@ -1,0 +1,139 @@
+/* Management: a navy stage with the leadership structure, the Company bar, monogram cards and the teams to reach. */
+.page { --m-orange: #fd8b01; --ease: cubic-bezier(.2, .75, .12, 1); --m-navy-1: #0c2740; --m-navy-2: #061a2c; }
+
+/* Entrances (only once JavaScript has marked what is still below the fold). */
+.page[data-motion=on] [data-reveal] { transition: transform .8s var(--ease) calc(var(--d, 0) * 90ms), opacity .8s var(--ease) calc(var(--d, 0) * 90ms); }
+.page[data-motion=on] [data-reveal=waiting] { transform: translateY(24px); opacity: 0; }
+
+/* ---------- Hero ---------- */
+.hero { position: relative; isolation: isolate; overflow: hidden; color: #fff; padding: 22px 0 0; background: radial-gradient(ellipse 70% 90% at 78% 32%, #1d4a68 0%, var(--m-navy-1) 55%, var(--m-navy-2) 100%); }
+.heroGrid { position: absolute; inset: 0; z-index: -1; background-image: linear-gradient(#ffffff0b 1px, transparent 1px), linear-gradient(90deg, #ffffff0b 1px, transparent 1px); background-size: 56px 56px; mask-image: radial-gradient(ellipse 70% 80% at 74% 45%, #000, transparent 75%); }
+.heroLayout { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, .95fr); gap: clamp(24px, 4vw, 64px); align-items: center; padding-block: 6px clamp(30px, 4vw, 52px); }
+.heroCopy :global(.breadcrumbs) { color: #cbdce8; margin-bottom: 18px; }
+.heroCopy :global(.kicker) { color: #ffb47a; margin-bottom: 10px; }
+.heroCopy h1 { font-size: clamp(2.3rem, 4.2vw, 3.8rem); line-height: 1; letter-spacing: -.05em; max-width: 13ch; text-wrap: balance; }
+.accent { background: linear-gradient(100deg, #ffc27a 0%, var(--m-orange) 55%, #ff7444 100%); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.heroCopy > p { margin-top: 1rem; max-width: 50ch; color: #d6e2eb; font-size: .95rem; }
+.heroActions { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; margin-top: 22px; }
+.ghost { display: inline-flex; align-items: center; gap: .5rem; min-height: 47px; padding: .65rem 1.1rem; border: 1px solid #ffffff59; color: #fff; font-size: .83rem; font-weight: 800; transition: background .2s, border-color .2s; }
+.ghost:hover { background: #ffffff14; border-color: #fff; }
+
+
+/* ---------- Hero: the leadership structure ---------- */
+.structure { position: relative; margin: 0; width: 100%; aspect-ratio: 1.12; max-height: 440px; }
+.structure ul { list-style: none; margin: 0; padding: 0; }
+.wires { position: absolute; inset: 0; width: 100%; height: 100%; fill: none; overflow: visible; }
+.wireBase { stroke: #9fc4dd; stroke-opacity: .32; stroke-width: 1.5; vector-effect: non-scaling-stroke; }
+.wireCurrent { stroke: var(--m-orange); stroke-width: 2; stroke-linecap: round; stroke-dasharray: 3 16; vector-effect: non-scaling-stroke; animation: current 2.8s linear infinite; filter: drop-shadow(0 0 4px #fd8b01aa); }
+@keyframes current { to { stroke-dashoffset: -38; } }
+.junction { position: absolute; left: 50%; top: 32%; width: 9px; height: 9px; margin: -4.5px 0 0 -4.5px; border-radius: 50%; background: var(--m-orange); box-shadow: 0 0 0 5px #fd8b0130, 0 0 14px #fd8b01; }
+.node, .nodeLead {
+  position: absolute; left: var(--x); top: var(--y); transform: translate(-50%, -50%); width: 46%;
+  display: flex; align-items: center; gap: 10px; padding: 10px 12px;
+  background: linear-gradient(160deg, #10365af0, #071d31f5); border: 1px solid #8fc4e640;
+  box-shadow: 0 18px 40px #01081359, inset 0 1px 0 #ffffff14;
+  animation: node-in .9s var(--ease) calc(.15s + var(--d) * .14s) both;
+}
+.nodeLead { border-top: 2px solid var(--m-orange); background: linear-gradient(160deg, #15426bf2, #0a2440f7); }
+.node > span:last-child, .nodeLead > span:last-child { min-width: 0; }
+.node small, .nodeLead small { display: block; font-size: .56rem; font-weight: 800; letter-spacing: .13em; text-transform: uppercase; color: #ffb47a; }
+.node b, .nodeLead b { display: block; margin-top: 2px; font-size: .8rem; line-height: 1.2; letter-spacing: -.01em; color: #fff; }
+.nodeMark { flex: none; display: grid; place-items: center; width: 38px; height: 38px; border-radius: 50%; font-size: .8rem; font-weight: 900; letter-spacing: -.02em; color: #fff; background: radial-gradient(circle at 35% 30%, #2d6a96, #0c2a45); box-shadow: 0 0 0 2px #fd8b01b3, 0 0 0 5px #fd8b011f; }
+@keyframes node-in { from { opacity: 0; transform: translate(-50%, calc(-50% + 12px)); } }
+.structure figcaption { position: absolute; left: 0; right: 0; bottom: -4px; text-align: right; color: #8fabbf; font-size: .62rem; }
+
+
+/* ---------- Bands and headings ---------- */
+.band { padding-block: clamp(38px, 4.6vw, 64px); background: var(--paper); }
+.heading { display: flex; justify-content: space-between; align-items: flex-end; gap: 12px 40px; flex-wrap: wrap; margin-bottom: 24px; }
+.heading :global(.kicker) { margin-bottom: 8px; }
+.heading h2 { font-size: clamp(1.7rem, 2.6vw, 2.4rem); letter-spacing: -.045em; }
+.heading p { max-width: 56ch; font-size: .88rem; }
+
+/* ---------- Leader cards ---------- */
+.cards { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; }
+.card { display: flex; flex-direction: column; background: var(--white); border: 1px solid var(--line); transition: transform .35s var(--ease), box-shadow .35s var(--ease); }
+.card:hover { transform: translateY(-4px); box-shadow: 0 22px 44px #0f29451f; }
+.portrait { position: relative; isolation: isolate; overflow: hidden; aspect-ratio: 4 / 4.2; display: grid; place-items: center; background: radial-gradient(ellipse 90% 80% at 30% 20%, #1f557c 0%, var(--m-navy-1) 55%, var(--m-navy-2) 100%); }
+.portrait::after { content: ''; position: absolute; inset: 0; z-index: -1; background-image: linear-gradient(#ffffff09 1px, transparent 1px), linear-gradient(90deg, #ffffff09 1px, transparent 1px); background-size: 28px 28px; }
+.photo { object-fit: cover; object-position: center 22%; }
+.strands { position: absolute; z-index: -1; right: -26%; bottom: -30%; width: 92%; fill: none; stroke: #9fd3ff; stroke-opacity: .2; stroke-width: .7; transition: transform 1.6s var(--ease); }
+.strandSheath { stroke: var(--m-orange); stroke-opacity: .35; stroke-dasharray: 2 3; }
+.card:hover .strands { transform: rotate(30deg); }
+.cardMark { position: relative; font-size: clamp(3rem, 5.4vw, 4.6rem); font-weight: 900; line-height: 1; letter-spacing: -.06em; color: #fff; text-shadow: 0 10px 30px #00081466; }
+.cardMark::after { content: ''; position: absolute; left: 50%; bottom: -16px; width: 34px; height: 3px; margin-left: -17px; background: var(--m-orange); box-shadow: 0 0 12px #fd8b01aa; }
+.group { position: absolute; top: 12px; left: 12px; padding: 3px 8px; font-size: .56rem; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; color: #fff; background: #ffffff17; border: 1px solid #ffffff2e; backdrop-filter: blur(6px); }
+.index { position: absolute; top: 12px; right: 14px; font-size: .7rem; font-weight: 900; color: #ffb47a; font-variant-numeric: tabular-nums; }
+.cardBody { flex: 1; padding: 16px 16px 18px; border-top: 3px solid var(--navy); }
+.card:nth-child(1) .cardBody { border-top-color: var(--orange); }
+.honorific { display: block; font-size: .7rem; font-weight: 700; color: var(--muted); }
+.cardBody h3 { margin-top: 2px; font-size: clamp(1.05rem, 1.4vw, 1.25rem); line-height: 1.15; letter-spacing: -.03em; }
+.role { margin-top: .45rem; font-size: .7rem; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: var(--orange-dark); }
+
+/* ---------- Closing: reach the right team ---------- */
+/* Light, so it stays distinct from the navy footer below it. */
+.closing { padding-block: clamp(38px, 4.6vw, 64px); background: #eef1ea; border-top: 1px solid var(--line); }
+.closingInner { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr); gap: 24px clamp(28px, 5vw, 72px); align-items: center; }
+.closing :global(.kicker) { margin-bottom: 8px; }
+.closing h2 { font-size: clamp(1.7rem, 2.6vw, 2.4rem); letter-spacing: -.045em; }
+.closing p { margin-top: .7rem; max-width: 48ch; font-size: .9rem; }
+.closing p a { color: var(--navy); font-weight: 700; text-decoration: underline; text-underline-offset: 3px; }
+.closing .ghost { color: var(--navy); border-color: #0f294540; }
+.closing .ghost:hover { background: var(--white); border-color: var(--navy); }
+.closingActions { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; margin-top: 20px; }
+.teams { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.teams li { display: flex; flex-direction: column; padding: 16px; background: var(--white); border: 1px solid var(--line); border-top: 3px solid var(--orange); transition: transform .3s var(--ease), box-shadow .3s var(--ease); }
+.teams li:hover { transform: translateY(-3px); box-shadow: 0 16px 32px #0f294517; }
+.teamName { font-size: .92rem; font-weight: 800; letter-spacing: -.01em; color: var(--navy); }
+.teamNote { margin-top: 3px; color: var(--muted); font-size: .72rem; line-height: 1.4; }
+.teamPhones { display: flex; flex-direction: column; gap: 4px; margin-top: auto; padding-top: 14px; }
+.teams a { color: var(--navy); font-size: .98rem; font-weight: 800; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.teams a:hover { color: var(--orange-dark); }
+/* For further queries: the office landline, a full-width navy strip under the three teams. */
+.teams .landline { grid-column: 1 / -1; flex-direction: row; align-items: center; gap: 14px 18px; padding: 16px 20px; color: #fff; background: radial-gradient(ellipse 70% 160% at 90% 0%, #1d4a68 0%, var(--m-navy-1) 60%, var(--m-navy-2) 100%); border: 0; border-left: 3px solid var(--m-orange); }
+.landlineIcon { flex: none; width: 40px; height: 40px; padding: 9px; border-radius: 50%; fill: #fff; background: #ffffff14; box-shadow: 0 0 0 1px #ffffff2e; }
+.landlineText { display: flex; flex-direction: column; min-width: 0; }
+.landline .teamName { color: #fff; }
+.landline .teamNote { color: #c4d4df; }
+.teams .landline a { margin-left: auto; display: flex; flex-direction: column; align-items: flex-end; color: #fff; font-size: clamp(1.05rem, 1.6vw, 1.3rem); letter-spacing: -.01em; }
+.landline a small { font-size: .56rem; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; color: #ffb47a; }
+.teams .landline a:hover { color: #ffb47a; }
+
+/* ---------- Responsive ---------- */
+@media (max-width: 1100px) {
+  .cards { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .closingInner { grid-template-columns: 1fr; }
+}
+@media (max-width: 899px) {
+  .heroLayout { grid-template-columns: 1fr; }
+  .structure { max-width: 520px; margin-inline: auto; }
+}
+@media (max-width: 620px) {
+  .node, .nodeLead { width: 47%; gap: 7px; padding: 8px 9px; }
+  .nodeMark { width: 30px; height: 30px; font-size: .68rem; }
+  .node b, .nodeLead b { font-size: .7rem; }
+  .node small, .nodeLead small { font-size: .5rem; letter-spacing: .08em; }
+  .structure { aspect-ratio: .8; max-height: none; }
+  /* Phones: compact side-by-side cards, monogram tile on the left. */
+  .cards { grid-template-columns: 1fr; gap: 10px; }
+  .card { flex-direction: row; }
+  .portrait { flex: none; width: 118px; aspect-ratio: 1; }
+  .cardMark { font-size: 2.3rem; }
+  .cardMark::after { bottom: -10px; width: 22px; margin-left: -11px; }
+  .group, .index { display: none; }
+  .cardBody { display: flex; flex-direction: column; justify-content: center; padding: 12px 14px; border-top: 0; border-left: 3px solid var(--navy); }
+  .card:nth-child(1) .cardBody { border-left-color: var(--orange); }
+  .teams { grid-template-columns: 1fr; }
+  .teams .landline { flex-wrap: wrap; }
+  .teams .landline a { margin-left: 54px; align-items: flex-start; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .wireCurrent { animation: none; stroke-dasharray: none; stroke-opacity: .55; }
+  .node, .nodeLead { animation: none; }
+  .strands, .card, .teams li { transition: none; }
+}
+:global(html[data-pci-motion=paused]) .wireCurrent { animation-play-state: paused; }
+:global(html[data-pci-motion=paused]) .node, :global(html[data-pci-motion=paused]) .nodeLead { animation: none; }
+/* The board / management label moves under the role when the portrait chip is hidden (phones). */
+.groupLine { display: none; }
+@media (max-width: 620px) { .groupLine { display: block; margin-top: .3rem; font-size: .66rem; font-weight: 700; color: var(--muted); } }

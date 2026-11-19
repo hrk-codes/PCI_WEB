@@ -12,6 +12,7 @@ import { turnoverFirstYear, turnoverLatestYear, withTurnoverYears } from '@/cont
 import { ProductDetail } from '@/components/product-detail'
 import { AboutPage, aboutHeadline } from '@/components/about-page'
 import { CertificatesPage, TestingPage } from '@/components/capabilities'
+import { ManagementPage } from '@/components/management-page'
 import { address, articles, catalogue, cleanHtml, company, edited, families, metaDescription, publicDocs, shareImage, siteUrl, structured } from '@/lib/content'
 
 /**
@@ -36,6 +37,7 @@ const intros: Record<string, [string,string]> = {
   clients: ['Clients', 'Explore the organisations PCI Cables has supplied across utilities, rail and public sector, international markets, and renewable energy.'],
   testing: ['Testing facilities', 'Our in-house laboratory tests what we make, from the breaking load of a conductor to the smoke density of an FRLSH cable: 25 tests on calibrated equipment.'],
   certificates: ['Certifications', 'ISO 9001, 14001 and 45001 management systems and eight BIS product licences stand behind every PCI cable, conductor and earth wire we make.'],
+  management: ['Management', 'Meet the board and senior management guiding PCI Cables’ manufacturing, sales and business development from our works in Dankuni, West Bengal.'],
   achievements: ['Built connection by connection.', 'Follow PCI Cables from its first years in West Bengal through cable and conductor manufacturing, first exports and new product milestones.'],
 }
 /** Search-result descriptions (120–160 characters) where the page's visible intro is too long or too short for a
@@ -99,7 +101,7 @@ async function resolve(segments: string[]) {
     }
   }
   // Designed pages: the code carries the default copy; a CMS edit that differs from the imported text still wins.
-  if (first === 'clients' || first === 'achievements' || first === 'testing' || first === 'certificates') {
+  if (first === 'clients' || first === 'achievements' || first === 'testing' || first === 'certificates' || first === 'management') {
     const title = revision?.title.trim()
     const summary = revision?.summary.trim()
     const html = revision?.html.trim()
@@ -158,6 +160,13 @@ export async function PublicPage({ segments, filters = {} }: { segments: string[
     return <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: structured(breadcrumbs) }} />
       <Capability title={d.title} intro={d.summary}>{d.html ? <Rich html={d.html} /> : null}</Capability>
+    </>
+  }
+  if (d.slug === 'management') {
+    return <>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: structured(breadcrumbs) }} />
+      {/* The leadership comes from content/management.ts; the imported WordPress layout is not shown under it. */}
+      <ManagementPage title={d.title} intro={d.summary}/>
     </>
   }
   if (d.slug === 'about-us') {

@@ -24,7 +24,8 @@
     "backup:local": "node --env-file-if-exists=.env scripts/backup-local.mjs",
     "staff:create": "node --env-file-if-exists=.env scripts/staff.mjs",
     "import:inquiries": "node --env-file-if-exists=.env scripts/import-inquiries.mjs",
-    "test:capabilities": "node scripts/test-capabilities.mjs"
+    "test:capabilities": "node scripts/test-capabilities.mjs",
+    "test:management": "node scripts/test-management.mjs"
   },
   "dependencies": {
     "@payloadcms/db-postgres": "3.92.1",
