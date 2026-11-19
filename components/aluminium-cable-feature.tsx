@@ -1,8 +1,9 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
-import type { CableLayout } from '@/lib/aluminium-cable-scene'
 import './aluminium-cable-feature.css'
+
+type CableLayout = 'landscape' | 'portrait'
 
 export type CableBranding = 'none' | 'overlay' | 'baked'
 

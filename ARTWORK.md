@@ -1,6 +1,6 @@
 # About PCI cable artwork
 
-Built-in image generation was used for the reference-inspired studio artwork. It is a marketing illustration, not a technical product specification. The original PNG remains in the Codex generated-images folder. An optimised WebP with the original alpha channel is saved in `public/media/pci-cable-sculpture-v3.webp` (1254 × 1254, approximately 274 KB).
+Built-in image generation was used for the reference-inspired studio artwork. It is a marketing illustration, not a technical product specification. The original PNG remains in the Codex generated-images folder. An optimised WebP with the original alpha channel is archived locally at `later/public/media/pci-cable-sculpture-v3.webp` (1254 × 1254, approximately 274 KB).
 
 ## Generation prompt
 

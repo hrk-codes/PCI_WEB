@@ -8,3 +8,5 @@ node_modules/
 *.log
 test-results/
 .vercel/
+/later/
+/laterly_delete/

@@ -13,8 +13,7 @@ export function ProductViewer({ slug, name, poster, layers = [] }: { slug: strin
   const [zoom, setZoom] = useState(1)
   const [separation, setSeparation] = useState(0)
   const id = useId()
-  const sample = productSamples[slug]
-  const reference = sample?.reference || (sample ? { image: sample.poster, label: sample.label } : undefined)
+  const reference = productSamples[slug]
   const aerial = slug === 'aerial-bunched-cable'
   const bunchStages = [
     { label: 'Bunched', value: 0, detail: 'Four equal black-insulated members twist together, with a thinner bare aluminium messenger on the outside.' },

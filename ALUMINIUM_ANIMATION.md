@@ -6,7 +6,7 @@ The approved approach is a direct color edit of the supplied video. Its cable ge
 
 Rebuild with `pnpm render:cable -- "C:/path/to/reference.mp4"`. Without an argument it uses the supplied Downloads file. `scripts/aluminum-color.mjs` selects connected copper color regions while separating yellow bedding. `scripts/edit-reference-cable.mjs` applies that correction to every frame and encodes silent outputs in `public/media/pci-reference-aluminum-*`.
 
-Run `pnpm test:cable` against the local server for duration, dimensions, playback, branding, mobile layout, and reduced motion. The earlier procedural Three.js concept remains in source as a draft; it is no longer used in the review page or active video component.
+Run `pnpm test:cable` against the local server for duration, dimensions, playback, branding, mobile layout, and reduced motion. The earlier procedural Three.js draft and its rendered exports are archived locally under `later/`.
 
 ## Homepage: the cable film with live layers
 

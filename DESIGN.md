@@ -30,12 +30,11 @@ Hardware styling references: [PLP CUSHION-GRIP spacer dampers](https://plp.com/e
 
 Delivery files are `pci-hero-film-landscape-v6.mp4/.webm/.webp` (1920 × 1080) and `pci-hero-film-portrait-v6.mp4/.webm/.webp` (720 × 1280). The phone logo is held above the copy and its pause control sits below the facts, clear of the logo and Quick info. MP4 is preferred, with WebM fallback. Playback pauses off screen and in hidden tabs; reduced motion and saved Quick info motion settings show the poster. New release filenames prevent stale video/poster combinations.
 
-The release reuses completed native-60-fps v5 frames, removes exactly the glass close-up, and inserts a freshly rendered 210-frame bundle-support shot. `scripts/finish-hero-v6.mjs` records the frame-exact edit (1950 frames = 32.5 seconds). The v5 masters remain for reproducibility.
+The release reuses completed native-60-fps v5 frames, removes exactly the glass close-up, and inserts a freshly rendered 210-frame bundle-support shot. The v6 assembly script was archived locally under `later/scripts/`. Its v5 and v6 inputs can be recovered from Git history.
 
 With the local site running:
 
 - Render the changed shot: `node scripts/render-hero-film.mjs --web --phone-hd --start=17.6166666667 --duration=3.5 --label=field`.
-- Assemble the delivery films: `node scripts/finish-hero-v6.mjs`. Add `landscape` or `portrait` to assemble only one layout.
 - A future full native render can use `node scripts/render-hero-film.mjs --web --phone-hd`; the scene timeline also excludes the removed close-up. Full master mode is available without `--web`.
 - Review stills with `scripts/hero-film-stills.mjs` and verify playback, looping, codecs, motion preferences, no-JavaScript posters and accessibility with `scripts/test-hero.mjs`.
 
