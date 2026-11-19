@@ -10,6 +10,12 @@ const staff: CollectionConfig['access'] = {
   delete: ({ req }) => !!req.user,
 }
 
+/** A CMS edit refreshes the prerendered public pages. Outside Next (seed and import scripts) there is no page cache to
+ *  refresh, so the call is skipped quietly; the hourly revalidate covers anything missed. */
+async function refreshSite() {
+  try { (await import('next/cache')).revalidatePath('/', 'layout') } catch { /* not running inside Next */ }
+}
+
 const secret = process.env.PAYLOAD_SECRET
 if (!secret || secret.length < 32) throw new Error('Set PAYLOAD_SECRET to a secure value of at least 32 characters.')
 if (process.env.VERCEL && !process.env.DATABASE_URL) throw new Error('Set DATABASE_URL to a persistent PostgreSQL database on Vercel.')
@@ -43,6 +49,8 @@ export default buildConfig({
     { slug: 'staff', auth: { cookies: { sameSite: 'Lax', secure: Boolean(process.env.VERCEL) }, maxLoginAttempts: 5 }, access: staff, fields: [{ name: 'name', type: 'text' }] },
     {
       slug: 'site-content', access: staff, admin: { useAsTitle: 'title', defaultColumns: ['title','slug','kind','updatedAt'] },
+      // Public pages are prerendered: a saved or deleted edit refreshes them straight away.
+      hooks: { afterChange: [refreshSite], afterDelete: [refreshSite] },
       fields: [
         { name: 'slug', type: 'text', required: true, unique: true, index: true, admin: { readOnly: true } },
         { name: 'kind', type: 'select', options: ['page','product','article','home'], required: true, admin: { readOnly: true } },

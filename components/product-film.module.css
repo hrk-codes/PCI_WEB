@@ -122,6 +122,9 @@
 .scene[data-film=ready]:not([data-mode=static]) .video { opacity: 1; }
 .scene[data-film=ready]:not([data-mode=static]) .poster { opacity: 0; transition: opacity .5s ease .2s; }
 .scene[data-mode=static] .video { display: none; }
+/* While the film plays, its own first frame (the video poster) stands in until playback starts: no swap, no fade. */
+.scene[data-mode=flow] .video { opacity: 1; transition: none; }
+.scene[data-mode=flow] .filmArt:has(.video) .poster { opacity: 0; transition: none; }
 /* The cable leaves the source frame on the left and top: feather every edge so it emerges from the dark. */
 .film :is(.video, .poster) {
   mask-image:

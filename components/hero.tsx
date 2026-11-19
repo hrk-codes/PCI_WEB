@@ -11,8 +11,8 @@ export const heroDefaults = {
 }
 
 type Copy = { title: string; summary: string } | null
-const LANDSCAPE_FILM = 'landscape-v6'
-const PORTRAIT_FILM = 'portrait-v6'
+const LANDSCAPE_FILM = 'landscape-v7'
+const PORTRAIT_FILM = 'portrait-v7'
 const FILM_RELEASE = `${LANDSCAPE_FILM}:${PORTRAIT_FILM}`
 // New filenames keep Next's image cache from showing the previous film during the first frame.
 const filmAsset = (name: string) => `/media/pci-hero-film-${name}`

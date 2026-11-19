@@ -11,7 +11,8 @@ import { Reach } from '@/components/reach'
 import { ProductFilm } from '@/components/product-film'
 import { address, catalogue, company, edited, shareImage, siteUrl, structured } from '@/lib/content'
 
-export const dynamic = 'force-dynamic'
+// Prerendered and served ready-made; CMS edits refresh it at once (site-content hook in payload.config.ts).
+export const revalidate = 3600
 export const metadata: Metadata = { alternates: { canonical: '/' }, openGraph: { url: '/', siteName: company, locale: 'en_IN', type: 'website', images: [shareImage] } }
 
 export default async function Home() {

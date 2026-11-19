@@ -22,7 +22,7 @@ const axe = async page => {
 }
 const overflow = page => page.evaluate(() => document.documentElement.scrollWidth > innerWidth)
 try {
-  for (const file of ['landscape-v6.webm', 'landscape-v6.mp4', 'landscape-v6.webp', 'portrait-v6.webm', 'portrait-v6.mp4', 'portrait-v6.webp']) {
+  for (const file of ['landscape-v7.webm', 'landscape-v7.mp4', 'landscape-v7.webp', 'portrait-v7.webm', 'portrait-v7.mp4', 'portrait-v7.webp']) {
     const response = await fetch(new URL(`/media/pci-hero-film-${file}`, url), {method:'HEAD'})
     assert.equal(response.status, 200, `${file} is served`)
   }
@@ -34,7 +34,7 @@ try {
   await page.waitForTimeout(1200)
   assert.ok(await page.locator('.hero-film-video').evaluate(v => v.currentTime) > start, 'Film plays')
   assert.equal(await page.locator('.hero-film-video').evaluate(v => v.currentSrc.includes('landscape')), true, 'Desktop uses the landscape film')
-  assert.equal(await page.locator('.hero-film-video').evaluate(v => v.currentSrc.includes('-v6.')), true, 'Desktop loads the finished 60 fps film')
+  assert.equal(await page.locator('.hero-film-video').evaluate(v => v.currentSrc.includes('-v7.')), true, 'Desktop loads the finished 60 fps film')
   assert.ok(await page.locator('.hero-film-video').evaluate(v => v.currentSrc.endsWith('.mp4')), 'H.264 is preferred for efficient playback')
   assert.ok(await page.locator('.hero-film-video').evaluate(v => Math.abs(v.duration - 32.5) < 1 / 30), 'Desktop uses the complete 32.5-second edit')
   await page.screenshot({path:'test-results/hero-desktop.png'})
@@ -79,7 +79,7 @@ try {
   const mobile = await open({viewport:{width:390, height:844}, isMobile:true, hasTouch:true})
   await mobile.waitForFunction(() => document.querySelector('.hero-film')?.dataset.film === 'playing', null, {timeout:15000})
   assert.equal(await mobile.locator('.hero-film-video').evaluate(v => v.currentSrc.includes('portrait')), true, 'Phones use the portrait film')
-  assert.equal(await mobile.locator('.hero-film-video').evaluate(v => v.currentSrc.includes('-v6.')), true, 'Phone loads the finished 60 fps film')
+  assert.equal(await mobile.locator('.hero-film-video').evaluate(v => v.currentSrc.includes('-v7.')), true, 'Phone loads the finished 60 fps film')
   assert.ok(await mobile.locator('.hero-film-video').evaluate(v => Math.abs(v.duration - 32.5) < 1 / 30), 'Phone has the same complete edit')
   assert.equal(await overflow(mobile), false, 'No horizontal overflow on phones')
   assert.ok(await mobile.evaluate(() => {
@@ -101,11 +101,11 @@ try {
   await alternate.route('**/media/pci-hero-film-*.mp4*', route => route.abort())
   await alternate.goto(url, {waitUntil:'domcontentloaded'})
   await alternate.waitForFunction(() => document.querySelector('.hero-film')?.dataset.film === 'playing', null, {timeout:15000})
-  assert.ok(await alternate.locator('.hero-film-video').evaluate(v => v.currentSrc.includes('landscape-v6.webm')), 'WebM fallback works if MP4 is unavailable')
+  assert.ok(await alternate.locator('.hero-film-video').evaluate(v => v.currentSrc.includes('landscape-v7.webm')), 'WebM fallback works if MP4 is unavailable')
   await alternate.close()
   const large = await open({viewport:{width:2560, height:1440}})
   await large.waitForFunction(() => document.querySelector('.hero-film')?.dataset.film === 'playing', null, {timeout:15000})
-  assert.ok(await large.locator('.hero-film-video').evaluate(v => v.currentSrc.includes('landscape-v6.') && !v.currentSrc.includes('-4k')), 'Large screens also use a completed export')
+  assert.ok(await large.locator('.hero-film-video').evaluate(v => v.currentSrc.includes('landscape-v7.') && !v.currentSrc.includes('-4k')), 'Large screens also use a completed export')
   await large.close()
   assert.deepEqual(errors, [])
   console.log('Hero: complete 32.5 s 60 fps desktop/mobile films, looping, WebM/MP4 fallback, large screens, pause/play, offscreen pause, motion preferences, no-JS poster and accessibility passed.')

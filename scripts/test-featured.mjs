@@ -81,9 +81,16 @@ try {
   await mobile.close()
   const refreshed = await open()
   await show(refreshed)
+  // Record every entrance state after the reload: the background film keeps the network busy for a while, so the
+  // short entrance can finish before 'networkidle' returns.
+  await refreshed.addInitScript(() => {
+    window.__entrances = []
+    new MutationObserver(records => { for (const r of records) window.__entrances.push(r.target.dataset.entrance) })
+      .observe(document, {subtree:true, attributes:true, attributeFilter:['data-entrance']})
+  })
   await refreshed.reload({waitUntil:'networkidle'})
   await show(refreshed)
-  await refreshed.waitForFunction(() => document.querySelector('.conductor-line').dataset.entrance === 'running')
+  await refreshed.waitForFunction(() => window.__entrances.includes('running'))
   await refreshed.close()
   const reduced = await open({reducedMotion:'reduce'})
   assert.equal(await line(reduced).getAttribute('data-entrance'), null, 'Reduced motion shows the span immediately, without the spark')

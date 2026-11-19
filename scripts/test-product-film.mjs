@@ -28,7 +28,7 @@ const axe = async page => {
   return violations.map(v => ({id:v.id, nodes:v.nodes.map(n => n.target)}))
 }
 try {
-  for (const file of ['pci-cable-film.mp4', 'pci-cable-film-final.webp']) {
+  for (const file of ['pci-cable-film-v2.mp4', 'pci-cable-film-v2-start.webp', 'pci-cable-film-final.webp']) {
     assert.equal((await fetch(new URL(`/media/${file}`, url), {method:'HEAD'})).status, 200, `${file} is served`)
   }
   const page = await open()

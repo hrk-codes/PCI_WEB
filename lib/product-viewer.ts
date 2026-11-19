@@ -127,9 +127,7 @@ export function createProductViewer(canvas: HTMLCanvasElement, slug: string, onR
   const packedPowerCable = slug === 'pvc-power-cable' || slug === 'lt-xlpe-cable'
   const aerialBunch = slug === 'aerial-bunched-cable'
   let orthographicEnd = false
-  const environment = createStudioEnvironment(renderer)
-  scene.environment = environment.texture
-  scene.environmentIntensity = .85
+  let environment: ReturnType<typeof createStudioEnvironment> | null = null
   // Poster capture (scripts/render-product-posters.mjs opens the page with ?poster=1) adds ambient occlusion
   // between strands and layers. The live viewer skips it to stay light.
   const poster = new URLSearchParams(location.search).has('poster')
@@ -138,8 +136,7 @@ export function createProductViewer(canvas: HTMLCanvasElement, slug: string, onR
   const key = new T.DirectionalLight(0xfff5e8, 3.2); key.position.set(-4, 7, 8)
   const rim = new T.DirectionalLight(0xc9e1ff, 3); rim.position.set(6, 3, -4)
   scene.add(key, rim, new T.HemisphereLight(0xe5efff, 0x798a86, 1.3))
-  const model = productModel(slug)
-  scene.add(model.group)
+  let model: ReturnType<typeof productModel> | null = null
   const initial = slug === 'control-cable' ? { yaw: .14, pitch: -1.2, roll: .15 } : { yaw: .72, pitch: -.36, roll: .52 }
   let { yaw, pitch, roll } = initial
   let zoom = 1
@@ -148,7 +145,7 @@ export function createProductViewer(canvas: HTMLCanvasElement, slug: string, onR
   let drag: { id: number; x: number; y: number; yaw: number; pitch: number } | null = null
   function paint() {
     frame = 0
-    if (disposed || lost || !visible || document.hidden) return
+    if (disposed || lost || !visible || document.hidden || !model) return
     const width = canvas.clientWidth, height = canvas.clientHeight
     if (!width || !height) return
     if (pendingSeparation !== null) { model.separate(pendingSeparation); pendingSeparation = null }
@@ -228,13 +225,31 @@ export function createProductViewer(canvas: HTMLCanvasElement, slug: string, onR
   canvas.addEventListener('webglcontextlost', contextLost)
   canvas.addEventListener('webglcontextrestored', contextRestored)
   document.addEventListener('visibilitychange', request)
-  request()
+  // Start-up is spread over several frames (lighting, then the model, then shader compilation off the main thread),
+  // so opening a product page never freezes. The poster stays in place until the first finished frame.
+  const nextFrame = () => new Promise<void>(resolve => requestAnimationFrame(() => setTimeout(resolve, 0)))
+  ;(async () => {
+    await nextFrame(); if (disposed) return
+    environment = createStudioEnvironment(renderer)
+    scene.environment = environment.texture
+    scene.environmentIntensity = .85
+    await nextFrame(); if (disposed) return
+    const built = productModel(slug)
+    if (disposed) { built.dispose(); return }
+    built.group.rotation.set(pitch, yaw, roll)
+    scene.add(built.group)
+    await nextFrame(); if (disposed) return
+    try { await renderer.compileAsync(scene, camera) } catch { /* compiled on first render instead */ }
+    if (disposed) return
+    model = built
+    request()
+  })()
   return {
     rotate,
     zoom(value: number) { zoom = value; request() },
     // Bending models rebuild vertex positions, so slider input is coalesced into the next frame.
     separate(value: number) { pendingSeparation = value; request() },
-    reset() { pendingSeparation = null; orthographicEnd = false; yaw = initial.yaw; pitch = initial.pitch; roll = initial.roll; zoom = 1; model.separate(0); request() },
+    reset() { pendingSeparation = null; orthographicEnd = false; yaw = initial.yaw; pitch = initial.pitch; roll = initial.roll; zoom = 1; model?.separate(0); request() },
     endView() { orthographicEnd = packedPowerCable || aerialBunch; yaw = 0; pitch = 0; roll = 0; zoom = slug === 'control-cable' || packedPowerCable || aerialBunch ? 1 : 2; request(); return zoom },
     dispose() {
       disposed = true
@@ -250,7 +265,7 @@ export function createProductViewer(canvas: HTMLCanvasElement, slug: string, onR
       document.removeEventListener('visibilitychange', request)
       delete canvas.dataset.ready
       ao?.dispose(); composer?.dispose()
-      model.dispose(); environment.dispose(); renderer.dispose()
+      model?.dispose(); environment?.dispose(); renderer.dispose()
     },
   }
 }

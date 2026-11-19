@@ -22,6 +22,9 @@ function layerAt(t: number) {
   return {index:Math.max(0, index), progress:(t - layer.start) / (layer.end - layer.start)}
 }
 const clamp = (n: number) => Math.max(0, Math.min(1, n))
+/** The film, and its exact first frame: shown as the video's own poster, so the hand-over to playback is invisible. */
+const FILM = '/media/pci-cable-film-v2.mp4'
+const FILM_START = '/media/pci-cable-film-v2-start.webp'
 
 export function CableBuildFilm({ copy }: { copy: ReactNode }) {
   const section = useRef<HTMLElement>(null)
@@ -38,7 +41,7 @@ export function CableBuildFilm({ copy }: { copy: ReactNode }) {
     const reduced = matchMedia('(prefers-reduced-motion: reduce)')
     const items = [...el.querySelectorAll<HTMLElement>('[data-layer]')]
     const caption = el.querySelector<HTMLElement>('[data-caption]')
-    let frame = 0, near = false, active = -1, modeNow = ''
+    let frame = 0, near = false, ahead = false, active = -1, modeNow = ''
     const duration = () => film && Number.isFinite(film.duration) && film.duration > 0 ? film.duration : 12.28
 
     // The layer list and caption follow the film as each layer is added.
@@ -63,11 +66,17 @@ export function CableBuildFilm({ copy }: { copy: ReactNode }) {
       paint(film.currentTime)
       if (!film.paused) frame = requestAnimationFrame(follow)
     }
+    // Buffers a screen ahead, so the film is ready and already running as the section scrolls into view.
+    function load() {
+      if (!film || modeNow !== 'flow' || film.src) return
+      film.preload = 'auto'
+      film.src = FILM
+    }
     // Plays on its own while the section is on screen; normal page scrolling is never affected.
     function sync() {
       if (!film || modeNow !== 'flow') return
       if (near && !document.hidden && !userPaused.current) {
-        if (!film.src) film.src = '/media/pci-cable-film.mp4'
+        load()
         film.play().catch(() => setPlaying(false))
       } else film.pause()
     }
@@ -77,21 +86,27 @@ export function CableBuildFilm({ copy }: { copy: ReactNode }) {
       modeNow = next
       setMode(next); el.dataset.mode = next
       if (next === 'static') { film?.pause(); cancelAnimationFrame(frame); frame = 0; paint(CLOSE_UP.end) }
-      else { if (film) film.loop = true; sync() }
+      else {
+        if (film) { film.loop = true; if (!film.currentTime) paint(0) }
+        if (ahead) load()
+        sync()
+      }
     }
     choose.current = pick
     const onPlay = () => { setPlaying(true); if (!frame) frame = requestAnimationFrame(follow) }
     const onPause = () => setPlaying(false)
     const onLoaded = () => { el.dataset.film = 'ready' }
-    const io = new IntersectionObserver(entries => { near = entries[0].isIntersecting; sync() }, {threshold:.15})
+    // Playback starts as the film's first pixel reaches the screen, so the build is always seen from its beginning.
+    const io = new IntersectionObserver(entries => { near = entries[0].isIntersecting; sync() })
+    const approach = new IntersectionObserver(entries => { ahead = entries[0].isIntersecting; if (ahead) load() }, {rootMargin:'100% 0px'})
     const prefs = new MutationObserver(pick)
     film?.addEventListener('play', onPlay); film?.addEventListener('pause', onPause); film?.addEventListener('loadeddata', onLoaded)
-    io.observe(el); prefs.observe(document.documentElement, {attributes:true, attributeFilter:['data-pci-motion']})
+    io.observe(film ?? el); approach.observe(el); prefs.observe(document.documentElement, {attributes:true, attributeFilter:['data-pci-motion']})
     reduced.addEventListener('change', pick); document.addEventListener('visibilitychange', sync)
     pick()
     el.dataset.ready = 'yes'
     return () => {
-      cancelAnimationFrame(frame); io.disconnect(); prefs.disconnect()
+      cancelAnimationFrame(frame); io.disconnect(); approach.disconnect(); prefs.disconnect()
       film?.removeEventListener('play', onPlay); film?.removeEventListener('pause', onPause); film?.removeEventListener('loadeddata', onLoaded)
       reduced.removeEventListener('change', pick); document.removeEventListener('visibilitychange', sync)
       film?.pause()
@@ -133,7 +148,7 @@ export function CableBuildFilm({ copy }: { copy: ReactNode }) {
           <div className={styles.filmArt} aria-hidden="true">
           <div className={styles.glow}/>
           <img className={styles.poster} src="/media/pci-cable-film-final.webp" alt="" width={1920} height={1080} loading="lazy" decoding="async"/>
-          {!failed && <video ref={video} className={styles.video} muted playsInline preload="none" disablePictureInPicture onError={() => setFailed(true)}/>}
+          {!failed && <video ref={video} className={styles.video} poster={FILM_START} muted playsInline preload="none" disablePictureInPicture onError={() => setFailed(true)}/>}
           <div className={styles.caption} data-caption data-complete="true"><b>05</b><span>Finished cable</span></div>
           </div>
           {!failed && <button type="button" className={styles.toggle} onClick={toggle} aria-label={playing ? 'Pause cable film' : 'Play cable film'}><span aria-hidden="true" data-icon={playing ? 'pause' : 'play'}/></button>}

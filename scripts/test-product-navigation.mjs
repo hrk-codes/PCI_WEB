@@ -39,10 +39,12 @@ async function follow(page, link, path) {
   return originY
 }
 
-async function checkPage(page, name) {
+async function checkPage(page, name, { skipScrolledNav = false } = {}) {
+  // Scan only once smooth scrolling has come to rest: mid-scroll, links pass under the sticky header.
+  await page.waitForFunction(() => new Promise(resolve => { let last = scrollY, still = 0; const tick = () => { still = scrollY === last ? still + 1 : 0; last = scrollY; still >= 5 ? resolve(true) : requestAnimationFrame(tick) }; requestAnimationFrame(tick) }))
   assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), `${name} fits the viewport`)
   await page.addScriptTag({ path: require.resolve('axe-core/axe.min.js') })
-  const violations = await page.evaluate(async () => (await axe.run('main', { runOnly: { type: 'tag', values: ['wcag2a', 'wcag2aa', 'wcag21aa', 'wcag22aa'] } })).violations.map(v => ({ id: v.id, targets: v.nodes.map(n => n.target) })))
+  const violations = await page.evaluate(async skip => (await axe.run(skip ? { include: [['main']], exclude: [['nav[aria-label="On this product page"]']] } : 'main', { runOnly: { type: 'tag', values: ['wcag2a', 'wcag2aa', 'wcag21aa', 'wcag22aa'] } })).violations.map(v => ({ id: v.id, targets: v.nodes.map(n => n.target) })), skipScrolledNav)
   assert.deepEqual(violations, [], `${name} accessibility`)
 }
 
@@ -78,7 +80,8 @@ try {
     const heading = document.getElementById('product-overview-title').getBoundingClientRect()
     return heading.top > 100 && heading.top < 260
   })
-  await checkPage(mobile, 'Mobile product information')
+  // On a phone the page menu is not sticky: at this point it has scrolled up behind the site header.
+  await checkPage(mobile, 'Mobile product information', { skipScrolledNav: true })
   await mobile.screenshot({ path: 'test-results/product-spacing-mobile.png' })
   await mobile.close()
   assert.deepEqual(errors, [])
