@@ -51,3 +51,63 @@ details[open]>summary .menu-chevron{transform:translateY(2px) rotate(225deg)}
 @media(max-width:820px){.mobile-nav nav details>summary{display:flex;align-items:center;justify-content:space-between}.mobile-nav nav details[open]>a{animation:menu-enter .22s ease-out both}}
 @media(max-width:640px){.meta-location{display:none}}
 .product-facts{margin:18px 0 0;border-top:1px solid var(--line)}.product-facts>div{padding:.65rem 0;border-bottom:1px solid var(--line)}.product-facts dt{font-size:.78rem;font-weight:800}.product-facts dd{margin:.16rem 0 0;color:var(--muted)}
+@media (prefers-reduced-motion: no-preference) {
+  @supports (animation-timeline: scroll()) {
+    html:not([data-pci-motion=paused]) .site-head::after {
+      content: '';
+      position: absolute;
+      inset: auto 0 0;
+      height: 2px;
+      pointer-events: none;
+      background: linear-gradient(90deg, var(--orange), #ffad8a);
+      transform-origin: left center;
+      animation: read-progress linear both;
+      animation-timeline: scroll(root block);
+    }
+    @keyframes read-progress {
+      from { transform: scaleX(0) }
+      to { transform: scaleX(1) }
+    }
+  }
+}
+
+html:has(.edge-scroll:not([hidden])) { scrollbar-width: none }
+html:has(.edge-scroll:not([hidden]))::-webkit-scrollbar { display: none }
+
+.edge-scroll {
+  position: fixed;
+  inset-inline-end: 2px;
+  width: 20px;
+  z-index: 21;
+  cursor: pointer;
+}
+.edge-scroll-thumb {
+  position: absolute;
+  inset-inline: 0;
+  top: 0;
+  pointer-events: auto;
+  cursor: ns-resize;
+}
+.edge-scroll-thumb::after,
+.edge-scroll:is(:hover,[data-tracking])::before {
+  content: '';
+  position: absolute;
+  inset: 0 6px;
+  border-radius: 10px;
+}
+.edge-scroll-thumb::after {
+  inset-inline: 7px;
+  background: #bc5131;
+  border: 1px solid #fff1e3;
+  transition: inset-inline .15s ease, background-color .15s ease;
+}
+.edge-scroll[data-tracking] {
+  cursor: ns-resize;
+}
+.edge-scroll:is(:hover,[data-tracking])::before { background: #17334b52; pointer-events: none }
+.edge-scroll[data-tracking] .edge-scroll-thumb::after {
+  inset-inline: 5px;
+  background: var(--orange);
+}
+.edge-scroll[data-dragging],
+.edge-scroll[data-dragging] .edge-scroll-thumb { cursor: grabbing }

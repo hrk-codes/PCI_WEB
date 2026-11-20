@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { Header, Footer } from '@/components/site'
 import { QuickInfo } from '@/components/quick-info'
+import { FloatingScrollbar } from '@/components/floating-scrollbar'
 import { company, indexable, shareImage, siteUrl } from '@/lib/content'
 import './site.css'
 
@@ -15,5 +16,5 @@ export const metadata: Metadata = {
   verification: { google: process.env.GOOGLE_SITE_VERIFICATION },
 }
 export default function Layout({ children }: { children: React.ReactNode }) {
-  return <html lang="en-IN" data-scroll-behavior="smooth"><body><a className="skip" href="#main">Skip to content</a><Header/><main id="main">{children}</main><Footer/><QuickInfo/></body></html>
+  return <html lang="en-IN" data-scroll-behavior="smooth"><body><a className="skip" href="#main">Skip to content</a><Header/><main id="main">{children}</main><Footer/><QuickInfo/><FloatingScrollbar/></body></html>
 }
