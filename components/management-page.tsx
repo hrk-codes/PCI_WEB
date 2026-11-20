@@ -111,7 +111,7 @@ export function ManagementPage({ title, intro }: { title: string; intro: string 
     </header>
 
     <section id="leadership" className={styles.band} aria-labelledby="leadership-title">
-      <div className="wrap">
+      <div className={`wrap ${styles.leadWrap}`}>
         <div className={styles.heading} data-reveal>
           <div><Kicker>Leadership</Kicker><h2 id="leadership-title">Meet our leadership.</h2></div>
           <p>The board of directors and senior management of PCI Cables Industries Pvt. Ltd., guiding our manufacturing, sales and business development.</p>

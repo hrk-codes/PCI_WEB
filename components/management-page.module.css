@@ -52,10 +52,12 @@
 .heading p { max-width: 56ch; font-size: .88rem; }
 
 /* ---------- Leader cards ---------- */
+/* The leadership cards stay at a portrait size: the section is narrower than the page and the cards keep to it. */
+.leadWrap:global(.wrap) { width: min(calc(100% - 2 * var(--gutter)), 1080px); }
 .cards { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: clamp(14px, 1.6vw, 22px); }
 .card { display: flex; flex-direction: column; background: var(--white); border: 1px solid var(--line); transition: transform .35s var(--ease), box-shadow .35s var(--ease); }
 .card:hover { transform: translateY(-4px); box-shadow: 0 22px 44px #0f29451f; }
-.portrait { position: relative; isolation: isolate; overflow: hidden; aspect-ratio: 4 / 4.3; display: grid; place-items: center; background: radial-gradient(ellipse 90% 80% at 30% 20%, #1f557c 0%, var(--m-navy-1) 55%, var(--m-navy-2) 100%); }
+.portrait { position: relative; isolation: isolate; overflow: hidden; aspect-ratio: 1 / 1.05; display: grid; place-items: center; background: radial-gradient(ellipse 90% 80% at 30% 20%, #1f557c 0%, var(--m-navy-1) 55%, var(--m-navy-2) 100%); }
 .portrait::after { content: ''; position: absolute; inset: 0; z-index: -1; background-image: linear-gradient(#ffffff09 1px, transparent 1px), linear-gradient(90deg, #ffffff09 1px, transparent 1px); background-size: 28px 28px; }
 .strands { position: absolute; z-index: 1; right: -30%; bottom: -36%; width: 86%; fill: none; stroke: #b9dcf5; stroke-opacity: .4; mask-image: radial-gradient(circle at 74% 74%, #000 30%, transparent 68%); stroke-width: .7; transition: transform 1.6s var(--ease); }
 /* Editorial portrait: the photograph fills the panel; its grey backdrop is toned into PCI navy towards the edges. */
@@ -148,13 +150,13 @@
 /* The board / management label moves under the role when the portrait chip is hidden (phones). */
 .groupLine { display: none; }
 @media (max-width: 620px) { .groupLine { display: block; margin-top: .3rem; font-size: .66rem; font-weight: 700; color: var(--muted); } }
-/* Mid-size screens: three portraits side by side get narrow, so they stack as wide rows earlier than on phones. */
+/* Mid-size screens: three compact portraits stay side by side; the group chip moves under the role. */
 @media (min-width: 621px) and (max-width: 820px) {
-  .cards { grid-template-columns: 1fr; }
-  .card { flex-direction: row; }
-  .portrait { flex: none; width: 210px; aspect-ratio: 4 / 4.6; }
-  .cardBody { display: flex; flex-direction: column; justify-content: center; border-top: 0; border-left: 3px solid var(--navy); padding: 18px 22px; }
-  .card:nth-child(1) .cardBody { border-left-color: var(--orange); }
-  .group, .index { display: none; }
-  .groupLine { display: block; margin-top: .3rem; font-size: .7rem; font-weight: 700; color: var(--muted); }
+  .cards { gap: 12px; }
+  .strands, .group, .index { display: none; }
+  .corner { left: 10px; bottom: 10px; width: 18px; height: 18px; }
+  .cardBody { padding: 12px 12px 14px; }
+  .cardBody h3 { font-size: 1rem; }
+  .role { font-size: .6rem; letter-spacing: .06em; }
+  .groupLine { display: block; margin-top: .3rem; font-size: .64rem; font-weight: 700; color: var(--muted); }
 }
