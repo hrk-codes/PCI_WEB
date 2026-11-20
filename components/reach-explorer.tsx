@@ -14,6 +14,7 @@ const groups: { label:string; points:DirectoryPoint[] }[] = [
 ]
 const locations = groups.flatMap(group => group.points)
 const countries = new Map(reachExports.map(point => [point.id, point]))
+const idleRotationDelay = 4000
 
 export function ReachExplorer(){
   const host = useRef<HTMLDivElement>(null)
@@ -24,7 +25,7 @@ export function ReachExplorer(){
   const locked = useRef(false)
   const pointerInside = useRef(false)
   const focusInside = useRef(false)
-  const leaveTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
+  const idleTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
   const [view, setView] = useState<ReachState['view']>('world')
   const [selected, setSelected] = useState<string | null>(null)
   const [preview, setPreview] = useState<string | null>(null)
@@ -54,21 +55,22 @@ export function ReachExplorer(){
     setPreview(null)
   }
   function world() {
-    clearTimeout(leaveTimer.current)
     locked.current = false
     setView('world')
     setSelected(null)
     setPreview(null)
   }
-  function syncInteraction() {
-    clearTimeout(leaveTimer.current)
-    const inside = pointerInside.current || focusInside.current
-    setInteracting(inside)
-    if (!inside) {
-      leaveTimer.current = setTimeout(() => {
-        if (!locked.current) world()
-      }, 500)
-    }
+  function syncInteraction(pointerActive = pointerInside.current) {
+    clearTimeout(idleTimer.current)
+    setInteracting(pointerActive || focusInside.current)
+    // A keyboard user may still be reading a focused marker or connection.
+    if (focusInside.current) return
+    idleTimer.current = setTimeout(() => {
+      setInteracting(false)
+      if (pointerActive && latest.current.paused) return
+      if (locked.current) setPreview(null)
+      else world()
+    }, pointerActive ? idleRotationDelay : 500)
   }
   function navigateDirectory(event: KeyboardEvent<HTMLDivElement>) {
     const target = event.target
@@ -123,12 +125,18 @@ export function ReachExplorer(){
       }catch{/* Static geography and descriptive fallback text remain available. */}
     },{rootMargin:'300px'})
     observer.observe(element)
-    return()=>{stopped=true;observer.disconnect();clearTimeout(leaveTimer.current);controller.current?.dispose();controller.current=null}
+    return()=>{stopped=true;observer.disconnect();clearTimeout(idleTimer.current);controller.current?.dispose();controller.current=null}
   },[])
   return <div className="earth-explorer" data-view={view} data-motion={globalPause || reduced ? 'paused' : undefined}
     onPointerEnter={event => { if (event.pointerType === 'mouse') { pointerInside.current = true; syncInteraction() } }}
     onPointerLeave={event => { if (event.pointerType === 'mouse') { pointerInside.current = false; syncInteraction() } }}
-    onFocusCapture={() => { focusInside.current = true; syncInteraction() }}
+    onPointerMoveCapture={event => { if (event.pointerType === 'mouse') syncInteraction(true) }}
+    onPointerDownCapture={() => { focusInside.current = false; syncInteraction(true) }}
+    onPointerUpCapture={() => syncInteraction(true)}
+    onPointerCancelCapture={() => syncInteraction()}
+    onWheelCapture={() => syncInteraction(true)}
+    onKeyDownCapture={() => { focusInside.current = true; syncInteraction() }}
+    onFocusCapture={event => { focusInside.current = event.target.matches(':focus-visible'); syncInteraction() }}
     onBlurCapture={event => {
       if (!event.currentTarget.contains(event.relatedTarget as Node | null)) {
         focusInside.current = false
