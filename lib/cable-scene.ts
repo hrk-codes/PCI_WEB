@@ -213,7 +213,7 @@ export function createCableScene(host: HTMLElement, section: HTMLElement) {
     }
   }
 
-  let visible=true,frame=0,disposed=false,contextLost=false,sized=false,pending=true,warmed=false,lastProgressAt=performance.now()
+  let visible=true,frame=0,disposed=false,contextLost=false,sized=false,pending=true,warmed=false
   let lastFrameAt=0,frameSum=0,frameCount=0
   let progress=Number(getComputedStyle(section).getPropertyValue('--story-progress')) || 0
   let px=0,py=0,cx=0,cy=0
@@ -238,7 +238,7 @@ export function createCableScene(host: HTMLElement, section: HTMLElement) {
   }
   function render(now:number) {
     frame=0
-    if(disposed || !visible || contextLost || !sized) return
+    if(disposed || !visible || contextLost || !sized || document.hidden) return
     // Every frame runs at the display rate. If a device keeps missing frames, render fewer pixels instead of
     // dropping frames: a slightly softer image reads as smooth, a stutter never does.
     // Average over 45 back-to-back frames; when below ~55fps, scale the pixel count to the measured headroom
@@ -305,8 +305,9 @@ export function createCableScene(host: HTMLElement, section: HTMLElement) {
     drawLeaders(e)
     canvas.dataset.progress=progress.toFixed(3)
     if (host.dataset.ready !== 'yes') host.dataset.ready = 'yes'
-    const looping=pulseOn && !staticMode && !document.hidden && now-lastProgressAt<6000
-    canvas.dataset.pulse=looping?'running':'idle'
+    const looping=pulseOn && !staticMode
+    const pulseState=looping?'running':'idle'
+    if(canvas.dataset.pulse!==pulseState)canvas.dataset.pulse=pulseState
     if(looping || Math.abs(px-cx)+Math.abs(py-cy)>.001) schedule()
   }
   /**
@@ -322,8 +323,13 @@ export function createCableScene(host: HTMLElement, section: HTMLElement) {
     renderer.render(scene,camera)
     hidden.forEach(o=>{o.visible=false})
   }
-  function schedule(){if(!frame)frame=requestAnimationFrame(render)}
+  function schedule(){if(!frame && visible && sized && !disposed && !contextLost && !document.hidden)frame=requestAnimationFrame(render)}
   function request(){pending=true;schedule()}
+  function suspend(){
+    cancelAnimationFrame(frame);frame=0
+    lastFrameAt=0;frameSum=0;frameCount=0
+    canvas.dataset.pulse='idle'
+  }
   function resize(){
     width=host.clientWidth;height=host.clientHeight
     sized = width > 0 && height > 0
@@ -335,17 +341,17 @@ export function createCableScene(host: HTMLElement, section: HTMLElement) {
     camera.updateProjectionMatrix()
     measure();request()
   }
-  function onProgress(event:Event){progress=(event as CustomEvent<number>).detail;lastProgressAt=performance.now();request()}
+  function onProgress(event:Event){progress=(event as CustomEvent<number>).detail;request()}
   function pointer(event:PointerEvent){
     if(event.pointerType!=='mouse')return
     const rect=host.getBoundingClientRect();px=(event.clientX-rect.left)/rect.width-.5;py=(event.clientY-rect.top)/rect.height-.5;request()
   }
   function leave(){px=0;py=0;request()}
-  function lost(event:Event){event.preventDefault();contextLost=true;delete host.dataset.ready;if(art)delete art.dataset.anchors}
+  function lost(event:Event){event.preventDefault();contextLost=true;suspend();delete host.dataset.ready;if(art)delete art.dataset.anchors}
   function restored(){contextLost=false;warmed=false;request()}
-  function onVisibility(){if(!document.hidden)request()}
+  function onVisibility(){if(document.hidden)suspend();else request()}
   const resizeObserver=new ResizeObserver(resize)
-  const intersection=new IntersectionObserver(entries=>{visible=entries[0].isIntersecting;if(visible)request()},{rootMargin:'100px'})
+  const intersection=new IntersectionObserver(entries=>{visible=entries[0].isIntersecting;if(visible)request();else suspend()})
   const modeObserver=new MutationObserver(()=>{measure();request()})
   host.append(canvas)
   resizeObserver.observe(host);if(art)resizeObserver.observe(art);intersection.observe(host)
