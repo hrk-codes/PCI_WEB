@@ -1,0 +1,50 @@
+/* Press releases: magazine pages laid on a desk, each with its issue, the leader interviewed and what they spoke about. */
+.press { --ease: cubic-bezier(.2, .75, .12, 1); max-width: 1120px; margin-inline: auto; }
+
+.intro { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 26rem); align-items: end; gap: 14px clamp(24px, 4vw, 56px); padding-bottom: 20px; margin-bottom: clamp(24px, 3vw, 36px); border-bottom: 1px solid var(--line); }
+.intro h2 { font-size: clamp(1.8rem, 3vw, 2.7rem); max-width: 18ch; }
+.intro h2 em { font-family: Georgia, 'Times New Roman', serif; font-weight: 400; letter-spacing: -.03em; color: var(--orange-dark); }
+.intro p { font-size: .9rem; }
+
+.issues { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: clamp(18px, 2.4vw, 32px); margin: 0; padding: 0; list-style: none; }
+.issue { display: flex; flex-direction: column; }
+
+/* The page itself, on a desk: tilted a little, it straightens and lifts when pointed at. */
+.desk { position: relative; display: grid; place-items: center; padding: clamp(18px, 2.4vw, 30px) clamp(22px, 3vw, 38px); background: radial-gradient(ellipse at 50% 30%, #f1f3ee, #dfe4dd 80%); border: 1px solid var(--line); overflow: hidden; }
+.desk::before { content: ''; position: absolute; inset: 0; background-image: linear-gradient(#13283a0a 1px, transparent 1px), linear-gradient(90deg, #13283a0a 1px, transparent 1px); background-size: 22px 22px; }
+.sheet { position: relative; display: block; width: 100%; background: #fff; box-shadow: 0 1px 2px #0a22331f, 0 14px 30px #0a223326; transform: rotate(-2.2deg); transition: transform .6s var(--ease), box-shadow .6s var(--ease); }
+.issue:nth-child(2) .sheet { transform: rotate(1.8deg); }
+.sheet img { display: block; width: 100%; height: auto; aspect-ratio: 820 / 1061; object-fit: cover; object-position: top; }
+.sheet::after { content: ''; position: absolute; inset: 0; background: linear-gradient(115deg, #ffffff00 40%, #ffffff40 50%, #ffffff00 60%); background-size: 250% 100%; background-position: 100% 0; transition: background-position .9s var(--ease); }
+.desk:hover .sheet, .desk:focus-visible .sheet { transform: rotate(0) translateY(-6px) scale(1.02); box-shadow: 0 2px 4px #0a22331f, 0 26px 44px #0a223340; }
+.desk:hover .sheet::after { background-position: 0 0; }
+.latest { position: absolute; left: 0; top: 14px; padding: .35rem .7rem; background: var(--orange); color: var(--deep); font-size: .62rem; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; }
+.open { position: absolute; right: 12px; bottom: 12px; display: grid; place-items: center; width: 38px; height: 38px; border-radius: 50%; background: var(--navy); color: #fff; opacity: 0; transform: translateY(6px); transition: opacity .3s, transform .4s var(--ease); }
+.desk:hover .open, .desk:focus-visible .open { opacity: 1; transform: none; }
+
+.info { display: flex; flex: 1; flex-direction: column; gap: 12px; padding: 16px 2px 0; }
+.issueLine { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 4px 12px; padding-bottom: 10px; border-bottom: 2px solid var(--navy); font-size: .68rem; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+.issueLine time { color: var(--ink); }
+.issue:first-child .issueLine { border-color: var(--orange); }
+.person { display: flex; align-items: center; gap: 12px; }
+.avatar { flex: none; width: 46px; height: 46px; border-radius: 50%; object-fit: cover; object-position: 50% 18%; box-shadow: 0 0 0 2px var(--white), 0 0 0 3px var(--orange); }
+.person h3 { font-size: 1.08rem; line-height: 1.2; letter-spacing: -.02em; }
+.person p { margin-top: 2px; font-size: .76rem; font-weight: 700; color: var(--orange-dark); }
+.topics { display: grid; gap: 6px; margin: 0; padding: 0; list-style: none; }
+.topics li { position: relative; padding-left: 16px; font-size: .84rem; color: var(--ink); }
+.topics li::before { content: ''; position: absolute; left: 0; top: .62em; width: 8px; height: 2px; background: var(--orange); }
+
+.note { margin-top: clamp(26px, 3vw, 40px); padding-top: 16px; border-top: 1px solid var(--line); font-size: .84rem; }
+.note a { font-weight: 700; color: var(--ink); text-decoration: underline; }
+
+@media (max-width: 900px) {
+  .intro { grid-template-columns: minmax(0, 1fr); }
+  .issues { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 620px) {
+  .issues { grid-template-columns: minmax(0, 1fr); gap: 28px; }
+  .desk { padding: 20px 18% 22px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .sheet, .sheet::after, .open { transition: none; }
+}

@@ -13,6 +13,7 @@ import { ProductDetail } from '@/components/product-detail'
 import { AboutPage, aboutHeadline } from '@/components/about-page'
 import { CertificatesPage, TestingPage } from '@/components/capabilities'
 import { ManagementPage } from '@/components/management-page'
+import { PressCoverage } from '@/components/press-coverage'
 import { address, articles, catalogue, cleanHtml, company, edited, families, metaDescription, publicDocs, shareImage, siteUrl, structured } from '@/lib/content'
 
 /**
@@ -194,6 +195,9 @@ export async function PublicPage({ segments, filters = {} }: { segments: string[
   } else if (['request-quote','contact-us','career','vendor-registration'].includes(d.slug)) {
     const kind = d.slug==='request-quote'?'quote':d.slug==='contact-us'?'contact':d.slug==='career'?'career':'vendor'
     body = <div className="split form-page">{kind==='contact' ? <ContactDetails/> : <div><Kicker>{kind==='quote'?'Sales':kind==='career'?'Human resources':'Procurement'}</Kicker><h2>{kind==='quote'?'Tell us about your requirement.':kind==='career'?'Introduce yourself.':'Tell us about your company.'}</h2><p>{d.summary}</p>{kind==='career' && <p>Send your résumé separately to <a href="mailto:hr@pcicablesindustries.com">hr@pcicablesindustries.com</a>.</p>}</div>}<Inquiry kind={kind} product={catalogue.some(p=>p.slug===selected)?selected:undefined}/></div>
+  } else if (d.slug==='press-releases') {
+    // The interviews come from components/press-coverage.tsx; the imported WordPress layout is not shown.
+    body = <PressCoverage/>
   } else if (d.slug==='privacy') {
     body = <Privacy/>
   } else if (d.slug==='turnover') {
