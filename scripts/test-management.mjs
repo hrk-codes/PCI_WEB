@@ -16,21 +16,30 @@ async function open(options = {}) {
   assert.equal(response.status(), 200, 'Management page loads')
   return page
 }
-const leaders = ['Harsh Narayan Jha', 'Prakash Jha', 'Ranju Devi Jha', 'Ranjeet Kumar']
+const leaders = ['Harsh Narayan Jha', 'Prakash Jha', 'Ranjeet Kumar']
+const portraits = ['harsh-narayan-jha', 'prakash-jha', 'ranjeet-kumar']
+const portraitName = src => portraits.find(name => src.includes(name))
 try {
   // Reduced motion: the accessibility audit must not catch blocks halfway through their entrance.
   const page = await open({ reducedMotion: 'reduce' })
   assert.equal(await page.locator('h1').count(), 1, 'One page heading')
   assert.match(await page.locator('h1').innerText(), /Led from Dankuni/)
   const structure = page.locator('ul[aria-label="Leadership structure"] > li')
-  assert.equal(await structure.count(), 4, 'The structure shows all four leaders')
+  assert.equal(await structure.count(), 3, 'The structure shows the three leaders')
   assert.deepEqual(await structure.evaluateAll(items => items.map(li => li.querySelector('small').textContent + ': ' + li.querySelector('b').textContent)),
-    ['Chairman: Shri Harsh Narayan Jha', 'Managing Director: Shri Prakash Jha', 'AVP: Smt. Ranju Devi Jha', 'AVP · Sales & BD: Shri Ranjeet Kumar'], 'Chairman, then the managing director, then the two AVPs')
+    ['Chairman: Shri Harsh Narayan Jha', 'Managing Director: Shri Prakash Jha', 'AVP · Sales & BD: Shri Ranjeet Kumar'], 'Chairman, then the managing director, then sales and business development')
   const cards = page.locator('#leadership ol > li')
   assert.deepEqual(await cards.locator('h3').allInnerTexts(), leaders, 'Leader cards in order')
-  assert.equal(await page.locator('#leadership img').count(), 0, 'Monograms stand in until real portraits are added')
+  assert.equal(await page.locator('[data-management]', { hasText: 'Ranju' }).count(), 0, 'Ranju Devi Jha is no longer listed')
+  // Each portrait loads, matches its card and has a descriptive alternative text; the structure shows the same faces.
+  const cardPhotos = await cards.locator('img').evaluateAll(imgs => Promise.all(imgs.map(async img => { await img.decode(); return { src: decodeURIComponent(img.currentSrc), alt: img.alt, width: img.naturalWidth } })))
+  assert.equal(cardPhotos.length, 3, 'One portrait per leader')
+  cardPhotos.forEach((photo, i) => {
+    assert.ok(photo.src.includes(portraits[i]), `${leaders[i]}: the right portrait`)
+    assert.ok(photo.width > 300 && photo.alt.includes(leaders[i]), `${leaders[i]}: a sharp portrait with alternative text`)
+  })
+  assert.deepEqual((await structure.locator('img').evaluateAll(imgs => imgs.map(img => decodeURIComponent(img.currentSrc || img.src)))).map(portraitName), portraits, 'The structure shows each leader\'s face')
   assert.equal(await page.locator('main img[src*="blank-id-avatar"], main img[src*="directors"]').count(), 0, 'The placeholder avatar and stock boardroom picture are gone')
-  assert.equal(await cards.filter({ hasText: 'Ranju Devi Jha' }).locator('p').first().innerText(), 'AVP', 'Ranju Devi Jha is an AVP')
   assert.equal(await page.locator('nav[aria-label=Company]').count(), 0, 'No Company bar on this page')
   assert.deepEqual(await page.locator('[data-management] a[href^="tel:"]').evaluateAll(links => links.map(a => a.getAttribute('href'))),
     ['tel:+919990301351', 'tel:+919062207003', 'tel:+919062207005', 'tel:+919062207010', 'tel:+913212230691'], 'Sales (two numbers), purchase, HR and the office landline are callable')

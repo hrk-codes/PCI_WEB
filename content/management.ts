@@ -1,8 +1,8 @@
 /**
- * PCI's leadership, as published on the company's own Management page. Only names, honorifics and roles are stated.
+ * PCI's leadership: names, honorifics and roles as PCI publishes them, with their studio portraits.
  *
- * Portraits: add a `photo` (for example '/media/leadership/prakash-jha.webp', a 4:5 portrait) and the card shows it in
- * place of the monogram. No other change is needed.
+ * Portraits are 4:5 studio photographs in public/media/leadership/. A leader without a `photo` shows a monogram
+ * instead, so a new member can be listed before their portrait is ready.
  */
 export type Leader = {
   id: string
@@ -17,10 +17,9 @@ export type Leader = {
 }
 
 export const leaders: Leader[] = [
-  { id: 'chairman', honorific: 'Shri', name: 'Harsh Narayan Jha', role: 'Chairman', short: 'Chairman', initials: 'HJ', group: 'board' },
-  { id: 'managing-director', honorific: 'Shri', name: 'Prakash Jha', role: 'Managing Director', short: 'Managing Director', initials: 'PJ', group: 'board' },
-  { id: 'avp', honorific: 'Smt.', name: 'Ranju Devi Jha', role: 'AVP', short: 'AVP', initials: 'RJ', group: 'management' },
-  { id: 'avp-sales', honorific: 'Shri', name: 'Ranjeet Kumar', role: 'AVP, Sales & Business Development', short: 'AVP · Sales & BD', initials: 'RK', group: 'management' },
+  { id: 'chairman', honorific: 'Shri', name: 'Harsh Narayan Jha', role: 'Chairman', short: 'Chairman', initials: 'HJ', group: 'board', photo: '/media/leadership/harsh-narayan-jha.webp' },
+  { id: 'managing-director', honorific: 'Shri', name: 'Prakash Jha', role: 'Managing Director', short: 'Managing Director', initials: 'PJ', group: 'board', photo: '/media/leadership/prakash-jha.webp' },
+  { id: 'avp-sales', honorific: 'Shri', name: 'Ranjeet Kumar', role: 'AVP, Sales & Business Development', short: 'AVP · Sales & BD', initials: 'RK', group: 'management', photo: '/media/leadership/ranjeet-kumar.webp' },
 ]
 
 export const leaderGroups: Record<Leader['group'], string> = { board: 'Board of directors', management: 'Senior management' }

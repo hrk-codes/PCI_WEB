@@ -35,26 +35,27 @@ function Strands({ className }: { className: string }) {
   </svg>
 }
 
-function Monogram({ leader, size }: { leader: Leader; size: 'node' | 'card' }) {
-  return <span className={size === 'node' ? styles.nodeMark : styles.cardMark} aria-hidden="true">{leader.initials}</span>
+/** The small round badge in the structure: the leader's face, or their initials until a portrait exists. */
+function NodeMark({ leader }: { leader: Leader }) {
+  return <span className={styles.nodeMark} aria-hidden="true">
+    {leader.photo ? <Image src={leader.photo} alt="" width={84} height={84} sizes="42px" className={styles.nodePhoto}/> : leader.initials}
+  </span>
 }
 
 /** The chain of responsibility, drawn as a live line diagram: the "current" flows from the chairman down through the
- *  managing director to the two AVPs. */
+ *  managing director to sales and business development. */
 function Structure() {
-  const nodes: [Leader, number, number][] = [
-    [byId.chairman, 50, 13], [byId['managing-director'], 50, 46], [byId.avp, 26, 84], [byId['avp-sales'], 74, 84],
-  ]
-  const wires = 'M50 21 V38 M50 54 V65 M26 65 H74 M26 65 V76 M74 65 V76'
+  const nodes: [Leader, number][] = [[byId.chairman, 14], [byId['managing-director'], 50], [byId['avp-sales'], 86]]
+  const wires = 'M50 23 V41 M50 59 V77'
   return <figure className={styles.structure}>
     <svg className={styles.wires} viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true" focusable="false">
       <path className={styles.wireBase} d={wires}/>
       <path className={styles.wireCurrent} d={wires}/>
     </svg>
-    <span className={styles.junction} style={{ top: '65%' }} aria-hidden="true"/>
+    {[32, 68].map(y => <span key={y} className={styles.junction} style={{ top: `${y}%` }} aria-hidden="true"/>)}
     <ul aria-label="Leadership structure">
-      {nodes.map(([leader, x, y], i) => <li key={leader.id} className={leader.id === 'chairman' ? styles.nodeLead : styles.node} style={{ '--x': `${x}%`, '--y': `${y}%`, '--d': i } as CSSProperties}>
-        <Monogram leader={leader} size="node"/>
+      {nodes.map(([leader, y], i) => <li key={leader.id} className={leader.id === 'chairman' ? styles.nodeLead : styles.node} style={{ '--x': '50%', '--y': `${y}%`, '--d': i } as CSSProperties}>
+        <NodeMark leader={leader}/>
         <span><small>{leader.short}</small><b>{leader.honorific} {leader.name}</b></span>
       </li>)}
     </ul>
@@ -62,12 +63,21 @@ function Structure() {
   </figure>
 }
 
+/**
+ * An editorial portrait: the studio photograph fills the navy panel, its grey backdrop toned into PCI navy at the edges,
+ * while the panel's artwork (grid and conductor strands) is laid over the margins and fades out before the face.
+ */
 function LeaderCard({ leader, index }: { leader: Leader; index: number }) {
   return <li className={styles.card} data-reveal style={d(index)}>
     <div className={styles.portrait}>
       {leader.photo
-        ? <Image src={leader.photo} alt={`${leader.honorific} ${leader.name}, ${leader.role}`} fill sizes="(max-width: 700px) 90vw, (max-width: 1100px) 45vw, 22vw" className={styles.photo}/>
-        : <><Strands className={styles.strands}/><Monogram leader={leader} size="card"/></>}
+        ? <div className={styles.photoFrame}>
+          <Image src={leader.photo} alt={`${leader.honorific} ${leader.name}, ${leader.role}, PCI Cables`} fill sizes="(max-width: 620px) 130px, (max-width: 820px) 220px, 32vw" className={styles.photo}/>
+        </div>
+        : <span className={styles.cardMark} aria-hidden="true">{leader.initials}</span>}
+      <span className={styles.portraitArt} aria-hidden="true"/>
+      <Strands className={styles.strands}/>
+      <span className={styles.corner} aria-hidden="true"/>
       <span className={styles.group}>{leaderGroups[leader.group]}</span>
       <span className={styles.index} aria-hidden="true">0{index + 1}</span>
     </div>
