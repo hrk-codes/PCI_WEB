@@ -97,21 +97,32 @@ export function createEarthScene(host:HTMLElement,data:EarthData,initial:ReachSt
   const domestic=reachStates.map(s=>makeRoute(s,.035+earthPoint(s.lat,s.lon).angleTo(earthPoint(reachHub.lat,reachHub.lon))*.16))
   const international=reachExports.map(s=>makeRoute(s,s.id==='uganda'?.22:.055))
   const base=new T.Quaternion().setFromEuler(new T.Euler(22*rad,-80*rad,0))
-  const worldBase=new T.Quaternion().setFromAxisAngle(new T.Vector3(0,0,1),23.4*rad).multiply(base)
-  const axis=new T.Vector3(0,1,0)
+  const axis=new T.Vector3(0,1,0),horizontalAxis=new T.Vector3(1,0,0),viewAxis=new T.Vector3(0,0,1)
+  const tilt=new T.Quaternion().setFromAxisAngle(viewAxis,23.4*rad)
+  const swing=new T.Quaternion(),turn=new T.Quaternion(),worldQ=new T.Quaternion()
   let state={...initial},visible=true,disposed=false,lost=false,frame=0,last=performance.now(),angle=0,focus=initial.view==='world'?0:1
   let transitionStart=performance.now()-1100,transitionFrom=focus,targetFocus=focus,routeStart=performance.now()-5000
-  let startQ=worldBase.clone(),targetQ=base.clone(),worldQ=worldBase.clone(),hoverIndia=false
+  const startQ=new T.Quaternion(),targetQ=new T.Quaternion()
+  let hoverIndia=false
   let hoverTimer:ReturnType<typeof setTimeout>|undefined
   let pitch=0
   let drag:{id:number;x:number;y:number;angle:number;pitch:number;moved:boolean}|undefined
-  const horizontalAxis=new T.Vector3(1,0,0)
+  function worldOrientation(){
+    return worldQ.copy(tilt).multiply(swing.setFromAxisAngle(horizontalAxis,22*rad+pitch)).multiply(turn.setFromAxisAngle(axis,angle-80*rad))
+  }
+  function centreConnection(destination:{lat:number;lon:number}){
+    const centre=earthPoint(reachHub.lat,reachHub.lon).add(earthPoint(destination.lat,destination.lon)).normalize()
+    angle=80*rad-Math.atan2(centre.x,centre.z)
+    pitch=Math.asin(centre.y)-22*rad
+  }
   function endDrag(){
     const id=drag?.id;drag=undefined;delete canvas.dataset.dragging
     if(id!==undefined&&canvas.hasPointerCapture(id))canvas.releasePointerCapture(id)
     canvas.style.cursor=state.view==='world'?'grab':'default'
   }
-  root.quaternion.copy(initial.view==='world'?worldBase:base)
+  const initialCountry=reachExports.find(point=>point.id===initial.selected)
+  if(initialCountry)centreConnection(initialCountry)
+  root.quaternion.copy(initial.view==='world'?worldOrientation():base)
   const viewport=host.parentElement!
   const hubLabel=viewport.querySelector<HTMLElement>('.earth-hub-label')
   const selectedLabel=viewport.querySelector<HTMLElement>('.earth-selected-label')
@@ -133,18 +144,19 @@ export function createEarthScene(host:HTMLElement,data:EarthData,initial:ReachSt
     focus=transitionFrom+(targetFocus-transitionFrom)*moving
     if(moving<1){root.quaternion.slerpQuaternions(startQ,targetQ,moving)}
     else if(state.view==='world'){
-      if(!state.paused&&!state.reduced&&!state.interacting&&!drag)angle+=dt*Math.PI*2/180
-      worldQ.setFromAxisAngle(horizontalAxis,pitch).multiply(worldBase).multiply(new T.Quaternion().setFromAxisAngle(axis,angle));root.quaternion.copy(worldQ)
+      if(!state.selected&&!state.paused&&!state.reduced&&!state.interacting&&!drag)angle+=dt*Math.PI*2/180
+      root.quaternion.copy(worldOrientation())
     }else root.quaternion.copy(base)
     camera.position.z=3.25+(1.79-3.25)*focus;camera.lookAt(0,0,0)
     const chosen=state.preview||state.selected
+    const featured=chosen!==reachHub.id && (state.view==='india'?domestic:international).some(route=>route.id===chosen)
     const elapsed=(now-routeStart)/1000
     domestic.forEach((route,i)=>{
       route.line.visible=route.marker.visible=focus>.5
-      const reveal=state.paused||state.reduced?1:clamp((elapsed-i*.12)/.65)
+      const reveal=state.paused||state.reduced?1:clamp((elapsed-i*.08)/.65)
       route.geometry.setDrawRange(0,Math.max(0,Math.floor(reveal*81)))
       route.marker.visible=route.line.visible&&reveal===1
-      route.material.opacity=chosen?(chosen===route.id?1:.24):.65
+      route.material.opacity=featured?(chosen===route.id?1:.19):.56
       route.material.color.setHex(chosen===route.id?0xffcf9a:0xff8858)
       route.marker.scale.setScalar((1-focus*.42)*(chosen===route.id?1.5:1))
       route.traveller.visible=focus>.9&&reveal>0&&reveal<1
@@ -152,14 +164,15 @@ export function createEarthScene(host:HTMLElement,data:EarthData,initial:ReachSt
     })
     international.forEach(route=>{
       route.line.visible=route.marker.visible=focus<.25;route.geometry.setDrawRange(0,81)
-      route.material.opacity=chosen?(chosen===route.id?1:.3):.65
+      route.material.opacity=featured?(chosen===route.id?1:.25):.58
       route.material.color.setHex(chosen===route.id?0xffcf9a:0xff8858)
       route.marker.scale.setScalar(chosen===route.id?1.35:1)
     })
     indiaMaterial.opacity=focus>.5?.7:hoverIndia?.8:.3
-    hub.scale.setScalar(1-focus*.42);halo.scale.setScalar(1-focus*.4)
+    hub.scale.setScalar((1-focus*.42)*(chosen===reachHub.id?1.3:1));halo.scale.setScalar(1-focus*.4)
     root.updateMatrixWorld(true)
     label(hubLabel,hub.position)
+    label(pointButtons.get(reachHub.id) ?? null,hub.position)
     for(const route of [...domestic,...international]){
       const button=pointButtons.get(route.id)
       if(button){if(route.marker.visible)label(button,route.marker.position);else button.hidden=true}
@@ -176,16 +189,18 @@ export function createEarthScene(host:HTMLElement,data:EarthData,initial:ReachSt
     host.dataset.ready='yes';canvas.dataset.view=state.view;canvas.dataset.routes=String(domestic.filter(r=>r.line.visible).length);canvas.dataset.angle=angle.toFixed(5)
     canvas.dataset.focus=focus.toFixed(3)
     canvas.dataset.internationalRoutes=String(international.filter(r=>r.line.visible).length)
-    const rotating=state.view==='world'&&!state.paused&&!state.reduced&&!state.interacting&&!drag
-    if(rotating||moving<1||(state.view==='india'&&!state.paused&&!state.reduced&&elapsed<(domestic.length-1)*.12+.75))schedule()
+    const rotating=state.view==='world'&&!state.selected&&!state.paused&&!state.reduced&&!state.interacting&&!drag
+    if(rotating||moving<1||(state.view==='india'&&!state.paused&&!state.reduced&&elapsed<(domestic.length-1)*.08+.75))schedule()
   }
   function schedule(){if(!frame&&!disposed)frame=requestAnimationFrame(render)}
   function update(next:ReachState){
     const viewChanged=next.view!==state.view
-    if(viewChanged){
+    const destination=next.view==='world' && next.selected!==state.selected ? reachExports.find(point=>point.id===next.selected) : undefined
+    if(viewChanged||destination){
       endDrag();clearTimeout(hoverTimer);hoverIndia=false
+      if(destination)centreConnection(destination)
       transitionStart=performance.now();transitionFrom=focus;targetFocus=next.view==='world'?0:1
-      startQ.copy(root.quaternion);targetQ.copy(next.view==='world'?worldQ:base)
+      startQ.copy(root.quaternion);targetQ.copy(next.view==='world'?worldOrientation():base)
       if(next.view==='india')routeStart=performance.now()+650
     }
     state={...next};schedule()
@@ -202,7 +217,7 @@ export function createEarthScene(host:HTMLElement,data:EarthData,initial:ReachSt
   function stateHit(event:PointerEvent){
     let nearest:string|null=null,best=event.pointerType==='touch'?25:17
     const rect=canvas.getBoundingClientRect()
-    ;(state.view==='india'?domestic:international).forEach(route=>{
+    ;[{id:reachHub.id,marker:hub},...(state.view==='india'?domestic:international)].forEach(route=>{
       if(!route.marker.visible)return
       const world=root.localToWorld(route.marker.position.clone())
       if(world.clone().normalize().dot(camera.position.clone().sub(world))<=0)return
@@ -226,7 +241,7 @@ export function createEarthScene(host:HTMLElement,data:EarthData,initial:ReachSt
     }
     const id=stateHit(event);callbacks.hover(id)
     const point=hit(event),inside=!id&&!!point&&inIndia(data,point.lat,point.lon)
-    if(inside&&!hoverIndia){hoverTimer=setTimeout(()=>{callbacks.india(false)},180)}
+    if(inside&&!hoverIndia&&!state.selected){hoverTimer=setTimeout(()=>{callbacks.india(false)},180)}
     if(!inside){clearTimeout(hoverTimer)}
     hoverIndia=inside;canvas.style.cursor=inside||id?'pointer':'grab';schedule()
   }

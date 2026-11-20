@@ -1,7 +1,7 @@
 import type { CSSProperties, ReactNode } from 'react'
 import Link from 'next/link'
 import { catalogue } from '@/lib/content'
-import { reachExports, reachStates } from '@/content/reach'
+import { reachExports, reachIndiaCount } from '@/content/reach'
 import { Arrow, Kicker, Picture } from './site'
 import { PciLogo3D } from './pci-logo-3d'
 import { AboutMotion } from './about-motion'
@@ -12,8 +12,8 @@ export const aboutHeadline = 'Built in Bengal. Strung across India and beyond.'
 const facts = [
   {value:2013, label:'Founded in Dankuni, West Bengal', count:false},
   {value:catalogue.length, label:'Products across three families', count:true},
-  {value:reachStates.length, label:'Indian states with PCI clients', count:true},
-  {value:reachExports.length, label:'Countries supplied abroad', count:true},
+  {value:reachIndiaCount, label:'Indian locations with PCI clients', count:true},
+  {value:reachExports.length, label:'International destinations', count:true},
   {value:800, unit:'kV', label:'Line rating our conductors serve', count:true},
 ]
 

@@ -4,6 +4,7 @@ import { useLayoutEffect, useRef, type CSSProperties } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { CableScene } from '@/components/cable-scene'
+import { reachExports, reachIndiaCount } from '@/content/reach'
 import { aboutTimeline, chapterAt } from '@/lib/about-timeline'
 import './about-cable.css'
 
@@ -18,8 +19,8 @@ const anatomy = [
 
 const stats = [
   {label:'Products', value:14, count:true},
-  {label:'Indian states', value:17, count:true},
-  {label:'Export countries', value:7, count:true},
+  {label:'Indian locations', value:reachIndiaCount, count:true},
+  {label:'Countries abroad', value:reachExports.length, count:true},
   {label:'Making cable since', value:2013, count:false},
 ]
 

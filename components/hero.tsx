@@ -3,6 +3,7 @@
 import { Fragment, useEffect, useRef, useState, type CSSProperties } from 'react'
 import Link from 'next/link'
 import { getImageProps } from 'next/image'
+import { reachExports, reachIndiaCount } from '@/content/reach'
 import './hero.css'
 
 export const heroDefaults = {
@@ -103,8 +104,8 @@ export function HeroFilm({ copy, productCount }: { copy: Copy; productCount: num
     <div className="wrap hero-film-bar">
       <ul className="hero-facts" aria-label="PCI at a glance">
         <li><b>{productCount}</b> products</li>
-        <li><b>17</b> Indian states</li>
-        <li><b>7</b> export countries</li>
+        <li><b>{reachIndiaCount}</b> Indian locations</li>
+        <li><b>{reachExports.length}</b> countries abroad</li>
         <li><b>2013</b> founded</li>
       </ul>
       {!failed && <button type="button" className="hero-film-toggle" onClick={toggle} aria-label={playing ? 'Pause background film' : 'Play background film'}>
