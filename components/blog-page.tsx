@@ -4,14 +4,21 @@ import { articles, editedMany } from '@/lib/content'
 import { newsBrief } from '@/content/news-brief'
 import { Arrow, Kicker } from './site'
 import { articleImages } from './catalogue'
+import { VideoCard, type BlogVideo } from './blog-videos'
 import styles from './blog-page.module.css'
 
 /**
- * Blog: the latest story featured, then PCI's news in brief, year by year (older stories are linked from their items).
+ * Blog: the latest story featured, the interview videos, then PCI's news in brief, year by year (older stories are linked from their items).
  */
 const summaries: Record<string, string> = {
   'pci-have-participated-at-elecrama-2025': 'PCI Cables Industries took its cables, conductors and earth wire to ELECRAMA 2025 at India Expo Mart, Greater Noida, meeting engineers, utilities, EPC companies and international buyers.',
 }
+/** The interview videos from the original Press Releases page, saved for streaming in public/media/blog/. */
+const videos: BlogVideo[] = [
+  { src: '/media/blog/elecrama-2025-interview.mp4', poster: '/media/blog/elecrama-2025-interview.webp', title: 'Exclusive interview at ELECRAMA 2025', by: 'Ranjeet Kumar, AVP Sales & BD', length: '3:26' },
+  { src: '/media/blog/ep-info-interview.mp4', poster: '/media/blog/ep-info-interview.webp', title: 'In conversation with E&P Info', by: 'Ranjeet Kumar, AVP Sales & BD', length: '4:40' },
+  { src: '/media/blog/era-fame-feature.mp4', poster: '/media/blog/era-fame-feature.webp', title: 'India’s cable and conductor maker', by: 'Era Fame Media Group', length: '0:44', vertical: true },
+]
 const day = (iso: string) => new Date(iso).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' })
 const minutes = (html: string) => Math.max(1, Math.round(html.replace(/<[^>]+>/g, ' ').split(/\s+/).filter(Boolean).length / 200))
 
@@ -38,6 +45,16 @@ export async function BlogPage() {
         <Link className={styles.more} href={featured.href}>Read the story <Arrow/></Link>
       </div>
     </article>}
+
+    <section className={styles.videos} aria-labelledby="blog-videos">
+      <div className={styles.videosHead}>
+        <div><Kicker>On video</Kicker><h2 id="blog-videos">PCI in the media.</h2></div>
+        <p>Interviews with Ranjeet Kumar, AVP Sales &amp; Business Development, at ELECRAMA 2025, and a short feature by Era Fame Media Group.</p>
+      </div>
+      <div className={styles.videoRow}>
+        {videos.map(video => <VideoCard key={video.src} video={video}/>)}
+      </div>
+    </section>
 
     <section className={styles.brief} aria-labelledby="news-brief">
       <div className={styles.briefHead}>

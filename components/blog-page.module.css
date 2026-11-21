@@ -59,3 +59,34 @@
 @media (max-width: 560px) {
   .years { grid-template-columns: minmax(0, 1fr); }
 }
+
+/* On video: two interviews side by side and a vertical short, all at the same height. */
+.videos { margin-top: clamp(10px, 2vw, 22px); }
+.videosHead { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-end; gap: 6px 32px; padding-bottom: 12px; margin-bottom: 16px; border-bottom: 1px solid var(--line); }
+.videosHead :global(.kicker) { margin-bottom: 4px; }
+.videosHead h2 { font-size: clamp(1.25rem, 1.8vw, 1.6rem); }
+.videosHead p { max-width: 52ch; font-size: .82rem; }
+.videoRow { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, .316fr); gap: clamp(12px, 1.6vw, 20px); align-items: start; }
+.video { margin: 0; }
+.screen { position: relative; aspect-ratio: 16 / 9; overflow: hidden; background: var(--deep); box-shadow: 0 12px 28px #0a22331f; }
+.video[data-vertical] .screen { aspect-ratio: 9 / 16; }
+.screen video { position: absolute; inset: 0; width: 100%; height: 100%; background: #000; }
+.play { position: absolute; inset: 0; display: block; width: 100%; padding: 0; border: 0; background: none; cursor: pointer; }
+.play img { object-fit: cover; transition: transform .9s var(--ease), filter .4s; }
+.play::after { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg, transparent 55%, #0a1f33a6); }
+.play:hover img { transform: scale(1.04); filter: brightness(.92); }
+.playIcon { position: absolute; z-index: 1; left: 50%; top: 50%; display: grid; place-items: center; width: 58px; height: 58px; margin: -29px 0 0 -29px; border-radius: 50%; background: var(--orange); color: var(--deep); box-shadow: 0 0 0 8px #ff744440, 0 10px 24px #0a223355; transition: transform .35s var(--ease), box-shadow .35s; }
+.playIcon svg { width: 24px; height: 24px; margin-left: 3px; fill: currentColor; }
+.play:hover .playIcon, .play:focus-visible .playIcon { transform: scale(1.1); box-shadow: 0 0 0 12px #ff744433, 0 12px 28px #0a223366; }
+.video[data-vertical] .playIcon { width: 46px; height: 46px; margin: -23px 0 0 -23px; }
+.length { position: absolute; z-index: 1; right: 10px; bottom: 10px; padding: .2rem .45rem; background: #0a1f33d9; color: #fff; font-size: .66rem; font-weight: 800; letter-spacing: .06em; font-variant-numeric: tabular-nums; }
+.video figcaption { display: grid; gap: 2px; padding-top: 10px; }
+.video figcaption b { font-size: .86rem; line-height: 1.3; color: var(--ink); }
+.video figcaption span { font-size: .72rem; font-weight: 700; color: var(--muted); }
+@media (max-width: 860px) {
+  .videoRow { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .video[data-vertical] { grid-column: 1 / -1; display: grid; grid-template-columns: minmax(0, 150px) minmax(0, 1fr); align-items: center; gap: 14px; }
+}
+@media (max-width: 560px) {
+  .videoRow { grid-template-columns: minmax(0, 1fr); }
+}
