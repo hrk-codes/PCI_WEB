@@ -10,7 +10,7 @@ export const menus = [
   { title: 'Company', items: [['About PCI','/about-us/'], ['Management','/management/'], ['Clients','/clients/'], ['Milestones','/achievements/'], ['Turnover','/turnover/']] },
   { title: 'Products', items: [['All products','/products/'], ['Cables','/cables/'], ['Conductors','/conductors/'], ['Earth wire','/earth-wire/']] },
   { title: 'Capabilities', items: [['Testing facilities','/testing/'], ['Certifications','/certificates/']] },
-  { title: 'Updates', items: [['News','/news/'], ['Blog','/blog/'], ['Press releases','/press-releases/'], ['Gallery','/gallery/']] },
+  { title: 'Updates', items: [['Blog','/blog/'], ['Press releases','/press-releases/'], ['Gallery','/gallery/']] },
 ]
 export function Arrow({ diagonal = false }: { diagonal?: boolean }) {
   return <svg width="17" height="17" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d={diagonal ? 'M6 18 18 6M7 6h11v11' : 'M3 12h17m-7-7 7 7-7 7'} stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"/></svg>
@@ -34,7 +34,7 @@ export function Footer() {
     <div><Brand/><p>Cables, conductors and earth wire for the power networks people depend on.</p><a href="mailto:info@pcicablesindustries.com">info@pcicablesindustries.com</a></div>
     <div><h2>Company</h2><Link href="/about-us/">About PCI</Link><Link href="/management/">Management</Link><Link href="/clients/">Clients</Link><Link href="/certificates/">Certifications</Link></div>
     <div><h2>Explore</h2><Link href="/products/">Product range</Link><Link href="/testing/">Testing facilities</Link><a href="/media/catalogue.pdf">Product catalogue <Arrow diagonal/></a></div>
-    <div><h2>Connect</h2><Link href="/contact-us/">Contact</Link><Link href="/career/">Careers</Link><Link href="/vendor-registration/">Vendor registration</Link><Link href="/news/">News</Link></div>
+    <div><h2>Connect</h2><Link href="/contact-us/">Contact</Link><Link href="/career/">Careers</Link><Link href="/vendor-registration/">Vendor registration</Link><Link href="/blog/">Blog</Link></div>
   </div><div className="wrap foot-end"><p><strong>Registered office & works</strong> · {address}</p><div><span>© {new Date().getFullYear()} {company}</span><div><Link href="/privacy/">Privacy notice</Link>{analytics && <AnalyticsPreference id={analytics}/>}</div></div></div></footer>
 }
 export function Kicker({ children }: { children: React.ReactNode }) {

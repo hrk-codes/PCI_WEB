@@ -23,8 +23,8 @@ export function metaDescription(text: string, limit = 160) {
 }
 export const families: Record<string, string> = { cables: 'Cables', conductors: 'Conductors', 'earth-wire': 'Earth Wire' }
 export const articles = snapshot.filter((doc) => doc.kind === 'article').sort((a, b) => b.date.localeCompare(a.date))
-/** Pages from the original site that are no longer published (they 404 and leave the sitemap). */
-const retiredPages = new Set(['epc'])
+/** Original pages without a standalone route in the current sitemap. */
+const retiredPages = new Set(['epc', 'news'])
 export const publicDocs = snapshot.filter((doc) => doc.kind === 'page' && !retiredPages.has(doc.slug))
 export const payload = cache(async () => getPayload({ config }))
 export const cleanHtml = (html: string) => sanitize(html, {

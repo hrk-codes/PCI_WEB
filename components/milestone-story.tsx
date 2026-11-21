@@ -106,7 +106,7 @@ export function MilestoneStory({ title, intro, children }: { title: string; intr
             <h2 id="milestone-more">Continue exploring PCI.</h2>
             <div className={styles.actions}>
               <Link className="button" href="/products/">Explore our products <Arrow diagonal /></Link>
-              <TextLink href="/news/">Read PCI news</TextLink>
+              <TextLink href="/blog/">Read the PCI blog</TextLink>
             </div>
             <nav className={styles.related} aria-label="About the company">
               {companyLinks.map(([label, href]) => <Link key={href} href={href}>{label}</Link>)}

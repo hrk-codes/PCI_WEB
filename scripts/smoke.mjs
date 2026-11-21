@@ -6,9 +6,10 @@ import { load } from 'cheerio'
 const base = (process.env.PCI_SMOKE_URL || 'http://127.0.0.1:3000').replace(/\/$/, '')
 const read = async name => JSON.parse(await readFile('content/'+name+'.json','utf8'))
 const [docs, products, redirects] = await Promise.all(['wordpress','catalogue','redirects'].map(read))
-// Original pages retired from the site (kept in step with retiredPages in lib/content.ts): they must 404.
+// Original pages with no replacement must return 404.
 const retired = ['epc']
-const pageRoutes = ['/', '/privacy/', '/request-quote/', ...docs.filter(d=>!retired.includes(d.slug)).map(d=>d.kind==='article'?'/blog/'+d.slug+'/':'/'+d.slug+'/'), ...products.map(p=>'/products/'+p.slug+'/')]
+const moved = { '/news/':'/blog/', '/updates/':'/blog/' }
+const pageRoutes = ['/', '/privacy/', '/request-quote/', ...docs.filter(d=>!retired.includes(d.slug)).map(d=>d.kind==='article'?'/blog/'+d.slug+'/':'/'+d.slug+'/'), ...products.map(p=>'/products/'+p.slug+'/')].filter(route=>!Object.hasOwn(moved,route))
 const unique = new Set(pageRoutes)
 const assets = new Set()
 const fetchPath = (path, options) => fetch(base+path, { signal:AbortSignal.timeout(35000), ...options })
@@ -38,7 +39,8 @@ for (const asset of assets) {
   const res = await fetchPath(asset,{method:'HEAD'})
   assert.equal(res.status,200,asset)
 }
-for (const [old, target] of Object.entries(redirects)) {
+const redirectEntries = Object.entries({ ...redirects, ...moved })
+for (const [old, target] of redirectEntries) {
   const res = await fetchPath(old,{redirect:'manual'})
   assert.ok([301,308].includes(res.status),old+' permanent redirect')
   assert.equal(new URL(res.headers.get('location'),base).pathname,target,old)
@@ -79,4 +81,4 @@ if (process.env.PCI_SMOKE_WRITE==='1') {
   for (const kind of ['quote','contact','career','vendor']) assert.ok(records.some(d=>d.kind===kind && d.email===email),kind+' record visible in CMS')
   assert.equal(records.find(d=>d.kind==='quote' && d.email===email).product,'acsr')
 }
-console.log('Verified '+unique.size+' pages, '+assets.size+' linked media files, '+Object.keys(redirects).length+' redirects, sitemap, 404, and private submissions.')
+console.log('Verified '+unique.size+' pages, '+assets.size+' linked media files, '+redirectEntries.length+' redirects, sitemap, 404, and private submissions.')

@@ -3,7 +3,7 @@ import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
 import { Arrow, Kicker, PageHead, Picture, TextLink } from '@/components/site'
-import { ProductGrid, Updates, articleImages, productImage } from '@/components/catalogue'
+import { ProductGrid, articleImages, productImage } from '@/components/catalogue'
 import { Inquiry } from '@/components/inquiry'
 import { ClientDirectory } from '@/components/client-directory'
 import { MilestoneStory } from '@/components/milestone-story'
@@ -13,6 +13,7 @@ import { ProductDetail } from '@/components/product-detail'
 import { AboutPage, aboutHeadline } from '@/components/about-page'
 import { CertificatesPage, TestingPage } from '@/components/capabilities'
 import { ManagementPage } from '@/components/management-page'
+import { BlogPage } from '@/components/blog-page'
 import { PressCoverage } from '@/components/press-coverage'
 import { address, articles, catalogue, cleanHtml, company, edited, families, metaDescription, publicDocs, shareImage, siteUrl, structured } from '@/lib/content'
 
@@ -33,7 +34,6 @@ const intros: Record<string, [string,string]> = {
   career: ['Careers at PCI Cables', 'Tell us about your area of interest and how you’d like to contribute.'],
   privacy: ['Privacy notice', 'How PCI uses details submitted through this website.'],
   blog: ['Stories and updates', 'Events, project news and manufacturing updates from PCI Cables.'],
-  news: ['PCI Cables news', 'Company milestones, product developments and industry events.'],
   turnover: ['Company turnover', `PCI Cables’ published financial year turnover from ${turnoverFirstYear} through ${turnoverLatestYear}.`],
   clients: ['Clients', 'Explore the organisations PCI Cables has supplied across utilities, rail and public sector, international markets, and renewable energy.'],
   testing: ['Testing facilities', 'Our in-house laboratory tests what we make, from the breaking load of a conductor to the smoke density of an FRLSH cable: 25 tests on calibrated equipment.'],
@@ -48,7 +48,6 @@ const searchDescriptions: Record<string, string> = {
   products: 'Explore PCI Cables’ range: power, control, service and aerial bunched cables, covered conductors, overhead conductors up to 800 kV and galvanised earth wire.',
   'earth-wire': 'Galvanised steel earth wire and stay wire from PCI Cables in Dankuni, West Bengal, for shielding and anchoring overhead transmission and distribution lines.',
   gallery: 'Photographs of PCI Cables’ works in Dankuni, West Bengal: production lines, the testing laboratory, our people and exhibitions such as ELECRAMA.',
-  news: 'PCI Cables news: company milestones, new conductor and cable orders, product developments and industry events from our works in Dankuni, West Bengal.',
   blog: 'Stories from PCI Cables: exhibitions, project orders and manufacturing updates from our cable and conductor works in Dankuni, West Bengal.',
   privacy: 'How PCI Cables Industries uses the details you send through this website’s inquiry, career and vendor forms, and how to contact us about them.',
   career: 'Careers at PCI Cables Industries in Dankuni, West Bengal: tell us about your skills and the role you would like in cable and conductor manufacturing.',
@@ -204,8 +203,8 @@ export async function PublicPage({ segments, filters = {} }: { segments: string[
     body = <Turnover/>
   } else if (d.slug==='clients') {
     body = <ClientDirectory filters={filters}>{d.html ? <Rich html={d.html} /> : null}</ClientDirectory>
-  } else if (d.slug==='blog' || d.slug==='news') {
-    body = <><Updates/>{d.slug==='news' && <div className="reading spaced"><Rich html={d.html}/></div>}</>
+  } else if (d.slug==='blog') {
+    body = <BlogPage/>
   } else if (d.slug==='gallery') {
     body = <><div className="gallery-grid">{['factory.webp','plant.webp','testing.webp','event.webp','2025-11-elecrama-2.webp','2025-11-elecrama-3.webp'].map((asset,i)=><a key={asset} href={'/media/'+asset}><Image src={'/media/'+asset} alt={['Manufacturing facility','PCI Cables works','Testing laboratory','PCI exhibit at Elecrama','Elecrama exhibit','PCI at Elecrama'][i]} width={540} height={360}/></a>)}</div><div className="reading spaced"><Rich html={d.html}/></div></>
   } else {

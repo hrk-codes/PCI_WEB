@@ -1,0 +1,61 @@
+/* Blog: a featured story and PCI's news in brief, year by year. */
+.blog { --ease: cubic-bezier(.2, .75, .12, 1); --k-order: #1f6fa8; --k-delivered: #1f8a6a; --k-export: #c4501f; --k-event: #9a6a00; display: grid; gap: clamp(16px, 2vw, 22px); }
+
+.meta { display: flex; flex-wrap: wrap; gap: 4px 12px; font-size: .72rem; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.meta time { color: var(--orange-dark); }
+.meta span::before { content: '·'; margin-right: 12px; }
+.more { display: inline-flex; align-items: center; gap: .5rem; width: fit-content; margin-top: auto; font-size: .84rem; font-weight: 800; color: var(--ink); border-bottom: 1px solid currentColor; padding-bottom: .15rem; }
+.more svg { transition: transform .3s var(--ease); }
+.more:hover { color: var(--orange-dark); }
+.more:hover svg { transform: translateX(4px); }
+
+/* Featured story */
+.featured { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); background: var(--white); border: 1px solid var(--line); box-shadow: 0 14px 34px #0a22330f; }
+.featuredImage { position: relative; display: block; min-height: clamp(260px, 30vw, 400px); overflow: hidden; background: #d9e1e3; }
+.featuredImage img { object-fit: cover; transition: transform 1.1s var(--ease); }
+.featured:hover .featuredImage img { transform: scale(1.04); }
+.flag { position: absolute; left: 0; top: 18px; padding: .4rem .75rem; background: var(--orange); color: var(--deep); font-size: .64rem; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; }
+.featuredText { display: flex; flex-direction: column; gap: 14px; padding: clamp(22px, 3vw, 40px); border-left: 4px solid var(--orange); }
+.featuredText h2 { font-size: clamp(1.7rem, 2.6vw, 2.5rem); line-height: 1.06; }
+.featuredText h2 a:hover { color: var(--orange-dark); }
+.featuredText > p:not(.meta) { font-size: .95rem; line-height: 1.65; }
+
+
+/* News in brief */
+.brief { margin-top: clamp(18px, 2.6vw, 30px); padding: clamp(18px, 2.2vw, 28px); background: radial-gradient(ellipse at 88% 0%, #224c66, #0b2238 62%); color: #fff; }
+.briefHead { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-end; gap: 6px 32px; padding-bottom: 12px; margin-bottom: 14px; border-bottom: 1px solid #ffffff2e; }
+.briefHead :global(.kicker) { color: #ff9a74; margin-bottom: 4px; }
+.briefHead h2 { font-size: clamp(1.25rem, 1.8vw, 1.6rem); }
+.legend { display: flex; flex-wrap: wrap; gap: 4px 16px; margin: 0; padding: 0; list-style: none; font-size: .68rem; font-weight: 700; color: #c9d9e3; }
+.legend li { --k: var(--k-order); display: inline-flex; align-items: center; gap: .4rem; }
+.legend li::before { content: ''; width: 7px; height: 7px; border-radius: 50%; background: color-mix(in srgb, var(--k) 70%, #fff); }
+.legend li[data-kind=Delivered] { --k: var(--k-delivered); }
+.legend li[data-kind=Export] { --k: var(--k-export); }
+.legend li[data-kind=Event] { --k: var(--k-event); }
+.years { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: clamp(12px, 1.6vw, 22px); }
+.year h3 { display: flex; align-items: baseline; justify-content: space-between; padding-bottom: 5px; border-bottom: 2px solid var(--orange); font-size: 1.1rem; letter-spacing: -.03em; }
+.year h3 small { font-size: .62rem; letter-spacing: .08em; color: #a9c4d6; }
+.year ol { margin: 0; padding: 0; list-style: none; }
+.year li { --k: var(--k-order); display: grid; grid-template-columns: 2.1rem minmax(0, 1fr); gap: 8px; padding: 7px 0; border-bottom: 1px solid #ffffff14; }
+.year li[data-kind=Delivered] { --k: var(--k-delivered); }
+.year li[data-kind=Export] { --k: var(--k-export); }
+.year li[data-kind=Event] { --k: var(--k-event); }
+.year li > div { position: relative; padding-left: 13px; }
+.year li > div::before { content: ''; position: absolute; left: 0; top: .42em; width: 6px; height: 6px; border-radius: 50%; background: color-mix(in srgb, var(--k) 70%, #fff); }
+.when { font-size: .62rem; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: #ff9a74; padding-top: .12rem; }
+/* The type is shown by the dot's colour; screen readers hear it as text. */
+.kind { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.year b { display: block; font-size: .8rem; font-weight: 700; line-height: 1.3; }
+.year b a { border-bottom: 1px solid #ff9a74; }
+.year b a:hover { color: #ff9a74; }
+
+@media (max-width: 1000px) {
+  .years { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 860px) {
+  .featured { grid-template-columns: minmax(0, 1fr); }
+  .featuredText { border-left: 0; border-top: 4px solid var(--orange); }
+}
+@media (max-width: 560px) {
+  .years { grid-template-columns: minmax(0, 1fr); }
+}

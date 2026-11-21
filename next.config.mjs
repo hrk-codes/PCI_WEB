@@ -9,7 +9,9 @@ export default withPayload({
   trailingSlash: true,
   async redirects() {
     return [
-      { source: '/updates', destination: '/news/', permanent: true },
+      { source: '/updates', destination: '/blog/', permanent: true },
+      // The News page was folded into the Blog.
+      { source: '/news', destination: '/blog/', permanent: true },
       { source: '/contact', destination: '/contact-us/', permanent: true },
       { source: '/careers', destination: '/career/', permanent: true },
       { source: '/about', destination: '/about-us/', permanent: true },
