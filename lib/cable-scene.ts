@@ -25,9 +25,10 @@ export function createCableScene(host: HTMLElement, section: HTMLElement) {
   renderer.shadowMap.type = T.PCFShadowMap
   // Shadows are redrawn only when the composition moves, not on frames where only the current animates.
   renderer.shadowMap.autoUpdate = false
-  // Sharp on every screen: at least 1.5x (supersampled on standard displays), up to 2x, within a pixel budget.
+  // Native resolution (antialiased) up to 2x on high-density screens, within a pixel budget. Supersampling standard
+  // screens made the canvas 1.5x larger to composite every frame, which is what dropped frames while scrolling.
   // If the device cannot hold a smooth frame rate, `quality` steps down (see render).
-  let quality = Math.min(2,Math.max(devicePixelRatio,1.25))
+  let quality = Math.min(2,Math.max(devicePixelRatio,1))
   const pixelBudget = 2.6e6
   const scene = new T.Scene()
   const camera = new T.PerspectiveCamera(32,1,.1,50)
@@ -213,7 +214,8 @@ export function createCableScene(host: HTMLElement, section: HTMLElement) {
     }
   }
 
-  let visible=true,frame=0,disposed=false,contextLost=false,sized=false,pending=true,warmed=false
+  let wantedQuality=0,restTimer=0
+  let visible=true,onScreen=false,frame=0,disposed=false,contextLost=false,sized=false,pending=true,warmed=false
   let lastFrameAt=0,frameSum=0,frameCount=0
   let progress=Number(getComputedStyle(section).getPropertyValue('--story-progress')) || 0
   let px=0,py=0,cx=0,cy=0
@@ -243,15 +245,17 @@ export function createCableScene(host: HTMLElement, section: HTMLElement) {
     // dropping frames: a slightly softer image reads as smooth, a stutter never does.
     // Average over 45 back-to-back frames; when below ~55fps, scale the pixel count to the measured headroom
     // (never below 0.8x). Only ever steps down, so it settles after one or two adjustments.
+    // Resizing the canvas reallocates its buffers (a visible stall and a change in sharpness), so a lower setting is
+    // only ever applied once scrolling has come to rest (see settleQuality), never in the middle of a scroll.
     if(lastFrameAt && now-lastFrameAt<120){
       frameSum+=now-lastFrameAt;frameCount++
       if(frameCount>=45){
         const fps=1000/(frameSum/frameCount);frameSum=frameCount=0
-        if(fps<55 && quality>.8){quality=Math.max(.8,quality*Math.sqrt(fps/60)*.97);resize()}
+        if(fps<55 && quality>.8)wantedQuality=Math.max(.8,Math.min(wantedQuality||quality,quality*Math.sqrt(fps/60)*.97))
       }
-    }
+    } else {frameSum=frameCount=0}
     lastFrameAt=now
-    if(!warmed) warmUp()
+    if(!warmed){warmUp();calibrate()}
     const staticMode=section.dataset.mode!=='cinematic'
     const tl=aboutTimeline(progress)
     if(staticMode || tl.anatomy>.05){px=0;py=0}
@@ -308,7 +312,8 @@ export function createCableScene(host: HTMLElement, section: HTMLElement) {
     const looping=pulseOn && !staticMode
     const pulseState=looping?'running':'idle'
     if(canvas.dataset.pulse!==pulseState)canvas.dataset.pulse=pulseState
-    if(looping || Math.abs(px-cx)+Math.abs(py-cy)>.001) schedule()
+    // The current keeps flowing only while the section is actually on screen.
+    if((looping && onScreen) || Math.abs(px-cx)+Math.abs(py-cy)>.001) schedule()
   }
   /**
    * Compiles every shader and uploads every texture before the first visible frame. Without this, each part that
@@ -351,18 +356,65 @@ export function createCableScene(host: HTMLElement, section: HTMLElement) {
   function restored(){contextLost=false;warmed=false;request()}
   function onVisibility(){if(document.hidden)suspend();else request()}
   const resizeObserver=new ResizeObserver(resize)
-  const intersection=new IntersectionObserver(entries=>{visible=entries[0].isIntersecting;if(visible)request();else suspend()})
+  // A screen of margin: the first real frame (and the canvas's first composite) happens while the section is still
+  // below the fold, not at the moment it scrolls in.
+  const intersection=new IntersectionObserver(entries=>{visible=entries[0].isIntersecting;if(visible)request();else suspend()},{rootMargin:'100% 0px'})
+  const seen=new IntersectionObserver(entries=>{onScreen=entries[0].isIntersecting;if(onScreen)request()})
   const modeObserver=new MutationObserver(()=>{measure();request()})
   host.append(canvas)
-  resizeObserver.observe(host);if(art)resizeObserver.observe(art);intersection.observe(host)
+  resizeObserver.observe(host);if(art)resizeObserver.observe(art);intersection.observe(host);seen.observe(host)
   modeObserver.observe(section,{attributes:true,attributeFilter:['data-mode']})
   section.addEventListener('pci-cable-progress',onProgress)
   host.addEventListener('pointermove',pointer);host.addEventListener('pointerleave',leave)
   canvas.addEventListener('webglcontextlost',lost);canvas.addEventListener('webglcontextrestored',restored)
   document.addEventListener('visibilitychange',onVisibility)
   resize()
+  /**
+   * Picks the canvas sharpness before the visitor arrives. While the section is still off screen, the busiest
+   * composition is drawn for half a second and the real frame rate measured; on a GPU that cannot hold 60 fps the
+   * pixel ratio is lowered there and then. This replaces discovering a slow GPU (and shrinking the canvas, a visible
+   * stall) halfway through the scroll.
+   */
+  let calibrated=false
+  // "Seen": more than a sliver of the canvas is on screen (the composition sits in its middle, the edges are empty).
+  const seenNow=()=>{const r=host.getBoundingClientRect();return Math.min(r.bottom,innerHeight)-Math.max(r.top,0)>r.height*.15}
+  function calibrate(){
+    if(calibrated||disposed||contextLost||!sized||seenNow())return
+    calibrated=true
+    const hidden:T.Object3D[]=[]
+    scene.traverse(o=>{if(!o.visible){hidden.push(o);o.visible=true}})
+    const restore=()=>hidden.forEach(o=>{o.visible=false})
+    let count=0,first=0
+    const step=(now:number)=>{
+      if(disposed||contextLost||seenNow()){restore();request();return}
+      renderer.shadowMap.needsUpdate=true;renderer.render(scene,camera)
+      if(!count)first=now
+      if(++count<=32){requestAnimationFrame(step);return}
+      restore()
+      const fps=1000/((now-first)/32)
+      canvas.dataset.benchFps=fps.toFixed(0)
+      if(fps<55){quality=Math.max(.8,quality*Math.sqrt(fps/60)*.97);resize()}else request()
+    }
+    requestAnimationFrame(step)
+  }
+  function settleQuality(){
+    clearTimeout(restTimer)
+    restTimer=window.setTimeout(()=>{if(wantedQuality&&!disposed){quality=wantedQuality;wantedQuality=0;resize()}},450)
+  }
+  addEventListener('scroll',settleQuality,{passive:true})
+  // Compile every shader in the background (parallel compile) and upload everything before the section is reached,
+  // so the first visible frame is an ordinary one rather than a stall in the middle of a scroll.
+  const hidden:T.Object3D[]=[]
+  scene.traverse(o=>{if(!o.visible){hidden.push(o);o.visible=true}})
+  const compiling=renderer.compileAsync(scene,camera)
+  hidden.forEach(o=>{o.visible=false})
+  compiling.then(()=>{
+    if(disposed||contextLost||warmed)return
+    const warm=()=>{if(!disposed&&!contextLost&&!warmed&&sized){warmUp();calibrate();request()}}
+    if('requestIdleCallback' in window)requestIdleCallback(warm,{timeout:800});else warm()
+  }).catch(()=>{})
   return ()=>{
-    disposed=true;cancelAnimationFrame(frame);resizeObserver.disconnect();intersection.disconnect();modeObserver.disconnect()
+    disposed=true;cancelAnimationFrame(frame);clearTimeout(restTimer);removeEventListener('scroll',settleQuality);resizeObserver.disconnect();intersection.disconnect();seen.disconnect();modeObserver.disconnect()
     section.removeEventListener('pci-cable-progress',onProgress)
     host.removeEventListener('pointermove',pointer);host.removeEventListener('pointerleave',leave)
     canvas.removeEventListener('webglcontextlost',lost);canvas.removeEventListener('webglcontextrestored',restored)

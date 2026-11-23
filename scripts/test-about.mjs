@@ -19,7 +19,8 @@ async function progress(page,p) {
     const header = document.querySelector('.site-head').offsetHeight
     window.scrollTo({top:scrollY+el.getBoundingClientRect().top-header+(el.offsetHeight-(innerHeight-header))*p,behavior:'instant'})
   },p)
-  await page.waitForTimeout(320)
+  // The story glides toward the scroll position (about-cable.tsx), so allow it to settle.
+  await page.waitForTimeout(600)
 }
 const opacity = (page,selector)=>page.locator(selector).first().evaluate(el=>Number(getComputedStyle(el).opacity))
 const overflow = page=>page.evaluate(()=>document.documentElement.scrollWidth>innerWidth)

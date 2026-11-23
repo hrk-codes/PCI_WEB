@@ -138,7 +138,7 @@ export function createEarthScene(host:HTMLElement,data:EarthData,initial:ReachSt
   }
   function render(now:number){
     frame=0
-    if(disposed||lost||!visible||document.hidden)return
+    if(disposed||lost||!visible||document.hidden||!warm)return
     const dt=Math.min((now-last)/1000,.05);last=now
     const moving=state.reduced||state.paused?1:ease((now-transitionStart)/1100)
     focus=transitionFrom+(targetFocus-transitionFrom)*moving
@@ -190,7 +190,8 @@ export function createEarthScene(host:HTMLElement,data:EarthData,initial:ReachSt
     canvas.dataset.focus=focus.toFixed(3)
     canvas.dataset.internationalRoutes=String(international.filter(r=>r.line.visible).length)
     const rotating=state.view==='world'&&!state.selected&&!state.paused&&!state.reduced&&!state.interacting&&!drag
-    if(rotating||moving<1||(state.view==='india'&&!state.paused&&!state.reduced&&elapsed<(domestic.length-1)*.08+.75))schedule()
+    // Animates only while the globe is actually on screen (it is drawn a screen early, but never spins unseen).
+    if(onScreen&&(rotating||moving<1||(state.view==='india'&&!state.paused&&!state.reduced&&elapsed<(domestic.length-1)*.08+.75)))schedule()
   }
   function schedule(){if(!frame&&!disposed)frame=requestAnimationFrame(render)}
   function update(next:ReachState){
@@ -266,14 +267,21 @@ export function createEarthScene(host:HTMLElement,data:EarthData,initial:ReachSt
   function contextLost(event:Event){event.preventDefault();endDrag();lost=true;delete host.dataset.ready;if(hubLabel)hubLabel.hidden=true;if(selectedLabel)selectedLabel.hidden=true;pointButtons.forEach(button=>{button.hidden=true})}
   function restored(){lost=false;schedule()}
   function visibility(){last=performance.now();schedule()}
-  const resizeObserver=new ResizeObserver(resize),intersection=new IntersectionObserver(entries=>{visible=entries[0].isIntersecting;last=performance.now();if(visible)schedule()})
-  host.append(canvas);resizeObserver.observe(host);intersection.observe(host)
+  // First frames are drawn a screen ahead, so the globe's first composite never lands mid-scroll.
+  let onScreen=false
+  const resizeObserver=new ResizeObserver(resize),intersection=new IntersectionObserver(entries=>{visible=entries[0].isIntersecting;last=performance.now();if(visible)schedule()},{rootMargin:'100% 0px'})
+  const seen=new IntersectionObserver(entries=>{onScreen=entries[0].isIntersecting;last=performance.now();if(onScreen)schedule()})
+  host.append(canvas);resizeObserver.observe(host);intersection.observe(host);seen.observe(host)
   canvas.addEventListener('pointermove',move);canvas.addEventListener('pointerleave',leave);canvas.addEventListener('pointerdown',down);canvas.addEventListener('pointerup',click)
   canvas.addEventListener('pointercancel',endDrag);canvas.addEventListener('lostpointercapture',endDrag)
   canvas.addEventListener('webglcontextlost',contextLost);canvas.addEventListener('webglcontextrestored',restored);document.addEventListener('visibilitychange',visibility)
   resize()
+  // Compile the shaders in the background (parallel compile) and upload the map textures before the first frame, so
+  // the globe appears without stalling the page. The static map stays on screen until then.
+  let warm=false
+  renderer.compileAsync(scene,camera).then(()=>{if(disposed)return;textures.forEach(t=>renderer.initTexture(t))}).catch(()=>{}).finally(()=>{warm=true;last=performance.now();schedule()})
   return {update,dispose(){
-    disposed=true;endDrag();cancelAnimationFrame(frame);clearTimeout(hoverTimer);resizeObserver.disconnect();intersection.disconnect()
+    disposed=true;endDrag();cancelAnimationFrame(frame);clearTimeout(hoverTimer);resizeObserver.disconnect();intersection.disconnect();seen.disconnect()
     canvas.removeEventListener('pointermove',move);canvas.removeEventListener('pointerleave',leave);canvas.removeEventListener('pointerdown',down);canvas.removeEventListener('pointerup',click)
     canvas.removeEventListener('pointercancel',endDrag);canvas.removeEventListener('lostpointercapture',endDrag)
     canvas.removeEventListener('webglcontextlost',contextLost);canvas.removeEventListener('webglcontextrestored',restored);document.removeEventListener('visibilitychange',visibility)

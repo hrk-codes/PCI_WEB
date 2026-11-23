@@ -109,8 +109,15 @@
   inset: 30% 20% 10%;
   border-radius: 50%;
   background: radial-gradient(ellipse, #ff74442e, transparent 70%);
-  opacity: calc(.35 + var(--build) * .65);
+  /* Warms as layers are added: stepped per layer, not per frame. */
+  opacity: .35;
+  transition: opacity .9s ease;
 }
+.scene[data-layer='1'] .glow::after { opacity: .48; }
+.scene[data-layer='2'] .glow::after { opacity: .61; }
+.scene[data-layer='3'] .glow::after { opacity: .74; }
+.scene[data-layer='4'] .glow::after { opacity: .87; }
+.scene[data-layer='5'] .glow::after { opacity: 1; }
 .poster, .video {
   position: absolute;
   inset: 0;
@@ -172,6 +179,13 @@
 }
 .toggle:hover { background: var(--orange); border-color: var(--orange); color: var(--navy); }
 .toggle:focus-visible { outline: 3px solid #8fd0ff; outline-offset: 3px; }
+/* While the film waits to start, a ring fills around the play button. */
+.toggle { isolation: isolate; }
+.ring { position: absolute; inset: -3px; width: calc(100% + 6px); height: calc(100% + 6px); transform: rotate(-90deg); pointer-events: none; }
+.ring circle { fill: none; stroke: var(--orange); stroke-width: 2.5; stroke-linecap: round; stroke-dasharray: 1; stroke-dashoffset: 1; opacity: 0; }
+.scene[data-arming=yes] .ring circle { opacity: 1; animation: arming var(--dwell, 1.2s) linear forwards; }
+.scene[data-arming=yes] .toggle { border-color: #ff744466; }
+@keyframes arming { to { stroke-dashoffset: 0; } }
 .toggle [data-icon=pause] { width: 12px; height: 12px; border-left: 4px solid currentColor; border-right: 4px solid currentColor; }
 .toggle [data-icon=play] { width: 0; height: 0; margin-left: 3px; border-top: 7px solid transparent; border-bottom: 7px solid transparent; border-left: 11px solid currentColor; }
 

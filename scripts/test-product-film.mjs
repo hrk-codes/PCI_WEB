@@ -1,4 +1,4 @@
-// Homepage "Explore the range" section: the cable film plays on its own and the layer list follows it.
+// Homepage "Explore the range" section: the film waits until a visitor rests on it, then plays; the layer list follows it.
 // Needs the site running (pnpm dev) at PCI_BROWSER_URL, default http://127.0.0.1:3000/.
 import assert from 'node:assert/strict'
 import { mkdir } from 'node:fs/promises'
@@ -35,6 +35,8 @@ try {
   assert.equal(await film(page).evaluate(v => v.readyState === 0 && !v.currentSrc), true, 'Film waits until the section is on screen')
   assert.ok(await page.locator(selector).evaluate(el => el.offsetHeight < innerHeight * 1.6), 'Section scrolls normally (not pinned)')
   await show(page)
+  assert.equal(await film(page).evaluate(v => v.paused && !v.currentSrc), true, 'Arriving does not start (or load) the film')
+  await page.locator(`${selector}[data-arming=yes]`).waitFor({state:'attached', timeout:3000})
   await playing(page)
   assert.equal(await page.locator(selector).getAttribute('data-mode'), 'flow')
   assert.equal(await film(page).evaluate(v => v.videoWidth), 1920, 'Full HD film')
@@ -54,6 +56,8 @@ try {
   await page.screenshot({path:'test-results/product-film-end.png'})
   await page.getByRole('button', {name:'Pause cable film'}).click()
   assert.equal(await film(page).evaluate(v => v.paused), true, 'Pause button stops the film')
+  await page.waitForTimeout(2500)
+  assert.equal(await film(page).evaluate(v => v.paused), true, 'A visitor’s pause holds while they rest on the film')
   await page.getByRole('button', {name:'Play cable film'}).click()
   await playing(page)
   await page.evaluate(() => scrollTo({top:0, behavior:'instant'}))
@@ -87,5 +91,5 @@ try {
   assert.equal(await noJS.locator(`${selector} img`).first().isVisible(), true, 'No-JavaScript poster')
   assert.equal(await noJS.locator(`${selector} ol li`).count(), 5, 'No-JavaScript layer list')
   assert.deepEqual(errors, [])
-  console.log('Product film: autoplay on screen, normal scrolling, layers follow playback, pause/play, offscreen pause, phone layout, reduced-motion opt-in, no-JS and accessibility passed.')
+  console.log('Product film: waits, then plays once the visitor rests, normal scrolling, layers follow playback, pause/play, offscreen pause, phone layout, reduced-motion opt-in, no-JS and accessibility passed.')
 } finally { await browser.close() }

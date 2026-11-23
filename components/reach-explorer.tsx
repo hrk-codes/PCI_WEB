@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, type KeyboardEvent } from 'react'
 import Image from 'next/image'
 import { reachHub, reachStates, reachExports, type ReachState } from '@/content/reach'
 import type { createEarthScene } from '@/lib/earth-scene'
+import { whenScrollRests } from '@/lib/when-settled'
 import './reach.css'
 
 type DirectoryPoint = { id:string; name:string; client:string }
@@ -114,18 +115,25 @@ export function ReachExplorer(){
   useEffect(()=>{
     let stopped=false
     const element=host.current!
-    const observer=new IntersectionObserver(async entries=>{
+    let cancelRest:(()=>void)|undefined
+    // Download a screen ahead, then parse the map and build the globe while scrolling rests (or at once if it is
+    // about to come into view), so the set-up never lands in the middle of a scroll.
+    const observer=new IntersectionObserver(entries=>{
       if(!entries.some(e=>e.isIntersecting))return
       observer.disconnect()
-      try{
-        const [module,response]=await Promise.all([import('@/lib/earth-scene'),fetch('/geography/earth.json')])
-        if(!response.ok)throw new Error('Geographic data unavailable')
-        const data=await response.json()
-        if(!stopped)controller.current=module.createEarthScene(element,data,latest.current,{india,hover:setPreview,select})
-      }catch{/* Static geography and descriptive fallback text remain available. */}
-    },{rootMargin:'300px'})
+      Promise.all([import('@/lib/earth-scene'),fetch('/geography/earth.json').then(response=>{if(!response.ok)throw new Error('Geographic data unavailable');return response.text()})])
+        .then(([module,text])=>{
+          if(stopped)return
+          const soon=()=>{const rect=element.getBoundingClientRect();return rect.top<innerHeight+120&&rect.bottom>-120}
+          cancelRest=whenScrollRests(()=>{
+            try{if(!stopped)controller.current=module.createEarthScene(element,JSON.parse(text),latest.current,{india,hover:setPreview,select})}
+            catch{/* Static geography and descriptive fallback text remain available. */}
+          },soon)
+        })
+        .catch(()=>{/* Static geography and descriptive fallback text remain available. */})
+    },{rootMargin:'100% 0px'})
     observer.observe(element)
-    return()=>{stopped=true;observer.disconnect();clearTimeout(idleTimer.current);controller.current?.dispose();controller.current=null}
+    return()=>{stopped=true;observer.disconnect();cancelRest?.();clearTimeout(idleTimer.current);controller.current?.dispose();controller.current=null}
   },[])
   return <div className="earth-explorer" data-view={view} data-motion={globalPause || reduced ? 'paused' : undefined}
     onPointerEnter={event => { if (event.pointerType === 'mouse') { pointerInside.current = true; syncInteraction() } }}

@@ -25,6 +25,8 @@ const clamp = (n: number) => Math.max(0, Math.min(1, n))
 /** The film, and its exact first frame: shown as the video's own poster, so the hand-over to playback is invisible. */
 const FILM = '/media/pci-cable-film-v2.mp4'
 const FILM_START = '/media/pci-cable-film-v2-start.webp'
+/** How long scrolling must rest before the film starts (ms), and when the play button's ring begins to fill. */
+const REST = 320, DWELL = 1500
 
 export function CableBuildFilm({ copy }: { copy: ReactNode }) {
   const section = useRef<HTMLElement>(null)
@@ -35,13 +37,14 @@ export function CableBuildFilm({ copy }: { copy: ReactNode }) {
   const userPaused = useRef(false)
   const optedIn = useRef(false)
   const choose = useRef<() => void>(() => {})
+  const control = useRef({ load: () => {}, disarm: () => {} })
 
   useLayoutEffect(() => {
     const el = section.current!, film = video.current
     const reduced = matchMedia('(prefers-reduced-motion: reduce)')
     const items = [...el.querySelectorAll<HTMLElement>('[data-layer]')]
     const caption = el.querySelector<HTMLElement>('[data-caption]')
-    let frame = 0, near = false, ahead = false, active = -1, modeNow = ''
+    let frame = 0, inView = false, away = true, active = -1, modeNow = ''
     const duration = () => film && Number.isFinite(film.duration) && film.duration > 0 ? film.duration : 12.28
 
     // The layer list and caption follow the film as each layer is added.
@@ -66,47 +69,70 @@ export function CableBuildFilm({ copy }: { copy: ReactNode }) {
       paint(film.currentTime)
       if (!film.paused) frame = requestAnimationFrame(follow)
     }
-    // Buffers a screen ahead, so the film is ready and already running as the section scrolls into view.
+    // Nothing is downloaded or decoded while a visitor scrolls past: the film's first frame (its poster) stands in.
     function load() {
       if (!film || modeNow !== 'flow' || film.src) return
       film.preload = 'auto'
       film.src = FILM
     }
-    // Plays on its own while the section is on screen; normal page scrolling is never affected.
+    // The film waits, paused. Once the visitor rests on it (scrolling stopped, film mostly on screen) a ring fills on
+    // the play button and the film starts; it carries on while they read, and pauses once they scroll away.
+    // A visitor's own pause or play always wins.
+    let resting = 0, starting = 0
+    function disarm() {
+      clearTimeout(resting); clearTimeout(starting); resting = starting = 0
+      if (el.dataset.arming) delete el.dataset.arming
+    }
+    function arm() {
+      disarm()
+      if (!film || modeNow !== 'flow' || !inView || document.hidden || userPaused.current || !film.paused) return
+      resting = window.setTimeout(() => {
+        load()
+        el.dataset.arming = 'yes'
+        starting = window.setTimeout(() => {
+          delete el.dataset.arming
+          if (inView && !document.hidden && !userPaused.current) film.play().catch(() => setPlaying(false))
+        }, DWELL - REST)
+      }, REST)
+    }
     function sync() {
       if (!film || modeNow !== 'flow') return
-      if (near && !document.hidden && !userPaused.current) {
-        load()
-        film.play().catch(() => setPlaying(false))
-      } else film.pause()
+      if (away || document.hidden) { disarm(); film.pause() }
+      else if (film.paused) arm()
     }
+    // Scrolling restarts the wait (only while the film is waiting to start; a playing film keeps playing).
+    const onScroll = () => { if (inView && film?.paused) arm() }
     function pick() {
       const next = (reduced.matches || document.documentElement.dataset.pciMotion === 'paused') && !optedIn.current ? 'static' : 'flow'
       if (next === modeNow) return
       modeNow = next
       setMode(next); el.dataset.mode = next
-      if (next === 'static') { film?.pause(); cancelAnimationFrame(frame); frame = 0; paint(CLOSE_UP.end) }
+      if (next === 'static') { disarm(); film?.pause(); cancelAnimationFrame(frame); frame = 0; paint(CLOSE_UP.end) }
       else {
         if (film) { film.loop = true; if (!film.currentTime) paint(0) }
-        if (ahead) load()
         sync()
       }
     }
     choose.current = pick
+    control.current = { load, disarm }
     const onPlay = () => { setPlaying(true); if (!frame) frame = requestAnimationFrame(follow) }
     const onPause = () => setPlaying(false)
     const onLoaded = () => { el.dataset.film = 'ready' }
-    // Playback starts as the film's first pixel reaches the screen, so the build is always seen from its beginning.
-    const io = new IntersectionObserver(entries => { near = entries[0].isIntersecting; sync() })
-    const approach = new IntersectionObserver(entries => { ahead = entries[0].isIntersecting; if (ahead) load() }, {rootMargin:'100% 0px'})
+    // "In view": most of the film on screen. "Away": all but a sliver scrolled off, the visitor has moved on.
+    const io = new IntersectionObserver(entries => {
+      const ratio = entries[0].intersectionRatio
+      inView = ratio >= .55; away = ratio < .2
+      sync()
+    }, {threshold:[0, .2, .55, .8, 1]})
     const prefs = new MutationObserver(pick)
     film?.addEventListener('play', onPlay); film?.addEventListener('pause', onPause); film?.addEventListener('loadeddata', onLoaded)
-    io.observe(film ?? el); approach.observe(el); prefs.observe(document.documentElement, {attributes:true, attributeFilter:['data-pci-motion']})
+    io.observe(film ?? el); prefs.observe(document.documentElement, {attributes:true, attributeFilter:['data-pci-motion']})
     reduced.addEventListener('change', pick); document.addEventListener('visibilitychange', sync)
+    addEventListener('scroll', onScroll, {passive:true})
     pick()
     el.dataset.ready = 'yes'
     return () => {
-      cancelAnimationFrame(frame); io.disconnect(); approach.disconnect(); prefs.disconnect()
+      cancelAnimationFrame(frame); disarm(); io.disconnect(); prefs.disconnect(); removeEventListener('scroll', onScroll)
       film?.removeEventListener('play', onPlay); film?.removeEventListener('pause', onPause); film?.removeEventListener('loadeddata', onLoaded)
       reduced.removeEventListener('change', pick); document.removeEventListener('visibilitychange', sync)
       film?.pause()
@@ -117,11 +143,13 @@ export function CableBuildFilm({ copy }: { copy: ReactNode }) {
     const film = video.current
     if (!film) return
     if (mode === 'static') { optedIn.current = true; userPaused.current = false; choose.current(); return }
+    control.current.disarm()
     userPaused.current = !film.paused
-    if (userPaused.current) film.pause(); else film.play().catch(() => setPlaying(false))
+    if (userPaused.current) film.pause()
+    else { control.current.load(); film.play().catch(() => setPlaying(false)) }
   }
 
-  return <section ref={section} className={`section ${styles.scene}`} aria-labelledby="product-film-heading" data-mode="static" data-layer={cableLayers.length}>
+  return <section ref={section} className={`section ${styles.scene}`} aria-labelledby="product-film-heading" data-mode="static" data-layer={cableLayers.length} style={{'--dwell':`${DWELL - REST}ms`} as CSSProperties}>
     <svg className={styles.transition} viewBox="0 0 1440 112" preserveAspectRatio="none" aria-hidden="true">
       <defs>
         <linearGradient id="product-film-trace">
@@ -151,7 +179,7 @@ export function CableBuildFilm({ copy }: { copy: ReactNode }) {
           {!failed && <video ref={video} className={styles.video} poster={FILM_START} muted playsInline preload="none" disablePictureInPicture onError={() => setFailed(true)}/>}
           <div className={styles.caption} data-caption data-complete="true"><b>05</b><span>Finished cable</span></div>
           </div>
-          {!failed && <button type="button" className={styles.toggle} onClick={toggle} aria-label={playing ? 'Pause cable film' : 'Play cable film'}><span aria-hidden="true" data-icon={playing ? 'pause' : 'play'}/></button>}
+          {!failed && <button type="button" className={styles.toggle} onClick={toggle} aria-label={playing ? 'Pause cable film' : 'Play cable film'}><svg className={styles.ring} viewBox="0 0 48 48" aria-hidden="true"><circle cx="24" cy="24" r="22" pathLength="1"/></svg><span aria-hidden="true" data-icon={playing ? 'pause' : 'play'}/></button>}
         </div>
       </div>
       <div className={`wrap ${styles.rail}`} aria-hidden="true"><span>Inside the cable</span><div><i/></div><span>{cableLayers.length} layers</span></div>

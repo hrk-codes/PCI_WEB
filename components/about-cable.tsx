@@ -71,7 +71,7 @@ export function AboutCable() {
       const target = scrollTarget()
       const dt = lastTick ? Math.min(.05, (now - lastTick) / 1000) : 1 / 60
       if (shown < 0 || Math.abs(target - shown) > .2) shown = target
-      else shown += (target - shown) * (1 - Math.exp(-dt / .085))
+      else shown += (target - shown) * (1 - Math.exp(-dt / .12))
       if (Math.abs(target - shown) < .0004) shown = target
       draw(shown)
       if (shown !== target) { lastTick = now; frame = requestAnimationFrame(update) } else lastTick = 0
