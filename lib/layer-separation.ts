@@ -46,8 +46,9 @@ export function separableConductor(group: T.Group, {reach = 3.4, spread = 1, fro
       const position = geometry.getAttribute('position') as T.BufferAttribute
       const normal = geometry.getAttribute('normal') as T.BufferAttribute
       // Which wire each vertex belongs to: undo the lay twist and round to the nearest wire position.
-      const wire = new Float32Array(position.count)
-      if (index) for (let i = 0; i < position.count; i++) {
+      const tagged = geometry.getAttribute('wire') as T.BufferAttribute | undefined
+      const wire = tagged ? Float32Array.from(tagged.array as Float32Array) : new Float32Array(position.count)
+      if (index && !tagged) for (let i = 0; i < position.count; i++) {
         const x = position.getX(i), y = position.getY(i), twist = position.getZ(i) * turns * tau
         const c = Math.cos(-twist), s = Math.sin(-twist)
         wire[i] = Math.round(Math.atan2(x * s + y * c, x * c - y * s) / (tau / count))
@@ -57,38 +58,8 @@ export function separableConductor(group: T.Group, {reach = 3.4, spread = 1, fro
     return {index, count, turns, end, trapezoid, centre, solid, meshes}
   })
   const n = layers.length
-  /**
-   * Conductors with shaped (trapezoidal) wires or continuous sleeves (carbon core, gap, ECO) separate as stepped
-   * sections instead: from the outside in, each layer slides back along the conductor and its wires part evenly
-   * around the circle, keeping their own shape and orientation. Every layer then reads as a distinct ring, in side
-   * view and end view alike, instead of shaped wires turning and overlapping.
-   */
-  const stepped = layers.some(layer => layer.trapezoid || layer.solid)
-  function telescope(value: number) {
-    for (const {index, count, turns, end, solid, meshes} of layers) {
-      const order = n - 1 - index, start = .03 + order * (.6 / Math.max(1, n - 1))
-      const open = index ? stage(value, start, start + .38) : 0
-      const back = open * index * .72                    // outer layers retreat furthest: a clear stepped section
-      const part = solid ? 0 : open * (.06 + .045 * index) * spread
-      for (const {geometry, position, base, wire} of meshes) {
-        const p = position.array as Float32Array
-        for (let i = 0; i < position.count; i++) {
-          const x = base[i * 3], y = base[i * 3 + 1], z = base[i * 3 + 2]
-          // Wires part only over the exposed stretch near the cut, so the far end of the layer stays closed.
-          const along = part ? smooth((z - (end - reach)) / reach) : 0
-          const angle = wire[i] * tau / count + z * turns * tau
-          p[i * 3] = x + Math.cos(angle) * part * along
-          p[i * 3 + 1] = y + Math.sin(angle) * part * along
-          p[i * 3 + 2] = z - back
-        }
-        position.needsUpdate = true
-        geometry.computeBoundingBox(); geometry.computeBoundingSphere()
-      }
-    }
-  }
   return (input: number) => {
     const value = Math.min(1, Math.max(0, (input - from) / (to - from)))
-    if (stepped) return telescope(value)
     for (const {index, count, turns, end, trapezoid, centre, solid, meshes} of layers) {
       // The outer layer opens first and widest; each layer inside it follows. The centre wire stands forward last.
       const order = n - 1 - index, start = .03 + order * (.5 / Math.max(1, n - 2))
@@ -97,7 +68,7 @@ export function separableConductor(group: T.Group, {reach = 3.4, spread = 1, fro
       const open = index && !solid ? stage(value, start, start + .44) : 0
       const slide = index && !solid ? 0 : stage(value, .74, 1) * .7
       const share = index / (n - 1), bend = end - reach
-      const fan = (.34 + .8 * share) * (trapezoid ? 1.15 : 1) * spread
+      const fan = (.34 + .8 * share) * (trapezoid ? 1.35 : 1) * spread
       for (const {geometry, position, normal, base, baseNormal, wire} of meshes) {
         const p = position.array as Float32Array, q = normal.array as Float32Array
         for (let i = 0; i < position.count; i++) {
@@ -111,13 +82,17 @@ export function separableConductor(group: T.Group, {reach = 3.4, spread = 1, fro
           // The lay unwinds over the opened stretch, so the loose wires run straight out like a broom, as the
           // aerial bunched cable's strands do, instead of spiralling into hooks.
           let px = x, py = y, nx = baseNormal[i * 3], ny = baseNormal[i * 3 + 1]
+          // Shaped (trapezoidal) wires keep their orientation as they open, and narrow towards their own centre line
+          // over the opened stretch, so each reads as a separate strip with clear space either side (wide flat sectors
+          // would otherwise close up into one continuous bell).
           if (trapezoid) {
-            // Flat trapezoidal wires also turn about their own length as they open, like the slats of a blind,
-            // so a clear gap shows between each peeled wire instead of the layer reading as one overlapping bell.
-            const at = wire[i] * tau / count + z * turns * tau, cx = Math.cos(at) * centre, cy = Math.sin(at) * centre
-            const turn = open * along * 1.3, ct = Math.cos(turn), st = Math.sin(turn)
-            px = cx + (x - cx) * ct - (y - cy) * st; py = cy + (x - cx) * st + (y - cy) * ct
-            const tx = nx * ct - ny * st; ny = nx * st + ny * ct; nx = tx
+            const at = wire[i] * tau / count + z * turns * tau, tx = -Math.sin(at), ty = Math.cos(at)
+            const cx = Math.cos(at) * centre, cy = Math.sin(at) * centre
+            const rx = Math.cos(at), ry = Math.sin(at)
+            const across = (px - cx) * tx + (py - cy) * ty, depth = (px - cx) * rx + (py - cy) * ry
+            const squeeze = open * Math.min(1, along * 2.4)
+            px -= tx * across * squeeze * .62 + rx * depth * squeeze * .5
+            py -= ty * across * squeeze * .62 + ry * depth * squeeze * .5
           }
           const unwind = -open * along * (z - bend) * turns * tau
           const c = Math.cos(unwind), s = Math.sin(unwind)

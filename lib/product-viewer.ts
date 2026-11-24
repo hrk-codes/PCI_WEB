@@ -128,8 +128,6 @@ export function createProductViewer(canvas: HTMLCanvasElement, slug: string, onR
   const endCamera = new T.OrthographicCamera(-1, 1, 1, -1, .1, 100)
   const packedPowerCable = slug === 'pvc-power-cable' || slug === 'lt-xlpe-cable'
   const aerialBunch = slug === 'aerial-bunched-cable'
-  // Shaped-wire conductors separate as stepped sections; their end view is a flat axial section of concentric rings.
-  const steppedConductor = slug === 'carbon-core' || slug === 'gap' || slug === 'eco-panther'
   let orthographicEnd = false
   let environment: ReturnType<typeof createStudioEnvironment> | null = null
   // Poster capture (scripts/render-product-posters.mjs opens the page with ?poster=1) adds ambient occlusion
@@ -176,15 +174,6 @@ export function createProductViewer(canvas: HTMLCanvasElement, slug: string, onR
     } else {
       camera.position.set(0, 0, 10.6 / zoom / Math.min(camera.aspect, 1))
       camera.lookAt(0, 0, 0)
-      if (orthographicEnd) {
-        const size = visibleBounds(model.group).getSize(new T.Vector3())
-        const halfHeight = Math.max(size.y, size.x / camera.aspect) * .62 / zoom
-        endCamera.left = -halfHeight * camera.aspect; endCamera.right = halfHeight * camera.aspect
-        endCamera.top = halfHeight; endCamera.bottom = -halfHeight
-        endCamera.position.set(0, 0, 15); endCamera.lookAt(0, 0, 0)
-        endCamera.far = 100
-        endCamera.updateProjectionMatrix()
-      }
     }
     camera.updateProjectionMatrix()
     const renderCamera = orthographicEnd ? endCamera : camera
@@ -263,7 +252,7 @@ export function createProductViewer(canvas: HTMLCanvasElement, slug: string, onR
     // Bending models rebuild vertex positions, so slider input is coalesced into the next frame.
     separate(value: number) { pendingSeparation = value; request() },
     reset() { pendingSeparation = null; orthographicEnd = false; yaw = initial.yaw; pitch = initial.pitch; roll = initial.roll; zoom = 1; model?.separate(0); request() },
-    endView() { orthographicEnd = packedPowerCable || aerialBunch || steppedConductor; yaw = 0; pitch = 0; roll = 0; zoom = slug === 'control-cable' || packedPowerCable || aerialBunch || steppedConductor ? 1 : 2; request(); return zoom },
+    endView() { orthographicEnd = packedPowerCable || aerialBunch; yaw = 0; pitch = 0; roll = 0; zoom = slug === 'control-cable' || packedPowerCable || aerialBunch ? 1 : 2; request(); return zoom },
     dispose() {
       disposed = true
       cancelAnimationFrame(frame)

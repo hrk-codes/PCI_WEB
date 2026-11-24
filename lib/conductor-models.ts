@@ -82,7 +82,7 @@ export function conductorMaterials() {
 function slice(source: T.BufferGeometry, ranges: [number, number][]) {
   const out = new T.BufferGeometry()
   const total = ranges.reduce((sum, [, count]) => sum + count, 0)
-  for (const name of ['position', 'normal', 'uv']) {
+  for (const name of ['position', 'normal', 'uv', 'wire']) {
     const attribute = source.attributes[name] as T.BufferAttribute | undefined
     if (!attribute) continue
     const size = attribute.itemSize, array = new Float32Array(total * size)
@@ -163,6 +163,9 @@ export function buildConductor(kind: ConductorKind, materials = conductorMateria
         g.translate(0, 0, end - len)
       }
       if (turns) twist(g, turns)
+      // Which wire each vertex belongs to, for the viewer's layer separation (angles alone are ambiguous at a shaped
+      // wire's side walls, which sit on the boundary between neighbouring wires).
+      g.setAttribute('wire', new T.Float32BufferAttribute(new Float32Array(g.getAttribute('position').count).fill(k), 1))
       // Cylinder caps are groups 1 and 2; extruded (trapezoidal) lids are group 0.
       const split = splitEnds(g, (layer.shape === 'round' || index === 0) && layer.shape !== 'tube' ? new Set([1, 2]) : new Set([0]))
       g.dispose()
