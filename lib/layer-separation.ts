@@ -30,7 +30,7 @@ export function morph(geometry: T.BufferGeometry, meta: Float32Array, size: numb
   }
 }
 
-export type ConductorLayerInfo = {index: number, count: number, turns: number, end: number, trapezoid: boolean, centre: number}
+export type ConductorLayerInfo = {index: number, count: number, turns: number, end: number, trapezoid: boolean, centre: number, solid?: boolean}
 
 /**
  * Separation for a stranded overhead conductor built by buildConductor: working from the outside in, each layer's
@@ -40,7 +40,7 @@ export type ConductorLayerInfo = {index: number, count: number, turns: number, e
 export function separableConductor(group: T.Group, {reach = 3.4, spread = 1, from = 0, to = 1} = {}) {
   const tau = Math.PI * 2
   const layers = group.children.map(layerGroup => {
-    const {index, count, turns, end, trapezoid, centre} = layerGroup.userData as ConductorLayerInfo
+    const {index, count, turns, end, trapezoid, centre, solid} = layerGroup.userData as ConductorLayerInfo
     const meshes = layerGroup.children.map(child => {
       const geometry = (child as T.Mesh).geometry
       const position = geometry.getAttribute('position') as T.BufferAttribute
@@ -54,16 +54,18 @@ export function separableConductor(group: T.Group, {reach = 3.4, spread = 1, fro
       }
       return {geometry, position, normal, base:(position.array as Float32Array).slice(), baseNormal:(normal.array as Float32Array).slice(), wire}
     })
-    return {index, count, turns, end, trapezoid, centre, meshes}
+    return {index, count, turns, end, trapezoid, centre, solid, meshes}
   })
   const n = layers.length
   return (input: number) => {
     const value = Math.min(1, Math.max(0, (input - from) / (to - from)))
-    for (const {index, count, turns, end, trapezoid, centre, meshes} of layers) {
+    for (const {index, count, turns, end, trapezoid, centre, solid, meshes} of layers) {
       // The outer layer opens first and widest; each layer inside it follows. The centre wire stands forward last.
       const order = n - 1 - index, start = .03 + order * (.5 / Math.max(1, n - 2))
-      const open = index ? stage(value, start, start + .44) : 0
-      const slide = index ? 0 : stage(value, .74, 1) * .7
+      // Continuous sleeves (a composite core's glass layer, a gap conductor's grease) stay with the core and stand
+      // forward with it, rather than flaring like separate wires.
+      const open = index && !solid ? stage(value, start, start + .44) : 0
+      const slide = index && !solid ? 0 : stage(value, .74, 1) * .7
       const share = index / (n - 1), bend = end - reach
       const fan = (.34 + .8 * share) * (trapezoid ? 1.15 : 1) * spread
       for (const {geometry, position, normal, base, baseNormal, wire} of meshes) {

@@ -8,7 +8,7 @@ import { HeaderLogo } from '@/components/header-logo'
 
 export const menus = [
   { title: 'Company', items: [['About PCI','/about-us/'], ['Management','/management/'], ['Clients','/clients/'], ['Milestones','/achievements/'], ['Turnover','/turnover/']] },
-  { title: 'Products', items: [['All products','/products/'], ['Cables','/cables/'], ['Conductors','/conductors/'], ['Earth wire','/earth-wire/']] },
+  { title: 'Products', items: [['All products','/products/'], ['Conductors','/conductors/'], ['HTLS conductors','/conductors/#htls'], ['Cables','/cables/'], ['Earth wire','/earth-wire/']] },
   { title: 'Capabilities', items: [['Testing facilities','/testing/'], ['Certifications','/certificates/']] },
   { title: 'Updates', items: [['Blog','/blog/'], ['Press releases','/press-releases/'], ['Gallery','/gallery/']] },
 ]

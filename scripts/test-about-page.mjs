@@ -69,7 +69,7 @@ async function revealAll(page) {
   await page.waitForFunction(() => document.querySelector('[data-about] canvas').parentElement.dataset.phase === 'rewind', null, {timeout:17000})
   await revealAll(page)
   assert.equal(await page.locator('[data-reveal=waiting]').count(), 0, 'every block revealed after scrolling')
-  assert.equal(await page.locator('[data-count-to="14"]').innerText(), '14')
+  assert.equal(await page.locator('[data-count-to="21"]').innerText(), '21')
   assert.deepEqual(await axe(page), [], 'axe')
   assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false, 'no horizontal overflow at 1440')
   await page.screenshot({path:'test-results/about-page-full.png', fullPage:true})

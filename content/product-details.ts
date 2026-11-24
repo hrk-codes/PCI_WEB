@@ -16,6 +16,8 @@ export const productSpecifications: Record<string, SpecificationTable[]> = speci
 
 type ConstructionLayer = { name: string; detail: string }
 type StrandSection = { label: string; total: number; core: number }
+/** Colour of the strand diagrams: aluminium and steel (default), copper, or galvanised steel throughout. */
+export type StrandTone = 'aluminium' | 'copper' | 'steel'
 type ProductDetail = {
   pages: number[]
   standards: string[]
@@ -23,6 +25,7 @@ type ProductDetail = {
   application: string
   notes: string[]
   sections?: StrandSection[]
+  tone?: StrandTone
   sizeEnquiry?: string
 }
 
@@ -163,5 +166,74 @@ export const productDetails: Record<string, ProductDetail> = {
     ],
     application: 'Covered overhead lines above 1 kV and up to 36 kV AC. The directory uses PCI’s dedicated MVCC sheet for 11 kV and 33 kV AAAC and AL-59/ACS dimensions.',
     notes: ['The catalogue describes the covering as protection against accidental contact with other covered conductors and grounded parts. It has reduced insulation properties and can withstand phase-to-earth voltage temporarily. Ask PCI to confirm line-design and clearance requirements.'],
+  },
+  // HTLS, copper and buried-earth products. PCI's catalogue names HTLS conductors up to 800 kV (p. 2), TACSR (p. 6)
+  // and BEC (p. 3); construction descriptions give the defining design of each type. Sizes are confirmed per enquiry.
+  acss: {
+    pages: [2], standards: [], sections: reinforcedSections,
+    layers: [
+      { name: 'Annealed aluminium strands', detail: 'Fully annealed (O-temper) aluminium wires, round or trapezoidal. The soft aluminium carries the current but almost none of the tension, so it can run hot without losing strength.' },
+      { name: 'Steel core', detail: 'A high-strength coated steel core carries the mechanical load of the conductor.' },
+    ],
+    application: 'New lines and re-conductoring projects that need more current from the same towers. ACSS is a high-temperature, low-sag (HTLS) design for continuous operation at up to 250°C.',
+    notes: ['Because the steel core takes the load, sag at high temperature follows the low thermal expansion of the steel.'],
+    sizeEnquiry: "PCI builds ACSS to the project’s specification. Share the code word or area, operating temperature, line design and applicable standard for the matching construction and technical data.",
+  },
+  'carbon-core': {
+    pages: [2], standards: [],
+    layers: [
+      { name: 'Trapezoidal annealed aluminium', detail: 'Fully annealed aluminium wires shaped as trapezoids fill the cross-section, so more aluminium fits within the same diameter.' },
+      { name: 'Glass fibre layer', detail: 'A glass fibre composite layer surrounds the carbon core and separates it from the aluminium.' },
+      { name: 'Carbon fibre composite core', detail: 'A pultruded carbon fibre core, far lighter than steel and with very low thermal expansion, so the conductor sags very little when hot.' },
+    ],
+    application: 'Lines that need higher capacity and lower losses with minimal sag, without new or reinforced towers.',
+    notes: ['Composite-core conductors use their own fittings and need careful handling and bending during stringing.'],
+    sizeEnquiry: "PCI builds carbon composite core conductors to the project’s specification. Share the code word or area, operating temperature, line design and applicable standard for the matching construction and technical data.",
+  },
+  invar: {
+    pages: [2], standards: [], sections: [{ label: '30 + 7', total: 37, core: 7 }, { label: '54 + 7', total: 61, core: 7 }],
+    layers: [
+      { name: 'Super thermal-resistant alloy strands', detail: 'Aluminium-zirconium alloy wires that keep their strength at high operating temperatures.' },
+      { name: 'Invar core', detail: 'Aluminium-clad Invar (iron-nickel) steel wires with very low thermal expansion. Above the knee point, the core alone governs sag.' },
+    ],
+    application: 'Uprating existing lines: continuous operation at up to 210°C with low sag, typically on the existing towers.',
+    notes: ['The aluminium cladding protects the Invar wires from corrosion.'],
+    sizeEnquiry: "PCI builds INVAR conductors to the project’s specification. Share the code word or area, operating temperature, line design and applicable standard for the matching construction and technical data.",
+  },
+  gap: {
+    pages: [2], standards: [],
+    layers: [
+      { name: 'Thermal-resistant alloy outer strands', detail: 'Heat-resistant aluminium-zirconium alloy wires form the outer layers.' },
+      { name: 'Trapezoidal inner layer', detail: 'The first alloy layer is made of trapezoidal wires that form a self-supporting tube around the core.' },
+      { name: 'Grease-filled gap', detail: 'A small annular gap, filled with heat-resistant grease, lets the steel core and the alloy layers move independently.' },
+      { name: 'Steel core', detail: 'A high-strength steel core, tensioned on its own during erection. Above the erection temperature only the steel’s expansion governs sag.' },
+    ],
+    application: 'Higher current on existing routes while keeping sag close to that of the original line.',
+    notes: ['GAP conductors are strung by tensioning the steel core alone, so they need the matching installation method and fittings.'],
+    sizeEnquiry: "PCI builds GAP conductors to the project’s specification. Share the code word or area, operating temperature, line design and applicable standard for the matching construction and technical data.",
+  },
+  tacsr: {
+    pages: [6], standards: [], sections: reinforcedSections,
+    layers: [
+      { name: 'Thermal-resistant alloy strands', detail: 'Thermal-resistant aluminium alloy wires keep their strength at higher operating temperatures than standard aluminium.' },
+      { name: 'Steel core', detail: 'A galvanised or aluminium-clad steel core reinforces the conductor, as described in PCI’s catalogue.' },
+    ],
+    application: 'Lines that need more current than an ACSR of the same size, with similar sag and tension. TACSR is designed for continuous operation at up to 150°C.',
+    notes: ['PCI’s catalogue illustrates TACSR strandings alongside AACSR, from 6 + 1 to 54 + 19 wires.'],
+    sizeEnquiry: "PCI builds TACSR to the project’s specification. Share the code word or area, operating temperature, line design and applicable standard for the matching construction and technical data.",
+  },
+  'copper-conductor': {
+    pages: [], standards: [], tone: 'copper', sections: [7, 19, 37].map(total => ({ label: `${total} strands`, total, core: 0 })),
+    layers: [{ name: 'Copper strands', detail: 'Copper wires laid concentrically in alternating directions, in 7, 19, 37 or more wires.' }],
+    application: 'Overhead lines, substation connections and earthing systems where copper is specified.',
+    notes: [],
+    sizeEnquiry: "PCI builds stranded copper conductors to the project’s specification. Share the code word or area, operating temperature, line design and applicable standard for the matching construction and technical data.",
+  },
+  bec: {
+    pages: [3, 16], standards: ['IS 2141'], tone: 'steel', sections: [{ label: '7 strands', total: 7, core: 7 }, { label: '19 strands', total: 19, core: 19 }],
+    layers: [{ name: 'Galvanised steel strands', detail: 'Hot-dip galvanised high-carbon steel wires stranded concentrically. PCI’s catalogue lists BEC (steel) in constructions of up to 19 strands.' }],
+    application: 'Buried earthing along routes and at structures, including railway electrification, where the conductor bonds masts and structures to earth.',
+    notes: ['For railway projects PCI also supplies ACSR as OPC/BEC conductor: Rail Vikas Nigam Ltd ordered ACSR (OPC/BEC) 93.3 sq mm from PCI for the Mumbai Metro.'],
+    sizeEnquiry: "PCI builds BEC to the project’s specification. Share the code word or area, operating temperature, line design and applicable standard for the matching construction and technical data.",
   },
 }

@@ -2,6 +2,7 @@ import type { ReactNode } from 'react'
 import Link from 'next/link'
 import { catalogue, families } from '@/lib/content'
 import { productDetails, productSpecifications } from '@/content/product-details'
+import { placeOf } from '@/content/product-structure'
 import { ProductGrid, productImage } from './catalogue'
 import { ProductViewer } from './product-viewer'
 import { ProductSpecifications } from './product-specifications'
@@ -10,12 +11,14 @@ import styles from './product-detail.module.css'
 
 type Product = typeof catalogue[number]
 function StrandSections({ slug }: { slug: string }) {
-  const sections = productDetails[slug].sections
+  const { sections, tone = 'aluminium' } = productDetails[slug]
   if (!sections) return null
+  const [light, mid, dark] = tone === 'copper' ? ['#fbe3cf', '#d9935f', '#8c4a24'] : tone === 'steel' ? ['#e6eaec', '#9aa6ac', '#4c5a62'] : ['#fcfefd', '#d5e0e3', '#7b939f']
+  const caption = tone === 'copper' ? 'Copper wires laid in concentric layers.' : tone === 'steel' ? 'Galvanised steel wires throughout.' : sections.some(section => section.core > 0) ? 'Aluminium or alloy wires surround the darker steel core.' : 'Circular stranded constructions shown in the catalogue.'
   return <div className={styles.strandPanel}>
     <div className={styles.sectionHeading}>
       <div><Kicker>Inside the conductor</Kicker><h3>Typical strand arrangements.</h3></div>
-      <p>{sections.some(section => section.core > 0) ? 'Aluminium or alloy wires surround the darker steel core.' : 'Circular stranded constructions shown in the catalogue.'}</p>
+      <p>{caption}</p>
     </div>
     <div className={styles.strandGrid}>
       {sections.map(section => {
@@ -30,9 +33,9 @@ function StrandSections({ slug }: { slug: string }) {
         const gradient = `${slug}-strand-${section.total}`
         const edge = rings * 2 + 1.2
         return <figure key={section.label}>
-          <svg viewBox={`${-edge} ${-edge} ${edge * 2} ${edge * 2}`} role="img" aria-label={`${section.label}${section.core ? ' outer wires plus steel core' : ' of aluminium or aluminium alloy'}`}>
-            <defs><linearGradient id={gradient} x1="0" y1="0" x2="1" y2="1"><stop stopColor="#fcfefd"/><stop offset=".45" stopColor="#d5e0e3"/><stop offset="1" stopColor="#7b939f"/></linearGradient></defs>
-            {wires.map((wire, index) => <circle key={index} cx={wire.x} cy={wire.y} r=".94" fill={index < section.core ? '#365469' : `url(#${gradient})`} stroke="#6e8793" strokeWidth=".08" />)}
+          <svg viewBox={`${-edge} ${-edge} ${edge * 2} ${edge * 2}`} role="img" aria-label={`${section.label}${tone === 'copper' ? ' of copper' : tone === 'steel' ? ' of galvanised steel' : section.core ? ' outer wires plus steel core' : ' of aluminium or aluminium alloy'}`}>
+            <defs><linearGradient id={gradient} x1="0" y1="0" x2="1" y2="1"><stop stopColor={light}/><stop offset=".45" stopColor={mid}/><stop offset="1" stopColor={dark}/></linearGradient></defs>
+            {wires.map((wire, index) => <circle key={index} cx={wire.x} cy={wire.y} r=".94" fill={index < section.core && tone !== 'steel' ? '#365469' : `url(#${gradient})`} stroke="#6e8793" strokeWidth=".08" />)}
           </svg>
           <figcaption>{section.label}</figcaption>
         </figure>
@@ -48,16 +51,19 @@ export async function ProductDetail({ product, title, summary, children }: { pro
   const rowCount = tables.reduce((count, table) => count + table.rows.length, 0)
   const quote = `/request-quote/?product=${product.slug}`
   const sourcePage = detail.pages[0]
-  const related = catalogue.filter(item => item.family === product.family && item.slug !== product.slug).slice(0, 4)
+  const place = placeOf(product.slug)
+  // Related: the same set first (for example the other HTLS conductors), then the rest of the family.
+  const related = catalogue.filter(item => item.slug !== product.slug && item.family === product.family)
+    .sort((a, b) => Number(!!place?.set.items.includes(b.slug)) - Number(!!place?.set.items.includes(a.slug))).slice(0, 4)
   return <div className={styles.page}>
     <header className={styles.hero}>
       <div className="wrap">
         <nav className={`breadcrumbs ${styles.breadcrumbs}`} aria-label="Breadcrumb">
-          <Link href="/">Home</Link><span aria-hidden="true">/</span><Link href="/products/">Products</Link><span aria-hidden="true">/</span><span aria-current="page">{product.short}</span>
+          <Link href="/">Home</Link><span aria-hidden="true">/</span><Link href="/products/">Products</Link><span aria-hidden="true">/</span><Link href={`/${product.family}/`}>{families[product.family]}</Link><span aria-hidden="true">/</span><span aria-current="page">{product.short}</span>
         </nav>
         <div className={styles.heroGrid}>
           <div className={styles.heroCopy}>
-            <Kicker>{families[product.family]} · PCI Cables</Kicker>
+            <Kicker>{place && place.set.title !== product.short && place.set.items.length > 1 ? `${place.set.title} · ` : ''}{families[product.family]} · PCI Cables</Kicker>
             <h1>{title}</h1>
             <p>{summary}</p>
             <div className={styles.actions}>
@@ -72,7 +78,7 @@ export async function ProductDetail({ product, title, summary, children }: { pro
         <dl className={styles.heroFacts}>
           <div><dt>Product family</dt><dd>{families[product.family]}</dd></div>
           <div><dt>{tables.length ? 'Catalogue entries' : 'Specification'}</dt><dd>{tables.length ? rowCount : 'By requirement'}</dd></div>
-          <div><dt>{tables.length ? 'Technical tables' : 'Construction reference'}</dt><dd>{tables.length || `Catalogue p. ${sourcePage}`}</dd></div>
+          <div><dt>{tables.length ? 'Technical tables' : 'Construction reference'}</dt><dd>{tables.length || (sourcePage ? `Catalogue p. ${sourcePage}` : 'On request')}</dd></div>
         </dl>
       </div>
     </header>
@@ -90,7 +96,7 @@ export async function ProductDetail({ product, title, summary, children }: { pro
       <section id="product-overview" className={styles.section} aria-labelledby="product-overview-title">
         <div className={styles.sectionHeading}>
           <div><Kicker>Know the construction</Kicker><h2 id="product-overview-title">Product information.</h2></div>
-          <a className={styles.sourceLink} href={`/media/catalogue.pdf#page=${sourcePage}`} target="_blank" rel="noopener noreferrer">Catalogue page {sourcePage} <Arrow diagonal /></a>
+          {sourcePage && <a className={styles.sourceLink} href={`/media/catalogue.pdf#page=${sourcePage}`} target="_blank" rel="noopener noreferrer">Catalogue page {sourcePage} <Arrow diagonal /></a>}
         </div>
         <div className={styles.overviewGrid}>
           <div className={styles.construction}>

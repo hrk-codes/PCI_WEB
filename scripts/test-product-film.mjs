@@ -65,7 +65,7 @@ try {
   await show(page)
   await playing(page)
   assert.deepEqual(await axe(page), [], 'Accessibility')
-  assert.equal(await page.locator(selector).getByRole('link', {name:'View all 14 products'}).getAttribute('href'), '/products/')
+  assert.equal(await page.locator(selector).getByRole('link', {name:'View all 21 products'}).getAttribute('href'), '/products/')
   const short = await open({viewport:{width:1055, height:772}})
   await show(short)
   await playing(short)

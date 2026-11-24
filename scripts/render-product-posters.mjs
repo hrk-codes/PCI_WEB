@@ -7,9 +7,12 @@ import sharp from 'sharp'
 const products = JSON.parse(await readFile(new URL('../content/catalogue.json', import.meta.url), 'utf8'))
 const only = process.argv.slice(2).filter(arg => !arg.startsWith('--'))
 const featured = process.argv.includes('--featured')
+// --cutouts: every model on a transparent background, trimmed, for the product range cards (public/media/product-cutouts).
+const cutouts = process.argv.includes('--cutouts')
 const base = (process.env.PCI_BROWSER_URL || 'http://127.0.0.1:3000').replace(/\/$/, '')
 await mkdir('public/media/products', { recursive: true })
 if (featured) await mkdir('public/media/conductors', { recursive: true })
+if (cutouts) await mkdir('public/media/product-cutouts', { recursive: true })
 const browser = await chromium.launch({ executablePath: process.env.CHROME_PATH || 'C:/Program Files/Google/Chrome/Application/chrome.exe' })
 try {
   const page = await browser.newPage({ viewport: { width: 1280, height: 1000 }, deviceScaleFactor: 1.5, reducedMotion: 'reduce' })
@@ -24,6 +27,20 @@ try {
       element.parentElement.style.cssText += ';position:fixed;top:0;left:0;width:1200px;height:900px;max-height:none;z-index:99;'
     })
     await page.waitForFunction(() => document.querySelector('[data-product-viewer] canvas').width === 1800)
+    if (cutouts) {
+      if (product.slug === 'control-cable') {
+        // The upright sample pose reads poorly on a small card: turn it to the diagonal used elsewhere.
+        await page.getByRole('group', { name: 'Control Cable 3D construction' }).focus()
+        for (let turn = 0; turn < 4; turn++) await page.keyboard.press('ArrowRight')
+        for (let turn = 0; turn < 5; turn++) await page.keyboard.press('ArrowDown')
+        await page.waitForTimeout(150)
+      }
+      await page.addStyleTag({ content: 'html,body{background:transparent!important}body *{visibility:hidden!important}[data-product-viewer] canvas{visibility:visible!important}' })
+      const cutout = await canvas.screenshot({ omitBackground: true })
+      await sharp(cutout).trim().resize({ width: 1100, height: 760, fit: 'inside' }).webp({ quality: 88, alphaQuality: 92 }).toFile(`public/media/product-cutouts/${product.slug}.webp`)
+      console.log(`Captured transparent ${product.slug} for the range cards`)
+      continue
+    }
     if (featured) {
       // Capture the existing manual model against transparency, without changing its product-page poster.
       await page.addStyleTag({ content: 'html,body{background:transparent!important}body *{visibility:hidden!important}[data-product-viewer] canvas{visibility:visible!important}' })

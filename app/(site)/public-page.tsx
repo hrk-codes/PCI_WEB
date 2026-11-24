@@ -13,6 +13,7 @@ import { ProductDetail } from '@/components/product-detail'
 import { AboutPage, aboutHeadline } from '@/components/about-page'
 import { CertificatesPage, TestingPage } from '@/components/capabilities'
 import { ManagementPage } from '@/components/management-page'
+import { ProductRange } from '@/components/product-range'
 import { BlogPage } from '@/components/blog-page'
 import { PressCoverage } from '@/components/press-coverage'
 import { address, articles, catalogue, cleanHtml, company, edited, families, metaDescription, publicDocs, shareImage, siteUrl, structured } from '@/lib/content'
@@ -24,10 +25,10 @@ import { address, articles, catalogue, cleanHtml, company, edited, families, met
  */
 export type Filters = Record<string, string | string[] | undefined>
 const intros: Record<string, [string,string]> = {
-  products: ['Explore the product range.', 'Find cables, overhead conductors and earth wire for power distribution, transmission and industrial projects.'],
-  cables: ['Cables', 'Explore PCI’s power, control and service cable range, including aerial bunched cable and LT XLPE cable.'],
-  conductors: ['Overhead conductors', 'Compare PCI’s stranded aluminium, aluminium alloy and reinforced conductor families.'],
-  'earth-wire': ['Earth wire', 'Explore galvanised steel earth wire for power networks.'],
+  products: ['Explore the product range.', 'Conductors, cables and earth wire, from conventional and HTLS overhead conductors to power, control and covered cables.'],
+  cables: ['Cables', 'Aerial bunched, power, control and service cables, and medium voltage covered conductor (MVCC) up to 36 kV.'],
+  conductors: ['Overhead conductors', 'Conventional, high ampacity and HTLS aluminium conductors up to 800 kV, and stranded copper conductor.'],
+  'earth-wire': ['Earth wire', 'Buried earth conductor (BEC) and galvanised steel earth wire for power and railway networks.'],
   'request-quote': ['Request a quote', 'Tell us which product or application you have in mind. PCI’s sales team can confirm specifications and availability.'],
   'contact-us': ['Contact PCI Cables', 'Reach our sales, purchasing and HR teams or visit our registered office and works in Dankuni.'],
   'vendor-registration': ['Vendor registration', 'Introduce your company and the products or services you supply to PCI’s procurement team.'],
@@ -45,8 +46,8 @@ const intros: Record<string, [string,string]> = {
  *  snippet. They only change the meta description; the page text and its CMS copy stay as written. */
 const searchDescriptions: Record<string, string> = {
   'about-us': 'PCI Cables Industries, Dankuni, West Bengal: makers of power and control cables, aerial bunched cables, covered conductors, overhead conductors and earth wire.',
-  products: 'Explore PCI Cables’ range: power, control, service and aerial bunched cables, covered conductors, overhead conductors up to 800 kV and galvanised earth wire.',
-  'earth-wire': 'Galvanised steel earth wire and stay wire from PCI Cables in Dankuni, West Bengal, for shielding and anchoring overhead transmission and distribution lines.',
+  products: 'Explore PCI Cables’ range: AAC, AAAC, ACSR, AL-59, ECO and HTLS conductors (ACSS, carbon core, INVAR, GAP, TACSR), copper conductor, aerial bunched, power, control and service cables, MVCC, BEC and earth wire.',
+  'earth-wire': 'Buried earth conductor (BEC) and galvanised steel earth, stay and guy wire from PCI Cables in Dankuni, West Bengal, for earthing and shielding power and railway networks.',
   gallery: 'Photographs of PCI Cables’ works in Dankuni, West Bengal: production lines, the testing laboratory, our people and exhibitions such as ELECRAMA.',
   blog: 'Stories from PCI Cables: exhibitions, project orders and manufacturing updates from our cable and conductor works in Dankuni, West Bengal.',
   privacy: 'How PCI Cables Industries uses the details you send through this website’s inquiry, career and vendor forms, and how to contact us about them.',
@@ -186,11 +187,8 @@ export async function PublicPage({ segments, filters = {} }: { segments: string[
   } else if (d.article) {
     body = <article className="reading"><div className="article-hero"><Picture src={'/media/'+articleImages[d.article.slug]} alt="" priority/></div><Rich html={d.html}/><TextLink href="/blog/">All stories</TextLink></article>
   } else if (d.slug==='products' || families[d.slug]) {
-    body = <><nav className="family-nav" aria-label="Product families">{[['products','All products'], ...Object.entries(families)].map(([id,label])=><Link aria-current={d.slug===id?'page':undefined} key={id} href={'/'+id+'/'}>{label}</Link>)}<a href="/media/catalogue.pdf">Catalogue PDF ↗</a></nav>
-      {d.slug==='products' ? Object.entries(families).map(([family,label])=>{
-        const items = catalogue.filter(p=>p.family===family)
-        return <section className="catalogue-family" key={family} aria-labelledby={'family-'+family}><div className="section-top"><div><Kicker>{items.length} {items.length===1?'product':'products'}</Kicker><h2 id={'family-'+family}>{label}</h2></div><TextLink href={'/'+family+'/'}>Browse {label.toLowerCase()}</TextLink></div><ProductGrid items={items}/></section>
-      }) : <ProductGrid items={catalogue.filter(p=>p.family===d.slug)}/>}</>
+    // The range carries its own navigation (families, sets and the catalogue PDF).
+    body = <ProductRange current={d.slug==='products' ? undefined : d.slug}/>
   } else if (['request-quote','contact-us','career','vendor-registration'].includes(d.slug)) {
     const kind = d.slug==='request-quote'?'quote':d.slug==='contact-us'?'contact':d.slug==='career'?'career':'vendor'
     body = <div className="split form-page">{kind==='contact' ? <ContactDetails/> : <div><Kicker>{kind==='quote'?'Sales':kind==='career'?'Human resources':'Procurement'}</Kicker><h2>{kind==='quote'?'Tell us about your requirement.':kind==='career'?'Introduce yourself.':'Tell us about your company.'}</h2><p>{d.summary}</p>{kind==='career' && <p>Send your résumé separately to <a href="mailto:hr@pcicablesindustries.com">hr@pcicablesindustries.com</a>.</p>}</div>}<Inquiry kind={kind} product={catalogue.some(p=>p.slug===selected)?selected:undefined}/></div>
@@ -211,5 +209,5 @@ export async function PublicPage({ segments, filters = {} }: { segments: string[
     body = <div className="reading"><Rich html={d.html}/></div>
   }
   const image = !d.product && !d.article && pagePhotos[d.slug]
-  return <><script type="application/ld+json" dangerouslySetInnerHTML={{__html:structured(breadcrumbs)}}/>{schema && <script type="application/ld+json" dangerouslySetInnerHTML={{__html:structured(schema)}}/>}<PageHead label={d.product?'Products':d.article?'Updates':d.title} title={d.title} intro={d.summary} image={image ? '/media/'+image : undefined}/><div className={d.slug === 'clients' ? 'wrap' : 'section wrap'}>{body}</div></>
+  return <><script type="application/ld+json" dangerouslySetInnerHTML={{__html:structured(breadcrumbs)}}/>{schema && <script type="application/ld+json" dangerouslySetInnerHTML={{__html:structured(schema)}}/>}<PageHead label={d.product?'Products':d.article?'Updates':d.title} title={d.title} intro={d.summary} image={image ? '/media/'+image : undefined}/><div className={d.slug === 'clients' || d.slug === 'products' || families[d.slug] ? 'wrap' : 'section wrap'}>{body}</div></>
 }

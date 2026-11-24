@@ -21,7 +21,7 @@ export function metaDescription(text: string, limit = 160) {
   if (sentence > limit * .55) return cut.slice(0, sentence + 1)
   return cut.slice(0, cut.lastIndexOf(' ')).replace(/[,;:]$/, '') + '…'
 }
-export const families: Record<string, string> = { cables: 'Cables', conductors: 'Conductors', 'earth-wire': 'Earth Wire' }
+export const families: Record<string, string> = { conductors: 'Conductors', cables: 'Cables', 'earth-wire': 'Earth Wire' }
 export const articles = snapshot.filter((doc) => doc.kind === 'article').sort((a, b) => b.date.localeCompare(a.date))
 /** Original pages without a standalone route in the current sitemap. */
 const retiredPages = new Set(['epc', 'news'])

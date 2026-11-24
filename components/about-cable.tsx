@@ -5,6 +5,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { CableScene } from '@/components/cable-scene'
 import { reachExports, reachIndiaCount } from '@/content/reach'
+import catalogue from '@/content/catalogue.json'
 import { aboutTimeline, chapterAt } from '@/lib/about-timeline'
 import './about-cable.css'
 
@@ -18,7 +19,7 @@ const anatomy = [
 ]
 
 const stats = [
-  {label:'Products', value:14, count:true},
+  {label:'Products', value:catalogue.length, count:true},
   {label:'Indian locations', value:reachIndiaCount, count:true},
   {label:'Countries abroad', value:reachExports.length, count:true},
   {label:'Making cable since', value:2013, count:false},
