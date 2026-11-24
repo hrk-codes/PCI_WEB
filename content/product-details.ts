@@ -148,9 +148,9 @@ export const productDetails: Record<string, ProductDetail> = {
   'service-cable': {
     pages: [4], standards: [],
     layers: [
-      { name: 'Conductor', detail: 'The conducting core connects the distribution supply to the service point.' },
-      { name: 'Insulation', detail: 'Insulation surrounds the conductor.' },
-      { name: 'Outer sheath', detail: 'An outer sheath encloses the cable, as shown in the catalogue illustration.' },
+      { name: 'Conductors', detail: 'Two solid aluminium conductors carry the supply from the distribution line to the service point.' },
+      { name: 'Insulation', detail: 'Each conductor is insulated and colour-coded, red and black, to tell the cores apart.' },
+      { name: 'Outer sheath', detail: 'A flat black outer sheath holds the two cores side by side.' },
     ],
     application: 'The connection from the main distribution supply to the customer’s premises or service point.',
     notes: [],

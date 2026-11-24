@@ -61,18 +61,13 @@ function blocksOf(family: ProductFamily): Block[] {
   return packed
 }
 
-function Navigator({ shown, current }: { shown: ProductFamily[]; current?: string }) {
+function Navigator({ current }: { current?: string }) {
   return <nav className={styles.navigator} aria-label="Product range">
     <div className={styles.navFamilies}>
       <Link href="/products/" aria-current={!current ? 'page' : undefined}>All<span>{catalogue.length}</span></Link>
       {productStructure.map(family => <Link key={family.id} href={current ? `/${family.id}/` : `#${family.id}`} aria-current={current === family.id ? 'page' : undefined}>
         {familyNames[family.id]}<span>{countOf(family)}</span>
       </Link>)}
-    </div>
-    <div className={styles.navSets}>
-      {shown.flatMap(family => family.groups.flatMap(group => group.sets.length > 1
-        ? group.sets.map(set => <a key={set.id} href={`#${set.id}`} data-htls={set.id === 'htls' || undefined}>{set.title.replace(' conductors', '')}</a>)
-        : [<a key={group.id} href={`#${group.id}`}>{group.title}</a>]))}
       <a className={styles.navPdf} href="/media/catalogue.pdf">Catalogue PDF <Arrow diagonal/></a>
     </div>
   </nav>
@@ -102,7 +97,7 @@ export async function ProductRange({ current }: { current?: string }) {
   const titles = await editedMany(catalogue.map(product => 'product:' + product.slug))
   let first = true
   return <div className={styles.range}>
-    <Navigator shown={shown} current={current}/>
+    <Navigator current={current}/>
     {shown.map(family => <section key={family.id} id={family.id} className={styles.family} aria-labelledby={`${family.id}-title`}>
       <header className={styles.head}>
         <span className={styles.number} aria-hidden="true">0{productStructure.indexOf(family) + 1}</span>

@@ -69,7 +69,7 @@ export const productHighlights: Record<string, string> = {
   'lt-xlpe-cable': 'XLPE insulated, IS 7098',
   'pvc-power-cable': 'PVC insulated, IS 1554',
   'control-cable': 'Multi-core control',
-  'service-cable': 'Supply to service point',
+  'service-cable': 'Two-core flat, solid aluminium',
   'covered-conductor': 'Covered, up to 36 kV',
   bec: 'Galvanised steel, up to 19 strands',
   'gi-earth-wire': 'Galvanised steel, 3 to 19 strands',

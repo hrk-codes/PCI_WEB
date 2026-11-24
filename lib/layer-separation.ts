@@ -57,8 +57,38 @@ export function separableConductor(group: T.Group, {reach = 3.4, spread = 1, fro
     return {index, count, turns, end, trapezoid, centre, solid, meshes}
   })
   const n = layers.length
+  /**
+   * Conductors with shaped (trapezoidal) wires or continuous sleeves (carbon core, gap, ECO) separate as stepped
+   * sections instead: from the outside in, each layer slides back along the conductor and its wires part evenly
+   * around the circle, keeping their own shape and orientation. Every layer then reads as a distinct ring, in side
+   * view and end view alike, instead of shaped wires turning and overlapping.
+   */
+  const stepped = layers.some(layer => layer.trapezoid || layer.solid)
+  function telescope(value: number) {
+    for (const {index, count, turns, end, solid, meshes} of layers) {
+      const order = n - 1 - index, start = .03 + order * (.6 / Math.max(1, n - 1))
+      const open = index ? stage(value, start, start + .38) : 0
+      const back = open * index * .72                    // outer layers retreat furthest: a clear stepped section
+      const part = solid ? 0 : open * (.06 + .045 * index) * spread
+      for (const {geometry, position, base, wire} of meshes) {
+        const p = position.array as Float32Array
+        for (let i = 0; i < position.count; i++) {
+          const x = base[i * 3], y = base[i * 3 + 1], z = base[i * 3 + 2]
+          // Wires part only over the exposed stretch near the cut, so the far end of the layer stays closed.
+          const along = part ? smooth((z - (end - reach)) / reach) : 0
+          const angle = wire[i] * tau / count + z * turns * tau
+          p[i * 3] = x + Math.cos(angle) * part * along
+          p[i * 3 + 1] = y + Math.sin(angle) * part * along
+          p[i * 3 + 2] = z - back
+        }
+        position.needsUpdate = true
+        geometry.computeBoundingBox(); geometry.computeBoundingSphere()
+      }
+    }
+  }
   return (input: number) => {
     const value = Math.min(1, Math.max(0, (input - from) / (to - from)))
+    if (stepped) return telescope(value)
     for (const {index, count, turns, end, trapezoid, centre, solid, meshes} of layers) {
       // The outer layer opens first and widest; each layer inside it follows. The centre wire stands forward last.
       const order = n - 1 - index, start = .03 + order * (.5 / Math.max(1, n - 2))

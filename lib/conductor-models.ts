@@ -35,8 +35,8 @@ export const constructions: Record<ConductorKind, Layer[]> = {
   // TACSR: thermal-resistant alloy over a galvanised steel core (54/7 style).
   tacsr:[{count:1, metal:'steel', shape:'round'}, {count:6, metal:'steel', shape:'round'}, {count:12, metal:'thermal', shape:'round'}, {count:18, metal:'thermal', shape:'round'}, {count:24, metal:'thermal', shape:'round'}],
   'copper-conductor':[{count:1, metal:'copper', shape:'round'}, {count:6, metal:'copper', shape:'round'}, {count:12, metal:'copper', shape:'round'}],
-  // BEC: heavily galvanised steel strand, buried in service (7 strands of thicker wire).
-  bec:[{count:1, metal:'zinc', shape:'round', size:1.35}, {count:6, metal:'zinc', shape:'round', size:1.35}],
+  // BEC: bright galvanised steel strand, 19 wires (1 + 6 + 12), laid long and cut flush.
+  bec:[{count:1, metal:'zinc', shape:'round'}, {count:6, metal:'zinc', shape:'round'}, {count:12, metal:'zinc', shape:'round'}],
 }
 
 export function conductorMaterials() {
@@ -63,8 +63,8 @@ export function conductorMaterials() {
     // Hard-drawn copper.
     copper:new T.MeshPhysicalMaterial({color:0xd0875a, metalness:1, roughness:.2, clearcoat:.2, clearcoatRoughness:.3}),
     copperCut:new T.MeshPhysicalMaterial({color:0x8a4f2e, metalness:.6, roughness:.62, envMapIntensity:.3}),
-    // Heavy hot-dip galvanising: a pale, matt zinc grey.
-    zinc:new T.MeshPhysicalMaterial({color:0x9ea6aa, metalness:.75, roughness:.5}),
+    // Hot-dip galvanising: a bright, slightly satin zinc silver.
+    zinc:new T.MeshPhysicalMaterial({color:0xc6ccd0, metalness:.92, roughness:.26, clearcoat:.15, clearcoatRoughness:.3}),
     zincCut:new T.MeshPhysicalMaterial({color:0x4a5155, metalness:.7, roughness:.66, envMapIntensity:.45}),
     // Carbon fibre composite: near-black satin.
     carbon:new T.MeshPhysicalMaterial({color:0x1a1c1f, metalness:.15, roughness:.38, clearcoat:.6, clearcoatRoughness:.3}),
@@ -121,12 +121,12 @@ function twist(geo: T.BufferGeometry, turnsPerUnit: number) {
  * Builds a conductor along +z, its stepped end at z = 0 and its body running back to z = -length.
  * `wire` is the round wire diameter; trapezoidal layers keep the same layer thickness.
  */
-export function buildConductor(kind: ConductorKind, materials = conductorMaterials(), {length = 14, wire = .2, step = .55, layers: selectedLayers = constructions[kind], segmentsPerUnit = 10}: {length?:number; wire?:number; step?:number; layers?:Layer[]; segmentsPerUnit?:number} = {}) {
+export function buildConductor(kind: ConductorKind, materials = conductorMaterials(), {length = 14, wire = .2, step = .55, layers: selectedLayers = constructions[kind], segmentsPerUnit = 10, layScale = 1}: {length?:number; wire?:number; step?:number; layers?:Layer[]; segmentsPerUnit?:number; layScale?:number} = {}) {
   const group = new T.Group()
   const layers = selectedLayers
   const geometries: T.BufferGeometry[] = []
   let inner = 0
-  const lay = 11 * wire * layers.length // lay length grows with the conductor diameter, as in real stranding
+  const lay = 11 * wire * layers.length * layScale // lay length grows with the conductor diameter, as in real stranding
   layers.forEach((layer, index) => {
     const thickness = wire * (layer.size ?? (layer.shape === 'tube' ? .5 : 1)), gap = (layer.gap ?? 0) * wire
     const base = inner + gap                            // inner surface of this layer, after any radial gap

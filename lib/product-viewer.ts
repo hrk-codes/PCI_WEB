@@ -39,7 +39,9 @@ export function productModel(slug: string) {
     if (slug === 'acsr') layers = [...constructions.acsr, { count: 24, metal: 'aluminium', shape: 'round' }]
     if (slug === 'gi-earth-wire') layers = constructions.aac.slice(0, 3).map(layer => ({ ...layer, metal: 'steel' }))
     if (slug === 'eco-panther') layers = layers.map(layer => ({ ...layer, metal: 'alloy' }))
-    const built = buildConductor(kind, metals, { length: 6, wire: .2, step: .55, layers })
+    // BEC is cut flush, with the long lay of a buried earth strand; every other conductor shows its stepped layers.
+    const flush = slug === 'bec'
+    const built = buildConductor(kind, metals, { length: 6, wire: .2, step: flush ? 0 : .55, layers, layScale: flush ? 2.4 : 1 })
     root.add(built.group)
     // Layers flare open in place (lib/layer-separation.ts) instead of sliding apart.
     customSeparate = separableConductor(built.group)
@@ -126,6 +128,8 @@ export function createProductViewer(canvas: HTMLCanvasElement, slug: string, onR
   const endCamera = new T.OrthographicCamera(-1, 1, 1, -1, .1, 100)
   const packedPowerCable = slug === 'pvc-power-cable' || slug === 'lt-xlpe-cable'
   const aerialBunch = slug === 'aerial-bunched-cable'
+  // Shaped-wire conductors separate as stepped sections; their end view is a flat axial section of concentric rings.
+  const steppedConductor = slug === 'carbon-core' || slug === 'gap' || slug === 'eco-panther'
   let orthographicEnd = false
   let environment: ReturnType<typeof createStudioEnvironment> | null = null
   // Poster capture (scripts/render-product-posters.mjs opens the page with ?poster=1) adds ambient occlusion
@@ -172,6 +176,15 @@ export function createProductViewer(canvas: HTMLCanvasElement, slug: string, onR
     } else {
       camera.position.set(0, 0, 10.6 / zoom / Math.min(camera.aspect, 1))
       camera.lookAt(0, 0, 0)
+      if (orthographicEnd) {
+        const size = visibleBounds(model.group).getSize(new T.Vector3())
+        const halfHeight = Math.max(size.y, size.x / camera.aspect) * .62 / zoom
+        endCamera.left = -halfHeight * camera.aspect; endCamera.right = halfHeight * camera.aspect
+        endCamera.top = halfHeight; endCamera.bottom = -halfHeight
+        endCamera.position.set(0, 0, 15); endCamera.lookAt(0, 0, 0)
+        endCamera.far = 100
+        endCamera.updateProjectionMatrix()
+      }
     }
     camera.updateProjectionMatrix()
     const renderCamera = orthographicEnd ? endCamera : camera
@@ -250,7 +263,7 @@ export function createProductViewer(canvas: HTMLCanvasElement, slug: string, onR
     // Bending models rebuild vertex positions, so slider input is coalesced into the next frame.
     separate(value: number) { pendingSeparation = value; request() },
     reset() { pendingSeparation = null; orthographicEnd = false; yaw = initial.yaw; pitch = initial.pitch; roll = initial.roll; zoom = 1; model?.separate(0); request() },
-    endView() { orthographicEnd = packedPowerCable || aerialBunch; yaw = 0; pitch = 0; roll = 0; zoom = slug === 'control-cable' || packedPowerCable || aerialBunch ? 1 : 2; request(); return zoom },
+    endView() { orthographicEnd = packedPowerCable || aerialBunch || steppedConductor; yaw = 0; pitch = 0; roll = 0; zoom = slug === 'control-cable' || packedPowerCable || aerialBunch || steppedConductor ? 1 : 2; request(); return zoom },
     dispose() {
       disposed = true
       cancelAnimationFrame(frame)

@@ -141,14 +141,39 @@ export function buildPowerCable(xlpe: boolean, m: CableMaterials) {
   return kit
 }
 
-/** Single-core service cable: black sheath, coloured insulation and a stranded aluminium conductor. */
+/**
+ * Two-core flat service cable: an oval black sheath around two side-by-side cores, red and black insulated, each with a
+ * solid round aluminium conductor. Separating slides the sheath back, parts the cores and peels their insulation.
+ */
 export function buildServiceCable(m: CableMaterials) {
-  const kit = layerKit('Single-core service cable')
-  kit.peel({ outer: .44, inner: .34, bottom: -2.8, top: .3, lip: 1.3, window: [.03, .36], out: .7, back: .25 }, [m.rubber, m.cutFace], 'Black outer sheath')
-  kit.peel({ outer: .29, inner: .206, bottom: -2.8, top: 2.5, lip: 1.6, split: Math.PI / 2, window: [.3, .66], out: .5, back: .18 }, [m.colours[0], m.colours[0]], 'Red insulation')
-  const strand = .203 / 5.15, positions: [number, number][] = [[0, 0]]
-  for (let ring = 1; ring <= 2; ring++) for (let i = 0; i < ring * 6; i++) { const a = i * Math.PI * 2 / (ring * 6); positions.push([Math.cos(a) * strand * 2.03 * ring, Math.sin(a) * strand * 2.03 * ring]) }
-  kit.strands({ positions, radius: strand, bottom: -2.8, still: 1.6, top: 3.05, centre: [0, 0], window: [.6, 1], spread: .32, tipLength: 1.3 }, m.aluminium, 'Stranded aluminium conductor')
+  const kit = layerKit('Two-core service cable')
+  const pitch = .29, insulation = .262, conductor = .165, bottom = -2.8
+  // Oval (flat twin) sheath: a stadium-shaped ring, extruded along the cable.
+  const stadium = (halfLength: number, radius: number) => {
+    const shape = new T.Shape()
+    shape.absarc(halfLength, 0, radius, -Math.PI / 2, Math.PI / 2, false)
+    shape.absarc(-halfLength, 0, radius, Math.PI / 2, Math.PI * 3 / 2, false)
+    return shape
+  }
+  const outline = stadium(pitch, insulation + .095), hole = stadium(pitch, insulation + .006)
+  outline.holes.push(new T.Path(hole.getPoints(48).reverse()))
+  const sheathTop = .3, sheath = new T.ExtrudeGeometry(outline, { depth: sheathTop - bottom, steps: 1, curveSegments: 36, bevelEnabled: true, bevelThickness: .012, bevelSize: .01, bevelSegments: 2 })
+  sheath.rotateX(-Math.PI / 2)
+  sheath.translate(0, bottom, 0)
+  kit.carried(sheath, [m.cutFace, m.rubber] as unknown as T.Material, (y, value) => new T.Vector3(0, -stage(value, .03, .38) * 1.1, 0), 'Black oval outer sheath')
+  const cores = [{ x: -pitch, colour: m.colours[0], insulationTop: 1.25, top: 2.85, name: 'Red' }, { x: pitch, colour: m.colours[3], insulationTop: .62, top: 2.55, name: 'Black' }]
+  cores.forEach((core, index) => {
+    // The cores part sideways, each away from the other.
+    const offset: Offset = (y, value) => new T.Vector3(Math.sign(core.x) * stage(value, .3, .7) * .32 * smooth((y + .6) / 2.4), 0, 0)
+    const centre: Offset = (y, value) => new T.Vector3(core.x, 0, 0).add(offset(y, value))
+    kit.peel({ outer: insulation, inner: conductor + .004, bottom, top: core.insulationTop, lip: .7, split: index ? Math.PI : 0, centre, window: [.56, .9], out: .32, back: .14, sides: 56 }, [core.colour, core.colour], `${core.name} insulation`)
+    // A solid round aluminium conductor, split along its length so it bends smoothly as the core parts.
+    const solid = new T.CylinderGeometry(conductor, conductor, core.top - bottom, 48, 40)
+    solid.translate(core.x, (core.top + bottom) / 2, 0)
+    kit.carried(solid, m.aluminium, offset, `${core.name} core · solid aluminium conductor`)
+  })
+  // Turn the flat side towards the viewer, so both cores show side by side.
+  kit.group.rotation.y = Math.PI / 2 - .35
   kit.separate(0)
   return kit
 }
@@ -157,14 +182,16 @@ export function buildServiceCable(m: CableMaterials) {
 export function buildCoveredConductor(m: CableMaterials) {
   const kit = layerKit('Covered conductor for overhead lines')
   kit.peel({ outer: .7, inner: .58, bottom: -2.8, top: .25, lip: 1.3, window: [.03, .3], out: 1, back: .35 }, [m.rubber, m.cutFace], 'Black weather-resistant covering')
-  kit.peel({ outer: .58, inner: .42, bottom: -2.8, top: .95, lip: 1.2, split: Math.PI / 2, window: [.24, .5], out: .85, back: .3 }, [m.pale, m.pale], 'Pale inner covering')
+  const grey = new T.MeshPhysicalMaterial({ color: 0x737b80, roughness: .5, clearcoat: .15 })
+  kit.peel({ outer: .58, inner: .42, bottom: -2.8, top: .95, lip: 1.2, split: Math.PI / 2, window: [.24, .5], out: .85, back: .3 }, [grey, grey], 'Light grey XLPE inner covering')
   kit.peel({ outer: .42, inner: .38, bottom: -2.8, top: 1.55, lip: 1, split: Math.PI / 4, window: [.44, .66], out: .65, back: .22 }, [m.bedding, m.bedding], 'Semi-conducting screen')
   const metals = conductorMaterials()
-  const built = buildConductor('aaac', metals, { length: 5.7, wire: .105, step: .16, layers: constructions.aaac.slice(0, 3) })
+  // 1 + 6 wires whose outer diameter fills the screen (inner radius .38): wire diameter .38 / 1.5, less a hair of clearance.
+  const built = buildConductor('aaac', metals, { length: 5.7, wire: .2515, step: .34, layers: constructions.aaac.slice(0, 2) })
   built.group.rotation.x = -Math.PI / 2
   built.group.position.y = 2.9
   kit.group.add(built.group)
   kit.updates.push(separableConductor(built.group, { reach: 1.5, spread: .42, from: .62, to: 1 }))
   kit.separate(0)
-  return { ...kit, dispose() { kit.dispose(); built.dispose(); Object.values(metals).forEach(material => material.dispose()) } }
+  return { ...kit, dispose() { kit.dispose(); built.dispose(); grey.dispose(); Object.values(metals).forEach(material => material.dispose()) } }
 }
