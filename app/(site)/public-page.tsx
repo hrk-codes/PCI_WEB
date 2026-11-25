@@ -131,7 +131,7 @@ export async function publicMetadata(segments: string[]): Promise<Metadata> {
 function Rich({ html }: { html: string }) { return <div className="rich" dangerouslySetInnerHTML={{ __html: html }}/> }
 function ContactDetails() {
   return <div className="contact-info"><Kicker>Registered office & works</Kicker><h2>Find us in Dankuni.</h2><p>{address}</p><dl>
-    <dt>Sales & marketing</dt><dd><a href="tel:+919062207003">+91 90622 07003</a></dd>
+    <dt>Sales & marketing</dt><dd><a href="tel:+919990301351">+91 99903 01351</a><br/><a href="tel:+919062207003">+91 90622 07003</a></dd>
     <dt>Purchase</dt><dd><a href="tel:+919062207005">+91 90622 07005</a></dd>
     <dt>HR</dt><dd><a href="tel:+919062207010">+91 90622 07010</a></dd>
     <dt>Email</dt><dd><a href="mailto:info@pcicablesindustries.com">info@pcicablesindustries.com</a></dd>
