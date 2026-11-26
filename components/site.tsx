@@ -18,9 +18,18 @@ export function Arrow({ diagonal = false }: { diagonal?: boolean }) {
 export function Brand({ live = false }: { live?: boolean }) {
   return <Link className="brand" href="/">{live ? <HeaderLogo/> : <span className="brand-mark"><Image src="/media/logo.webp" width={62} height={48} alt="" /></span>}<span><strong>PCI Cables</strong><small>INDUSTRIES PVT. LTD.</small></span></Link>
 }
+export function SalesPhoneLinks() {
+  return <>
+    <a href="tel:+919990301351">+91 99903 01351</a>
+    <a href="tel:+919062207003">+91 90622 07003</a>
+  </>
+}
 export function Header() {
   return <header className="site-head" id="top">
-    <div className="head-meta"><div className="wrap meta-inner"><a className="meta-location" href="https://www.google.com/maps/search/?api=1&query=PCI+Cables+Industries+Pvt+Ltd+Om+Complex+Monber+Sastitala+Beneras+Road+Mrigola+Dankuni+Hooghly+712311" target="_blank" rel="noopener noreferrer">Manufactured in West Bengal, India</a><div><a href="https://mail.google.com/mail/?view=cm&fs=1&to=info%40pcicablesindustries.com" target="_blank" rel="noopener noreferrer">info@pcicablesindustries.com</a><a href="tel:+919062207003">+91 90622 07003</a></div></div></div>
+    <div className="head-meta"><div className="wrap meta-inner">
+      <a className="meta-location" href="https://www.google.com/maps/search/?api=1&query=PCI+Cables+Industries+Pvt+Ltd+Om+Complex+Monber+Sastitala+Beneras+Road+Mrigola+Dankuni+Hooghly+712311" target="_blank" rel="noopener noreferrer">Manufactured in West Bengal, India</a>
+      <div><a href="https://mail.google.com/mail/?view=cm&fs=1&to=info%40pcicablesindustries.com" target="_blank" rel="noopener noreferrer">info@pcicablesindustries.com</a><span className="meta-phones"><SalesPhoneLinks/></span></div>
+    </div></div>
     <div className="wrap navbar"><Brand live/>
       <nav className="main-nav" aria-label="Main navigation"><Link href="/">Home</Link>{menus.map(m=><DesktopMenu key={m.title} {...m}/>)}<Link href="/contact-us/">Contact</Link></nav>
       <Link className="button nav-cta" href="/request-quote/">Request a quote <Arrow diagonal/></Link>
