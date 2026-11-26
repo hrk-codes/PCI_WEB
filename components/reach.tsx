@@ -8,7 +8,7 @@ export function Reach(){
     <div className="wrap reach-layout">
       <div className="reach-intro">
         <Kicker>Our reach</Kicker>
-        <h2 id="reach-heading">From West Bengal to wider horizons.</h2>
+        <h2 id="reach-heading">From Bengal to wider horizons.</h2>
         <p>Manufacturing in Dankuni. Connecting power networks across India, with international client reach across Asia and Africa.</p>
         <TextLink href="/achievements/">Explore our milestones</TextLink>
         <div className="reach-origin"><span aria-hidden="true"/><div><strong>Dankuni, West Bengal</strong><small>PCI manufacturing and works</small></div></div>
