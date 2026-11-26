@@ -1,6 +1,5 @@
 /* About PCI: "Inside every connection". Variables default to the finished state (no JS, static, flow). */
-.about-cable{--anatomy:0;--settle:1;--headline-in:1;--headline:1;--story-copy:1;--stats:1;--story-progress:1;--story-header:106px;position:relative;background:var(--paper)}
-.about-sr{position:absolute;width:1px;height:1px;margin:-1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+.about-cable{--anatomy:0;--settle:1;--headline-in:1;--headline:1;--story-copy:1;--story-progress:1;--story-header:106px;position:relative;background:var(--paper)}
 .about-stage{position:relative;isolation:isolate;overflow:clip;padding:32px 0 24px;background:radial-gradient(ellipse at 34% 43%,#e5e7de77,transparent 65%),var(--paper)}
 .about-topline{display:flex;justify-content:space-between;align-items:center;position:relative;z-index:3;border-bottom:1px solid #cbd2c9;padding-bottom:20px}.about-topline .kicker{margin:0}
 .about-skip{display:none;font-size:.72rem;font-weight:700;color:#4f5f66;align-items:center;gap:8px;min-height:30px}.about-skip:hover{color:var(--orange-dark)}
@@ -44,16 +43,12 @@
 .about-description{margin-top:25px;max-width:44ch;opacity:var(--story-copy);transform:translateY(calc((1 - var(--story-copy)) * 20px))}.about-description .lead{font-size:1rem;line-height:1.55;margin-bottom:16px}.about-description p{font-size:.95rem;line-height:1.75}.about-description .text-link{margin-top:22px;min-height:36px}
 
 
-/* Baseline: chapters, progress and figures */
-.about-baseline{position:relative;z-index:2;display:flex;align-items:center;gap:24px;margin-top:16px;border-top:1px solid #cbd2c9;padding-top:14px;color:#53665f}
-.about-chapters{display:none;align-items:center;gap:14px;font-size:.55rem;font-weight:700;letter-spacing:.13em;text-transform:uppercase}
+/* Chapter progress */
+.about-baseline{display:none;position:relative;z-index:2;margin-top:16px;border-top:1px solid #cbd2c9;padding-top:14px;color:#53665f}
+.about-chapters{display:flex;align-items:center;gap:14px;font-size:.55rem;font-weight:700;letter-spacing:.13em;text-transform:uppercase}
 .about-chapters span{transition:color .3s}
 .about-cable[data-chapter=anatomy] [data-tick=anatomy],.about-cable[data-chapter=range] [data-tick=range],.about-cable[data-chapter=reach] [data-tick=reach]{color:var(--orange-dark)}
 .about-progress{height:2px;background:#d3d8cf;width:90px;overflow:hidden}.about-progress span{display:block;height:100%;background:var(--orange-dark);transform:scaleX(var(--story-progress));transform-origin:left}
-.about-stats{display:flex;gap:clamp(16px,2.6vw,34px);margin:0 0 0 auto;opacity:var(--stats)}
-.about-stats div{display:flex;flex-direction:column-reverse}
-.about-stats dt{font-size:.55rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#53665f}
-.about-stats dd{margin:0;font-size:1.25rem;font-weight:800;letter-spacing:-.03em;line-height:1.1;color:var(--ink);font-variant-numeric:tabular-nums}
 
 /* Cinematic: one pinned stage, three beats */
 .about-cable[data-mode=cinematic]{height:240svh}
@@ -65,7 +60,7 @@
 .about-cable[data-mode=cinematic] .about-visual{position:absolute;inset:0;height:auto}
 .about-cable[data-mode=cinematic] .conductor-main{inset:-4% -32% 5%}
 .about-cable[data-mode=cinematic] .about-copy{grid-column:2;padding:12px 0}
-.about-cable[data-mode=cinematic] .about-chapters{display:flex}
+.about-cable[data-mode=cinematic] .about-baseline{display:block}
 .about-cable[data-mode=cinematic] .anatomy{position:absolute;inset:0;margin:0;display:block;pointer-events:none}
 .about-cable[data-mode=cinematic] .anatomy li{position:absolute;width:clamp(150px,15vw,205px);padding:0 0 0 24px;opacity:clamp(0,calc((var(--anatomy) - var(--k) * .12) * 2.5),1)}
 .about-cable[data-mode=cinematic] .anatomy li::after{content:'';position:absolute;left:24px;right:0;top:-6px;height:1px;background:linear-gradient(90deg,var(--orange),#bbc9bf00)}
@@ -93,7 +88,6 @@
   .about-cable[data-mode=cinematic] .about-description .lead{font-size:.92rem;margin-bottom:8px}
   .about-cable[data-mode=cinematic] .about-description .text-link{margin-top:8px}
   .about-cable[data-mode=cinematic] .about-baseline{margin-top:8px;padding-top:10px}
-  .about-cable[data-mode=cinematic] .about-stats dd{font-size:1.05rem}
 }
 
 /* Phones and small tablets */
@@ -106,8 +100,6 @@
   .about-copy{padding:30px 0 30px}
   .about-copy h2{font-size:clamp(2.2rem,7vw,4rem);max-width:none}
   .about-description{max-width:55ch}
-  .about-baseline{flex-wrap:wrap;gap:12px;padding-bottom:56px}
-  .about-stats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px 20px;width:100%;margin:0}
 }
 @media(max-width:380px){.anatomy{grid-template-columns:1fr}}
 

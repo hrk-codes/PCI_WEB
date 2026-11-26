@@ -15,9 +15,8 @@ export function aboutTimeline(p: number) {
     pulse: phase(p, .40, .48) * (1 - phase(p, .68, .76)),
     headlineIn: phase(p, .44, .52),
     headline: phase(p, .48, .68),
-    /** Beat 3: the story and figures land. */
+    /** Beat 3: the story copy appears. */
     copy: phase(p, .68, .80),
-    stats: phase(p, .74, .92),
   }
 }
 

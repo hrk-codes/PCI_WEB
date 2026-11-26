@@ -3,7 +3,6 @@
 import { Fragment, useEffect, useRef, useState, type CSSProperties } from 'react'
 import Link from 'next/link'
 import { getImageProps } from 'next/image'
-import { reachExports, reachIndiaCount } from '@/content/reach'
 import './hero.css'
 
 export const heroDefaults = {
@@ -30,7 +29,7 @@ function Poster() {
   </picture>
 }
 
-export function HeroFilm({ copy, productCount }: { copy: Copy; productCount: number }) {
+export function HeroFilm({ copy }: { copy: Copy }) {
   const { title, summary } = copy ?? heroDefaults
   const section = useRef<HTMLElement>(null)
   const video = useRef<HTMLVideoElement>(null)
@@ -102,12 +101,6 @@ export function HeroFilm({ copy, productCount }: { copy: Copy; productCount: num
       </div>
     </div>
     <div className="wrap hero-film-bar">
-      <ul className="hero-facts" aria-label="PCI at a glance">
-        <li><b>{productCount}</b> products</li>
-        <li><b>{reachIndiaCount}</b> Indian locations</li>
-        <li><b>{reachExports.length}</b> countries abroad</li>
-        <li><b>2013</b> founded</li>
-      </ul>
       {!failed && <button type="button" className="hero-film-toggle" onClick={toggle} aria-label={playing ? 'Pause background film' : 'Play background film'}>
         <span aria-hidden="true" data-icon={playing ? 'pause' : 'play'}/>
       </button>}

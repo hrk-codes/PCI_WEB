@@ -4,8 +4,6 @@ import { useLayoutEffect, useRef, type CSSProperties } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { CableScene } from '@/components/cable-scene'
-import { reachExports, reachIndiaCount } from '@/content/reach'
-import catalogue from '@/content/catalogue.json'
 import { aboutTimeline, chapterAt } from '@/lib/about-timeline'
 import './about-cable.css'
 
@@ -18,13 +16,6 @@ const anatomy = [
   {anchor:'sheath', name:'Outer sheath', note:'PVC / PE, weather-ready'},
 ]
 
-const stats = [
-  {label:'Products', value:catalogue.length, count:true},
-  {label:'Indian locations', value:reachIndiaCount, count:true},
-  {label:'Countries abroad', value:reachExports.length, count:true},
-  {label:'Making cable since', value:2013, count:false},
-]
-
 const headline = ['Building', 'confidence', 'into every', 'connection.']
 
 export function AboutCable() {
@@ -33,7 +24,6 @@ export function AboutCable() {
   useLayoutEffect(() => {
     const el = section.current!
     const header = document.querySelector<HTMLElement>('.site-head')
-    const counters = [...el.querySelectorAll<HTMLElement>('[data-count-to]')]
     const reduced = matchMedia('(prefers-reduced-motion: reduce)')
     const large = matchMedia('(min-width: 821px) and (min-height: 701px)')
     let frame = 0, near = true, skipped = false, mode = '', headerHeight = 106
@@ -45,12 +35,7 @@ export function AboutCable() {
       set('--headline-in', tl.headlineIn)
       set('--headline', tl.headline)
       set('--story-copy', tl.copy)
-      set('--stats', tl.stats)
       set('--story-progress', p)
-      for (const counter of counters) {
-        const value = String(Math.round(Number(counter.dataset.countTo) * tl.stats))
-        if (counter.textContent !== value) counter.textContent = value
-      }
       const chapter = chapterAt(p)
       if (el.dataset.chapter !== chapter) el.dataset.chapter = chapter
       const pose = p < .36 ? 'opening' : 'settled'
@@ -151,9 +136,6 @@ export function AboutCable() {
       </div>
       <div className="wrap about-baseline">
         <div className="about-chapters" aria-hidden="true"><span data-tick="anatomy">01 Anatomy</span><span data-tick="range">02 Range</span><span data-tick="reach">03 Reach</span><div className="about-progress"><span/></div></div>
-        <dl className="about-stats">
-          {stats.map(stat => <div key={stat.label}><dt>{stat.label}</dt><dd>{stat.count ? <><span className="about-sr">{stat.value}</span><span aria-hidden="true" data-count-to={stat.value}>{stat.value}</span></> : stat.value}</dd></div>)}
-        </dl>
       </div>
     </div>
   </section>

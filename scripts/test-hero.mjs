@@ -49,6 +49,8 @@ try {
   await page.waitForFunction(() => !document.querySelector('.hero-film-video').paused)
   assert.deepEqual(await axe(page), [], 'Hero accessibility')
   assert.equal(await page.getByRole('navigation', {name:'Product families', exact:true}).count(), 0, 'Hero product family strip is removed')
+  assert.equal(await page.locator('.hero-facts').count(), 0, 'Hero no longer repeats the company figures')
+  assert.equal(await page.getByRole('link', {name:'Scroll', exact:true}).getAttribute('href'), '#about-pci-title')
   await page.locator('.hero-film-video').evaluate(v => { v.currentTime = 32.2 })
   await page.waitForFunction(() => document.querySelector('.hero-film-video').currentTime < 2, null, {timeout:5000})
   await page.close()
@@ -56,9 +58,10 @@ try {
   const fit = await short.evaluate(() => {
     const r = s => document.querySelector(s).getBoundingClientRect()
     const hit = (a, b) => !(a.right <= b.left || b.right <= a.left || a.bottom <= b.top || b.bottom <= a.top)
-    return {bar:hit(r('.hero-film-bar'), r('.info-trigger')) && hit(r('.hero-facts'), r('.info-trigger')), onScreen:r('.hero-film-actions').bottom <= innerHeight}
+    const info = r('.info-trigger')
+    return {overlapsInfo:hit(r('.hero-film-toggle'), info) || hit(r('.hero-scroll'), info), onScreen:r('.hero-film-actions').bottom <= innerHeight}
   })
-  assert.equal(fit.bar, false, 'Quick info button does not cover the facts')
+  assert.equal(fit.overlapsInfo, false, 'Quick info does not cover the hero controls')
   assert.equal(fit.onScreen, true, 'Hero actions fit above the fold at 1055 × 772')
   await short.waitForTimeout(1500)
   await short.screenshot({path:'test-results/hero-1055.png'})
@@ -84,10 +87,10 @@ try {
   assert.equal(await overflow(mobile), false, 'No horizontal overflow on phones')
   assert.ok(await mobile.evaluate(() => {
     const button = document.querySelector('.hero-film-toggle').getBoundingClientRect()
-    const facts = document.querySelector('.hero-facts').getBoundingClientRect()
+    const actions = document.querySelector('.hero-film-actions').getBoundingClientRect()
     const info = document.querySelector('.info-trigger').getBoundingClientRect()
-    return button.top >= facts.bottom && button.right < info.left
-  }), 'Phone playback control clears the logo, facts and Quick info')
+    return button.top >= actions.bottom && button.right < info.left
+  }), 'Phone playback control clears the hero actions and Quick info')
   assert.deepEqual(await axe(mobile), [], 'Phone hero accessibility')
   await mobile.waitForTimeout(1000)
   await mobile.screenshot({path:'test-results/hero-mobile.png'})
