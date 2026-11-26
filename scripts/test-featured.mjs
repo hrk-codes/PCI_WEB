@@ -9,7 +9,7 @@ const browser = await chromium.launch({executablePath:process.env.CHROME_PATH ||
 const url = process.env.PCI_BROWSER_URL || 'http://127.0.0.1:3000/'
 await mkdir('test-results', {recursive:true})
 const errors = []
-const products = ['aac', 'aaac', 'acsr', 'aacsr', 'aerial-bunched-cable', 'eco-panther', 'control-cable']
+const products = ['aac', 'acss', 'acsr', 'copper-conductor', 'aerial-bunched-cable', 'eco-panther', 'control-cable', 'bec']
 async function open(options = {}) {
   const page = await browser.newPage({viewport:{width:1440, height:950}, ...options})
   page.on('pageerror', e => errors.push(e.message))
@@ -28,7 +28,7 @@ try {
   const section = line(page).locator('xpath=ancestor::section')
   assert.equal(await section.getByRole('heading', {name:'Featured products.'}).count(), 1)
   assert.equal(await section.locator('.product-grid').count(), 0, 'The photo cards are gone')
-  assert.deepEqual(await line(page).locator('a').evaluateAll(links => links.map(a => new URL(a.href).pathname)), products.map(slug => `/products/${slug}/`), 'All seven featured products link to their pages')
+  assert.deepEqual(await line(page).locator('a').evaluateAll(links => links.map(a => new URL(a.href).pathname)), products.map(slug => `/products/${slug}/`), 'All eight featured products link to their pages')
   assert.equal(await page.locator('.line-wire').nth(1).getAttribute('d'), 'M52 30 C 340 118, 860 118, 1148 30', 'The original main wire path is preserved')
   assert.equal(await page.locator('.line-wire-two').getAttribute('d'), 'M52 20 C 340 96, 860 96, 1148 20', 'The original upper wire path is preserved')
   assert.equal(await line(page).getAttribute('data-entrance'), 'armed', 'Line and conductors wait until the span is reached')
@@ -45,10 +45,14 @@ try {
     const span = document.querySelector('.conductor-span').getBoundingClientRect()
     const opaque = [...document.querySelectorAll('.conductor-list li')].every(li => getComputedStyle(li).opacity === '1')
     const overlap = items.some((a, i) => items.some((b, j) => i < j && !(a.right <= b.left || b.right <= a.left)))
-    return {opaque, overlap, inside:items.every(r => r.bottom <= span.bottom + 2 && r.left >= span.left - 2 && r.right <= span.right + 2), sagging:items[2].top > items[0].top && items[2].top > items[5].top}
+    return {opaque, overlap, inside:items.every(r => r.bottom <= span.bottom + 2 && r.left >= span.left - 2 && r.right <= span.right + 2), sagging:items[3].top > items[0].top && items[4].top > items[7].top}
   })
   assert.deepEqual(layout, {opaque:true, overlap:false, inside:true, sagging:true}, 'Conductors hang along the span without overlapping')
-  assert.ok(await line(page).locator('a[href="/products/aerial-bunched-cable/"] img').evaluate(async img => { await img.decode(); return img.naturalWidth > 0 }), 'Aerial Bunched Cable artwork loads')
+  const imageSizes = await line(page).locator('img').evaluateAll(images => Promise.all(images.map(async img => {
+    await img.decode()
+    return img.naturalWidth
+  })))
+  assert.ok(imageSizes.length === products.length && imageSizes.every(width => width > 0), 'All eight model renders load')
   assert.ok(await line(page).evaluate(el => {
     const first = el.querySelector('.conductor-clamp')
     const control = el.querySelector('a[href="/products/control-cable/"] .conductor-clamp')
@@ -69,7 +73,7 @@ try {
     const boxes = items.map(item => item.getBoundingClientRect())
     return boxes.some((box, i) => boxes.some((other, j) => i < j && box.left < other.right && other.left < box.right))
   })
-  assert.equal(shortOverlap, false, 'All seven points fit at 1055px')
+  assert.equal(shortOverlap, false, 'All eight points fit at 1055px')
   await line(short).screenshot({path:'test-results/featured-1055.png'})
   await short.close()
   const mobile = await open({viewport:{width:390, height:844}, isMobile:true, hasTouch:true})
@@ -99,5 +103,5 @@ try {
   assert.equal(await noJS.locator('.conductor-list li').first().evaluate(li => getComputedStyle(li).opacity), '1', 'No-JavaScript conductors visible')
   await noJS.close()
   assert.deepEqual(errors, [])
-  console.log('Featured products: seven product links, original wire paths, animation on entry and return, sag layout, phone swipe row, reduced motion, no-JS and accessibility passed.')
+  console.log('Featured products: eight product links and renders, original wire paths, animation on entry and return, sag layout, phone swipe row, reduced motion, no-JS and accessibility passed.')
 } finally { await browser.close() }

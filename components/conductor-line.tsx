@@ -5,15 +5,16 @@ import Link from 'next/link'
 import Image from 'next/image'
 import './conductor-line.css'
 
-/** Homepage-only selection from the conductor and cable range. */
-const conductors = [
-  {slug:'aac', name:'AAC', note:'All aluminium'},
-  {slug:'aaac', name:'AAAC', note:'Alloy strength'},
-  {slug:'acsr', name:'ACSR', note:'Steel-cored'},
-  {slug:'aacsr', name:'AACSR', note:'Alloy, steel-cored'},
-  {slug:'aerial-bunched-cable', name:'Aerial Bunched Cable', note:'Insulated aluminium'},
-  {slug:'eco-panther', name:'ECO Panther', note:'Trapezoidal strands'},
-  {slug:'control-cable', name:'Control cable', note:'Copper cores'},
+/** Homepage selection with transparent renders of each product's construction. */
+const featuredProducts = [
+  {slug:'aac', name:'AAC', note:'All aluminium', image:{src:'/media/conductors/aac.webp', width:2400, height:1346}},
+  {slug:'acss', name:'ACSS', note:'High-temperature', image:{src:'/media/product-cutouts/acss.webp', width:1100, height:550}},
+  {slug:'acsr', name:'ACSR', note:'Steel-cored', image:{src:'/media/conductors/acsr.webp', width:2400, height:1346}},
+  {slug:'copper-conductor', name:'Copper Conductor', note:'Bare stranded copper', image:{src:'/media/product-cutouts/copper-conductor.webp', width:1100, height:526}},
+  {slug:'aerial-bunched-cable', name:'Aerial Bunched Cable', note:'Insulated aluminium', image:{src:'/media/conductors/aerial-bunched-cable-seamless.webp', width:2400, height:1384}},
+  {slug:'eco-panther', name:'ECO Panther', note:'Trapezoidal strands', image:{src:'/media/conductors/eco-panther.webp', width:2400, height:1346}},
+  {slug:'control-cable', name:'Control cable', note:'Copper cores', image:{src:'/media/conductors/control-cable-copper.webp', width:2400, height:1493}},
+  {slug:'bec', name:'BEC', note:'Buried earth conductor', image:{src:'/media/product-cutouts/bec.webp', width:1100, height:600}},
 ]
 
 // The wires live in a stretched 1200 × 200 space; the towers are separate fixed-ratio drawings centred on x0 and x1.
@@ -28,8 +29,8 @@ function wireAt(xPercent: number) {
   for (let i = 0; i < 24; i++) { const mid = (lo + hi) / 2; if (bez(mid, WIRE.x0, WIRE.c1[0], WIRE.c2[0], WIRE.x1) < target) lo = mid; else hi = mid }
   return bez(lo, WIRE.y0, WIRE.c1[1], WIRE.c2[1], WIRE.y1) / 200 * 100
 }
-const placed = conductors.map((item, i) => {
-  const x = 13 + i * (74 / (conductors.length - 1))
+const placed = featuredProducts.map((item, i) => {
+  const x = 13 + i * (74 / (featuredProducts.length - 1))
   return {...item, x, y:wireAt(x), t:(x / 100 * 1200 - WIRE.x0) / (WIRE.x1 - WIRE.x0)}
 })
 
@@ -134,17 +135,17 @@ export function ConductorLine() {
       </svg>
       <Tower side="start"/>
       <Tower side="end"/>
-      <ul className="conductor-list" aria-label="Featured conductors and cables">
-        {placed.map((item, i) => <li key={item.slug} style={{'--i':i, '--x':`${item.x}%`, '--y':`${item.y}%`, '--t':item.t.toFixed(3)} as CSSProperties}>
+      <ul className="conductor-list" aria-label="Featured products">
+        {placed.map(item => <li key={item.slug} style={{'--x':`${item.x}%`, '--y':`${item.y}%`, '--t':item.t.toFixed(3)} as CSSProperties}>
           <Link href={`/products/${item.slug}/`}>
             <span className="conductor-clamp" aria-hidden="true"/>
-            <Image src={`/media/conductors/${item.slug === 'aerial-bunched-cable' ? 'aerial-bunched-cable-seamless' : item.slug === 'control-cable' ? 'control-cable-copper' : item.slug}.webp`} width={2400} height={1344} alt="" sizes="(max-width: 820px) 42vw, 13vw"/>
+            <Image {...item.image} alt="" sizes="(max-width: 380px) 124px, (max-width: 520px) 40vw, (max-width: 820px) 184px, (max-width: 1600px) 10vw, 146px"/>
             <b>{item.name}</b>
             <small>{item.note}</small>
           </Link>
         </li>)}
       </ul>
     </div>
-    <p className="conductor-line-note">Aluminium conductors for overhead networks, alongside copper control cable for automation and instrumentation.</p>
+    <p className="conductor-line-note">Overhead conductors, insulated cables and buried earth wire for power and rail networks.</p>
   </div>
 }
