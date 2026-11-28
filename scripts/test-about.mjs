@@ -168,6 +168,17 @@ try {
   await resized.setViewportSize({width:800,height:650})
   assert.equal(await resized.locator('.about-cable').getAttribute('data-mode'),'flow')
   assert.equal(await opacity(resized,'.about-description'),1)
+  const slow = await open({deviceScaleFactor:1})
+  await progress(slow,.55)
+  await slow.locator('.cable-webgl[data-ready=yes] canvas').waitFor()
+  await slow.evaluate(() => {
+    const nextFrame = window.requestAnimationFrame.bind(window)
+    window.requestAnimationFrame = callback => nextFrame(now => callback(now * 8))
+  })
+  await slow.locator('.cable-webgl[data-quality=poster]').waitFor({state:'attached'})
+  assert.equal(await slow.locator('.cable-fallback-settled').isVisible(),true,'Sustained low frame rates show the still at the native resolution floor')
+  assert.equal(await slow.locator('.cable-webgl canvas').isVisible(),false,'The live animation is hidden in the quality fallback')
+  await slow.close()
   assert.deepEqual(errors,[])
   console.log('About: anatomy, range, reach, forward/reverse, pulse, reload, keyboard, pause, reduced motion, mobile, resize, no-JS, context loss and accessibility passed.')
 } finally {await browser.close()}

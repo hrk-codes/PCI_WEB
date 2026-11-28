@@ -27,7 +27,7 @@ export function createCableScene(host: HTMLElement, section: HTMLElement) {
   renderer.shadowMap.autoUpdate = false
   // Native resolution (antialiased) up to 2x on high-density screens, within a pixel budget. Supersampling standard
   // screens made the canvas 1.5x larger to composite every frame, which is what dropped frames while scrolling.
-  // If the device cannot hold a smooth frame rate, `quality` steps down (see render).
+  // Give up supersampling first. The still takes over if the animation cannot keep up at 1x.
   let quality = Math.min(2,Math.max(devicePixelRatio,1))
   const pixelBudget = 2.6e6
   const scene = new T.Scene()
@@ -216,7 +216,8 @@ export function createCableScene(host: HTMLElement, section: HTMLElement) {
 
   let wantedQuality=0,restTimer=0
   let visible=true,onScreen=false,frame=0,disposed=false,contextLost=false,sized=false,pending=true,warmed=false
-  let lastFrameAt=0,frameSum=0,frameCount=0
+  let lastFrameAt=0,frameSum=0,frameCount=0,slowSamples=0
+  let continuous=false,qualityFallback=false
   let progress=Number(getComputedStyle(section).getPropertyValue('--story-progress')) || 0
   let px=0,py=0,cx=0,cy=0
   const lerp=(a:number,b:number,p:number)=>a+(b-a)*p
@@ -238,22 +239,32 @@ export function createCableScene(host: HTMLElement, section: HTMLElement) {
     }
     if (art.dataset.anchors!=='live') art.dataset.anchors='live'
   }
+  function measureRate(fps:number) {
+    if (fps<55 && renderer.getPixelRatio()>1) {
+      wantedQuality=Math.max(1,Math.min(wantedQuality||quality,renderer.getPixelRatio()*Math.sqrt(fps/60)*.97))
+      settleQuality()
+    }
+    // Two slow samples at 1x avoid switching after a single burst of work or on a 30 Hz display.
+    slowSamples=fps<24 && renderer.getPixelRatio()<=1 ? slowSamples+1 : 0
+    if (slowSamples<2) return
+    qualityFallback=true
+    suspend()
+    delete host.dataset.ready
+    host.dataset.quality='poster'
+    if (art) delete art.dataset.anchors
+  }
   function render(now:number) {
     frame=0
-    if(disposed || !visible || contextLost || !sized || document.hidden) return
-    // Every frame runs at the display rate. If a device keeps missing frames, render fewer pixels instead of
-    // dropping frames: a slightly softer image reads as smooth, a stutter never does.
-    // Average over 45 back-to-back frames; when below ~55fps, scale the pixel count to the measured headroom
-    // (never below 0.8x). Only ever steps down, so it settles after one or two adjustments.
-    // Resizing the canvas reallocates its buffers (a visible stall and a change in sharpness), so a lower setting is
-    // only ever applied once scrolling has come to rest (see settleQuality), never in the middle of a scroll.
-    if(lastFrameAt && now-lastFrameAt<120){
+    if(disposed || qualityFallback || !visible || contextLost || !sized || document.hidden) return
+    // Sample only consecutive animation frames. Gaps while waiting for scroll input say nothing about rendering.
+    if(continuous && lastFrameAt){
       frameSum+=now-lastFrameAt;frameCount++
-      if(frameCount>=45){
+      if(frameCount>=24){
         const fps=1000/(frameSum/frameCount);frameSum=frameCount=0
-        if(fps<55 && quality>.8)wantedQuality=Math.max(.8,Math.min(wantedQuality||quality,quality*Math.sqrt(fps/60)*.97))
+        measureRate(fps)
+        if (qualityFallback) return
       }
-    } else {frameSum=frameCount=0}
+    } else {frameSum=frameCount=slowSamples=0}
     lastFrameAt=now
     if(!warmed){warmUp();calibrate()}
     const staticMode=section.dataset.mode!=='cinematic'
@@ -313,7 +324,8 @@ export function createCableScene(host: HTMLElement, section: HTMLElement) {
     const pulseState=looping?'running':'idle'
     if(canvas.dataset.pulse!==pulseState)canvas.dataset.pulse=pulseState
     // The current keeps flowing only while the section is actually on screen.
-    if((looping && onScreen) || Math.abs(px-cx)+Math.abs(py-cy)>.001) schedule()
+    continuous=looping && onScreen
+    if(continuous || Math.abs(px-cx)+Math.abs(py-cy)>.001) schedule()
   }
   /**
    * Compiles every shader and uploads every texture before the first visible frame. Without this, each part that
@@ -328,14 +340,15 @@ export function createCableScene(host: HTMLElement, section: HTMLElement) {
     renderer.render(scene,camera)
     hidden.forEach(o=>{o.visible=false})
   }
-  function schedule(){if(!frame && visible && sized && !disposed && !contextLost && !document.hidden)frame=requestAnimationFrame(render)}
+  function schedule(){if(!frame && visible && sized && !disposed && !qualityFallback && !contextLost && !document.hidden)frame=requestAnimationFrame(render)}
   function request(){pending=true;schedule()}
   function suspend(){
     cancelAnimationFrame(frame);frame=0
-    lastFrameAt=0;frameSum=0;frameCount=0
+    lastFrameAt=0;frameSum=0;frameCount=0;slowSamples=0;continuous=false
     canvas.dataset.pulse='idle'
   }
   function resize(){
+    if (qualityFallback) return
     width=host.clientWidth;height=host.clientHeight
     sized = width > 0 && height > 0
     if (!sized) return
@@ -379,27 +392,28 @@ export function createCableScene(host: HTMLElement, section: HTMLElement) {
   // "Seen": more than a sliver of the canvas is on screen (the composition sits in its middle, the edges are empty).
   const seenNow=()=>{const r=host.getBoundingClientRect();return Math.min(r.bottom,innerHeight)-Math.max(r.top,0)>r.height*.15}
   function calibrate(){
-    if(calibrated||disposed||contextLost||!sized||seenNow())return
+    if(calibrated||disposed||qualityFallback||contextLost||!sized||seenNow())return
     calibrated=true
     const hidden:T.Object3D[]=[]
     scene.traverse(o=>{if(!o.visible){hidden.push(o);o.visible=true}})
     const restore=()=>hidden.forEach(o=>{o.visible=false})
     let count=0,first=0
     const step=(now:number)=>{
-      if(disposed||contextLost||seenNow()){restore();request();return}
+      if(disposed||qualityFallback||contextLost||seenNow()||document.hidden){restore();request();return}
       renderer.shadowMap.needsUpdate=true;renderer.render(scene,camera)
       if(!count)first=now
       if(++count<=32){requestAnimationFrame(step);return}
       restore()
       const fps=1000/((now-first)/32)
       canvas.dataset.benchFps=fps.toFixed(0)
-      if(fps<55){quality=Math.max(.8,quality*Math.sqrt(fps/60)*.97);resize()}else request()
+      measureRate(fps)
+      request()
     }
     requestAnimationFrame(step)
   }
   function settleQuality(){
     clearTimeout(restTimer)
-    restTimer=window.setTimeout(()=>{if(wantedQuality&&!disposed){quality=wantedQuality;wantedQuality=0;resize()}},450)
+    if (wantedQuality && !disposed && !qualityFallback) restTimer=window.setTimeout(()=>{quality=wantedQuality;wantedQuality=0;resize()},450)
   }
   addEventListener('scroll',settleQuality,{passive:true})
   // Compile every shader in the background (parallel compile) and upload everything before the section is reached,
@@ -425,7 +439,7 @@ export function createCableScene(host: HTMLElement, section: HTMLElement) {
     ;[powerLegend,copperLegend,bareHalo,earthHalo,bareSparks,copperSparks,dust,copperCable].forEach(x=>x.dispose())
     ;[pulseA,pulseB,glow].forEach(m=>m.dispose())
     bandTexture.dispose();bandTextureB.dispose()
-    environment.dispose();renderer.dispose();canvas.remove();delete host.dataset.ready
+    environment.dispose();renderer.dispose();canvas.remove();delete host.dataset.ready;delete host.dataset.quality
     if(art)delete art.dataset.anchors
   }
 }
