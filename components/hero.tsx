@@ -14,20 +14,16 @@ type Copy = { title: string; summary: string } | null
 const LANDSCAPE_FILM = 'landscape-v7'
 const PORTRAIT_FILM = 'portrait-v7'
 const FILM_RELEASE = `${LANDSCAPE_FILM}:${PORTRAIT_FILM}`
-const PORTRAIT_MEDIA = '(orientation: portrait) and (max-width: 820px)'
-const LANDSCAPE_FRAME = {width:1920, height:1080}
-const PORTRAIT_FRAME = {width:720, height:1280}
-const MAX_AUTOPLAY_UPSCALE = 1.5
 // New filenames keep Next's image cache from showing the previous film during the first frame.
 const filmAsset = (name: string) => `/media/pci-hero-film-${name}`
 
 /** Art-directed poster: landscape on wide screens, portrait on tall phones. It is the LCP image and the reduced-motion view. */
 function Poster() {
   const common = {alt:'', sizes:'100vw'}
-  const { props: { srcSet: wide } } = getImageProps({...common, ...LANDSCAPE_FRAME, src:filmAsset(`${LANDSCAPE_FILM}.webp`)})
-  const { props: { srcSet: tall, ...rest } } = getImageProps({...common, ...PORTRAIT_FRAME, src:filmAsset(`${PORTRAIT_FILM}.webp`)})
+  const { props: { srcSet: wide } } = getImageProps({...common, width:1920, height:1080, src:filmAsset(`${LANDSCAPE_FILM}.webp`)})
+  const { props: { srcSet: tall, ...rest } } = getImageProps({...common, width:720, height:1280, src:filmAsset(`${PORTRAIT_FILM}.webp`)})
   return <picture>
-    <source media={PORTRAIT_MEDIA} srcSet={tall}/>
+    <source media="(orientation: portrait) and (max-width: 820px)" srcSet={tall}/>
     <source srcSet={wide}/>
     <img {...rest} alt="" className="hero-film-poster" fetchPriority="high" loading="eager"/>
   </picture>
@@ -48,52 +44,29 @@ export function HeroFilm({ copy }: { copy: Copy }) {
     el.dataset.film = 'poster'
     setPlaying(false)
     const reduced = matchMedia('(prefers-reduced-motion: reduce)')
-    const portrait = matchMedia(PORTRAIT_MEDIA)
     let visible = true
     const motionOff = () => reduced.matches || document.documentElement.dataset.pciMotion === 'paused'
-    function fitsDisplay() {
-      const { width, height } = el.getBoundingClientRect()
-      const source = portrait.matches ? PORTRAIT_FRAME : LANDSCAPE_FRAME
-      const sourceWidth = film!.videoWidth || source.width
-      const sourceHeight = film!.videoHeight || source.height
-      // The film covers the section. Check the growing axis in display pixels, including high-density screens.
-      return Math.max(width / sourceWidth, height / sourceHeight) * devicePixelRatio <= MAX_AUTOPLAY_UPSCALE
-    }
     function update() {
-      if (choice.current === 'auto' && !fitsDisplay()) {
-        el.dataset.film = 'poster'
-        film!.pause()
-        return
-      }
       const allowed = choice.current === 'play' || (choice.current === 'auto' && !motionOff())
       if (allowed && visible && !document.hidden) {
         film!.play().catch(() => { /* Autoplay refused: the poster stays and the button offers Play. */ setPlaying(false) })
       } else film!.pause()
     }
     sync.current = update
-    const onPlaying = () => {
-      if (choice.current === 'auto' && !fitsDisplay()) { update(); return }
-      setPlaying(true); el.dataset.film = 'playing'
-    }
+    const onPlaying = () => { setPlaying(true); el.dataset.film = 'playing' }
     const onPause = () => { setPlaying(false) }
     const observer = new IntersectionObserver(entries => { visible = entries[0].isIntersecting; update() }, {threshold:.05})
     const preference = new MutationObserver(() => { if (choice.current === 'auto') update() })
-    const resize = new ResizeObserver(update)
     film.addEventListener('playing', onPlaying); film.addEventListener('pause', onPause)
-    film.addEventListener('loadedmetadata', update)
     observer.observe(el)
-    resize.observe(el)
     preference.observe(document.documentElement, {attributes:true, attributeFilter:['data-pci-motion']})
     reduced.addEventListener('change', update)
-    window.addEventListener('resize', update)
     document.addEventListener('visibilitychange', update)
     update()
     return () => {
-      observer.disconnect(); preference.disconnect(); resize.disconnect()
+      observer.disconnect(); preference.disconnect()
       film.removeEventListener('playing', onPlaying); film.removeEventListener('pause', onPause)
-      film.removeEventListener('loadedmetadata', update)
       reduced.removeEventListener('change', update); document.removeEventListener('visibilitychange', update)
-      window.removeEventListener('resize', update)
       film.pause()
     }
   }, [failed, FILM_RELEASE])
@@ -111,8 +84,8 @@ export function HeroFilm({ copy }: { copy: Copy }) {
         // A source's error bubbles through React. Let the browser try the next codec first.
         if (event.target === event.currentTarget) setFailed(true)
       }}>
-        <source src={filmAsset(`${PORTRAIT_FILM}.mp4`)} type="video/mp4" media={PORTRAIT_MEDIA}/>
-        <source src={filmAsset(`${PORTRAIT_FILM}.webm`)} type="video/webm" media={PORTRAIT_MEDIA}/>
+        <source src={filmAsset(`${PORTRAIT_FILM}.mp4`)} type="video/mp4" media="(orientation: portrait) and (max-width: 820px)"/>
+        <source src={filmAsset(`${PORTRAIT_FILM}.webm`)} type="video/webm" media="(orientation: portrait) and (max-width: 820px)"/>
         <source src={filmAsset(`${LANDSCAPE_FILM}.mp4`)} type="video/mp4"/>
         <source src={filmAsset(`${LANDSCAPE_FILM}.webm`)} type="video/webm"/>
       </video>}
